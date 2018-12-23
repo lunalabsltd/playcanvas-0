@@ -33,6 +33,7 @@ Object.assign(pc, function () {
     var viewMat3 = new pc.Mat3();
     var viewProjMat = new pc.Mat4();
     var projMat;
+    var screenParams = [0, 0, 1, 1];
 
     var viewInvL = new pc.Mat4();
     var viewInvR = new pc.Mat4();
@@ -376,6 +377,7 @@ Object.assign(pc, function () {
         this.farClipId = scope.resolve('camera_far');
         this.cameraParamsId = scope.resolve('camera_params');
         this.shadowMapLightRadiusId = scope.resolve('light_radius');
+        this.screenParamsId = scope.resolve('_ScreenParams');
 
         this.fogColorId = scope.resolve('fog_color');
         this.fogStartId = scope.resolve('fog_start');
@@ -463,6 +465,7 @@ Object.assign(pc, function () {
             var materialA = drawCallA._material;
             var materialB = drawCallB._material;
 
+            // FIXME EN-62 should remove the below
             if (drawCallA.sortingLayerIndex != drawCallB.sortingLayerIndex) {
                 return drawCallA.sortingLayerIndex - drawCallB.sortingLayerIndex;
             }
@@ -490,6 +493,7 @@ Object.assign(pc, function () {
             var materialA = drawCallA._material;
             var materialB = drawCallB._material;
 
+            // FIXME EN-62 should remove the below
             if (drawCallA.sortingLayerIndex != drawCallB.sortingLayerIndex) {
                 return drawCallA.sortingLayerIndex - drawCallB.sortingLayerIndex;
             }
@@ -649,6 +653,11 @@ Object.assign(pc, function () {
                 this.viewPos[1] = cameraPos.y;
                 this.viewPos[2] = cameraPos.z;
                 this.viewPosId.setValue(this.viewPos);
+
+                // Screen Parameters
+                screenParams[ 0 ] = ( camera.renderTarget || this.device ).width;
+                screenParams[ 1 ] = ( camera.renderTarget || this.device ).height;
+                this.screenParamsId.setValue(screenParams);
 
                 camera.frustum.update(projMat, viewMat);
             } else {
