@@ -455,7 +455,8 @@ Object.assign(pc, function () {
             { class: pc.AudioListenerComponentSystem,    args: [ this, this._audioManager ] },
             { class: pc.ParticleSystemComponentSystem,   args: [ this ] },
             { class: pc.ScreenComponentSystem,           args: [ this ] },
-            { class: pc.ElementComponentSystem,          args: [ this ] }
+            { class: pc.ElementComponentSystem,          args: [ this ] },
+            { class: pc.UnityComponentSystem,            args: [ this ] }
         ];
 
         for ( var i = 0; i < systemClasses.length; i++ ) {
