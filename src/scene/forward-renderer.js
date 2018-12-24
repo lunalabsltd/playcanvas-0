@@ -819,8 +819,8 @@ Object.assign(pc, function () {
 
                 this.lightColorId[cnt].setValue(scene.gammaCorrection ? directional._linearFinalColor : directional._finalColor);
 
-                // Directionals shine down the negative Y axis
-                wtm.getY(directional._direction).scale(-1);
+                // Directionals shine along the position Z axis
+                wtm.getZ(directional._direction).scale(1);
                 directional._direction.normalize();
                 this.lightDir[cnt][0] = directional._direction.x;
                 this.lightDir[cnt][1] = directional._direction.y;
