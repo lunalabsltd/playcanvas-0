@@ -397,8 +397,8 @@ pc.extend(pc, function() {
 
     // we mix point events in to both Screen and Element so that the whole UI stack
     // becomes mouse/touch events-aware.
-    pc.extend(pc.ScreenComponent.prototype, PointEventsManager);
-    pc.extend(pc.ElementComponent.prototype, PointEventsManager);
+    pc.extend( pc.ScreenComponent.prototype, PointEventsManager );
+    pc.extend( pc.ElementComponent.prototype, PointEventsManager );
 
     return {
         POINTEREVENT_MOVE: "pointer:move",

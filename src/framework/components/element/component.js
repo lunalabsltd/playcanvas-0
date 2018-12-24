@@ -43,7 +43,7 @@ pc.extend(pc, function () {
         
         this._anchor = new pc.Vec4();
         this._localAnchor = new pc.Vec4();
-        this._canvasGroups = null;
+        this._canvasGroups = [];
 
         this._pivot = new pc.Vec2(0.5, 0.5);
         this._width = 0;

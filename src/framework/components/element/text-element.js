@@ -83,6 +83,7 @@ pc.extend(pc, function () {
 
         // initialize based on screen
         this._onScreenChange(this._element.screen);
+        this._createMesh( "" );
 
         // start listening for element events
         element.on('resize', this._onParentResize, this);

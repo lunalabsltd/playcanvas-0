@@ -594,7 +594,6 @@ pc.extend(pc, function () {
             if (value) {
                 // default texture just uses emissive and opacity maps
                 this._meshInstance.setParameter("_MainTex", this._texture);
-                this._meshInstance.setParameter("_ScreenParams", [ 1000, 1000, 1, 1 ]);
 
                 this._meshInstance.setParameter("texture_emissiveMap", this._texture);
                 this._meshInstance.setParameter("texture_opacityMap", this._texture);

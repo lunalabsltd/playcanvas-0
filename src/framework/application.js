@@ -167,7 +167,6 @@ Object.assign(pc, function () {
         this.graphicsDevice = new pc.GraphicsDevice(canvas, options.graphicsDeviceOptions);
         this.stats = new pc.ApplicationStats(this.graphicsDevice);
         this._audioManager = new pc.SoundManager(options);
-        this.loader = new pc.ResourceLoader();
 
         // stores all entities that have been created
         // for this app by guid
@@ -443,52 +442,30 @@ Object.assign(pc, function () {
 
         this._scriptPrefix = options.scriptPrefix || '';
 
-        this.loader.addHandler("animation", new pc.AnimationHandler());
-        this.loader.addHandler("model", new pc.ModelHandler(this.graphicsDevice, this.scene.defaultMaterial));
-        this.loader.addHandler("material", new pc.MaterialHandler(this));
-        this.loader.addHandler("texture", new pc.TextureHandler(this.graphicsDevice, this.assets, this.loader));
-        this.loader.addHandler("text", new pc.TextHandler());
-        this.loader.addHandler("json", new pc.JsonHandler());
-        this.loader.addHandler("audio", new pc.AudioHandler(this._audioManager));
-        this.loader.addHandler("script", new pc.ScriptHandler(this));
-        this.loader.addHandler("scene", new pc.SceneHandler(this));
-        this.loader.addHandler("cubemap", new pc.CubemapHandler(this.graphicsDevice, this.assets, this.loader));
-        this.loader.addHandler("html", new pc.HtmlHandler());
-        this.loader.addHandler("css", new pc.CssHandler());
-        this.loader.addHandler("shader", new pc.ShaderHandler());
-        this.loader.addHandler("hierarchy", new pc.HierarchyHandler(this));
-        this.loader.addHandler("scenesettings", new pc.SceneSettingsHandler(this));
-        this.loader.addHandler("folder", new pc.FolderHandler());
-        this.loader.addHandler("font", new pc.FontHandler(this.loader));
-        this.loader.addHandler("binary", new pc.BinaryHandler());
-        this.loader.addHandler("textureatlas", new pc.TextureAtlasHandler(this.loader));
-        this.loader.addHandler("sprite", new pc.SpriteHandler(this.assets, this.graphicsDevice));
-
         this.systems = new pc.ComponentSystemRegistry();
-        this.systems.add(new pc.RigidBodyComponentSystem(this));
-        this.systems.add(new pc.CollisionComponentSystem(this));
-        this.systems.add(new pc.AnimationComponentSystem(this));
-        this.systems.add(new pc.ModelComponentSystem(this));
-        this.systems.add(new pc.CameraComponentSystem(this));
-        this.systems.add(new pc.LightComponentSystem(this));
-        if (pc.script.legacy) {
-            this.systems.add(new pc.ScriptLegacyComponentSystem(this));
-        } else {
-            this.systems.add(new pc.ScriptComponentSystem(this));
+
+        var systemClasses = [
+            { class: pc.AnimationComponentSystem,        args: [ this ] },
+            { class: pc.ModelComponentSystem,            args: [ this ] },
+            { class: pc.CameraComponentSystem,           args: [ this ] },
+            { class: pc.LightComponentSystem,            args: [ this ] },
+            { class: pc.ScriptComponentSystem,           args: [ this ] },
+            { class: pc.AudioSourceComponentSystem,      args: [ this, this._audioManager ] },
+            { class: pc.SoundComponentSystem,            args: [ this, this._audioManager ] },
+            { class: pc.AudioListenerComponentSystem,    args: [ this, this._audioManager ] },
+            { class: pc.ParticleSystemComponentSystem,   args: [ this ] },
+            { class: pc.ScreenComponentSystem,           args: [ this ] },
+            { class: pc.ElementComponentSystem,          args: [ this ] }
+        ];
+
+        for ( var i = 0; i < systemClasses.length; i++ ) {
+            var klass = systemClasses[ i ].class;
+
+            if ( klass ) {
+                var args = systemClasses[ i ].args;
+                this.systems.add(new klass( args[ 0 ], args[ 1 ] ));
+            }
         }
-        this.systems.add(new pc.AudioSourceComponentSystem(this, this._audioManager));
-        this.systems.add(new pc.SoundComponentSystem(this, this._audioManager));
-        this.systems.add(new pc.AudioListenerComponentSystem(this, this._audioManager));
-        this.systems.add(new pc.ParticleSystemComponentSystem(this));
-        this.systems.add(new pc.ScreenComponentSystem(this));
-        this.systems.add(new pc.ElementComponentSystem(this));
-        this.systems.add(new pc.ButtonComponentSystem(this));
-        this.systems.add(new pc.ScrollViewComponentSystem(this));
-        this.systems.add(new pc.ScrollbarComponentSystem(this));
-        this.systems.add(new pc.SpriteComponentSystem(this));
-        this.systems.add(new pc.LayoutGroupComponentSystem(this));
-        this.systems.add(new pc.LayoutChildComponentSystem(this));
-        this.systems.add(new pc.ZoneComponentSystem(this));
 
         this._visibilityChangeHandler = this.onVisibilityChange.bind(this);
 
