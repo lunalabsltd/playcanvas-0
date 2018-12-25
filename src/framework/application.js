@@ -445,18 +445,19 @@ Object.assign(pc, function () {
         this.systems = new pc.ComponentSystemRegistry();
 
         var systemClasses = [
-            { class: pc.AnimationComponentSystem,        args: [ this ] },
-            { class: pc.ModelComponentSystem,            args: [ this ] },
-            { class: pc.CameraComponentSystem,           args: [ this ] },
-            { class: pc.LightComponentSystem,            args: [ this ] },
-            { class: pc.ScriptComponentSystem,           args: [ this ] },
-            { class: pc.AudioSourceComponentSystem,      args: [ this, this._audioManager ] },
-            { class: pc.SoundComponentSystem,            args: [ this, this._audioManager ] },
-            { class: pc.AudioListenerComponentSystem,    args: [ this, this._audioManager ] },
-            { class: pc.ParticleSystemComponentSystem,   args: [ this ] },
-            { class: pc.ScreenComponentSystem,           args: [ this ] },
-            { class: pc.ElementComponentSystem,          args: [ this ] },
-            { class: pc.UnityComponentSystem,            args: [ this ] }
+            { class: pc.AnimationComponentSystem,           args: [ this ] },
+            { class: pc.ModelComponentSystem,               args: [ this ] },
+            { class: pc.CameraComponentSystem,              args: [ this ] },
+            { class: pc.LightComponentSystem,               args: [ this ] },
+            { class: pc.ScriptComponentSystem,              args: [ this ] },
+            { class: pc.AudioSourceComponentSystem,         args: [ this, this._audioManager ] },
+            { class: pc.SoundComponentSystem,               args: [ this, this._audioManager ] },
+            { class: pc.AudioListenerComponentSystem,       args: [ this, this._audioManager ] },
+            { class: pc.ParticleSystemComponentSystem,      args: [ this ] },
+            { class: pc.ScreenComponentSystem,              args: [ this ] },
+            { class: pc.ElementComponentSystem,             args: [ this ] },
+            { class: pc.UnityComponentSystemManagerSystem,  args: [ this ] },
+            { class: pc.UnityComponentSystem,               args: [ this ] }
         ];
 
         for ( var i = 0; i < systemClasses.length; i++ ) {
