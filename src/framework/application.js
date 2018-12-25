@@ -457,7 +457,10 @@ Object.assign(pc, function () {
             { class: pc.ScreenComponentSystem,              args: [ this ] },
             { class: pc.ElementComponentSystem,             args: [ this ] },
             { class: pc.UnityComponentSystemManagerSystem,  args: [ this ] },
-            { class: pc.UnityComponentSystem,               args: [ this ] }
+            { class: pc.UnityComponentSystem,               args: [ this ] },
+            { class: pc.PhysicsSystem,                      args: [ this ] },
+            { class: pc.RigidBodySystem,                    args: [ this ] },
+            { class: pc.ColliderSystem,                     args: [ this ] }
         ];
 
         for ( var i = 0; i < systemClasses.length; i++ ) {
@@ -799,41 +802,9 @@ Object.assign(pc, function () {
                     var grp = props.batchGroups[i];
                     this.batcher.addGroup(grp.name, grp.dynamic, grp.maxAabbSize, grp.id, grp.layers);
                 }
-
             }
 
-            this._loadLibraries(props.libraries, callback);
-        },
-
-        _loadLibraries: function (urls, callback) {
-            var len = urls.length;
-            var count = len;
-            var self = this;
-
-            var regex = /^http(s)?:\/\//;
-
-            if (len) {
-                var onLoad = function (err, script) {
-                    count--;
-                    if (err) {
-                        callback(err);
-                    } else if (count === 0) {
-                        self.onLibrariesLoaded();
-                        callback(null);
-                    }
-                };
-
-                for (var i = 0; i < len; ++i) {
-                    var url = urls[i];
-
-                    if (!regex.test(url.toLowerCase()) && self._scriptPrefix)
-                        url = pc.path.join(self._scriptPrefix, url);
-
-                    this.loader.load(url, 'script', onLoad);
-                }
-            } else {
-                callback(null);
-            }
+            callback();
         },
 
         // insert scene name/urls into the registry
@@ -935,10 +906,6 @@ Object.assign(pc, function () {
                 timestamp: pc.now(),
                 target: this
             });
-
-            if (!this._librariesLoaded) {
-                this.onLibrariesLoaded();
-            }
 
             pc.ComponentSystem.initialize(this.root);
             this.fire("initialize");
@@ -1323,30 +1290,8 @@ Object.assign(pc, function () {
             };
         },
 
-        /**
-         * @private
-         * @name pc.Application#onLibrariesLoaded
-         * @description Event handler called when all code libraries have been loaded
-         * Code libraries are passed into the constructor of the Application and the application won't start running or load packs until all libraries have
-         * been loaded
-         */
-        onLibrariesLoaded: function () {
-            this._librariesLoaded = true;
-            if (this.systems.rigidbody) {
-                this.systems.rigidbody.onLibraryLoaded();
-            }
-            if (this.systems.collision) {
-                this.systems.collision.onLibraryLoaded();
-            }
-        },
-
         applySceneSettings: function (settings) {
             var asset;
-
-            if (this.systems.rigidbody && typeof Ammo !== 'undefined') {
-                var gravity = settings.physics.gravity;
-                this.systems.rigidbody.setGravity(gravity[0], gravity[1], gravity[2]);
-            }
 
             this.scene.applySettings(settings);
 
