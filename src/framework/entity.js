@@ -131,6 +131,16 @@ Object.assign(pc, function () {
     };
 
     /**
+     * Adds a Unity component to the entity. It is assumed to be a subclass of
+     * pc.UnityComponent for the callbacks to function properly.
+     *
+     * @param {pc.UnityComponent} component     Component to add.
+     */
+    Entity.prototype.addUnityComponent = function ( component ) {
+        this._app.systems.unity.addComponent( this, component );
+    }
+
+    /**
      * @function
      * @name pc.Entity#removeComponent
      * @description Remove a component from the Entity.
@@ -228,6 +238,11 @@ Object.assign(pc, function () {
     Entity.prototype._onHierarchyStateChanged = function (enabled) {
         pc.GraphNode.prototype._onHierarchyStateChanged.call(this, enabled);
         this.fire(enabled ? 'enable' : 'disable');
+
+        // enable / disable Unity components if there are any attached
+        if ( this._unityComponents ) {
+            this._app.systems.unity._onEntityHierarchyStateChanged( this, enabled );
+        }
 
         // enable / disable all the components
         var component;
