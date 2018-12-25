@@ -134,10 +134,11 @@ Object.assign(pc, function () {
      * Adds a Unity component to the entity. It is assumed to be a subclass of
      * pc.UnityComponent for the callbacks to function properly.
      *
+     * @param {string}            type          System id to add the component to.
      * @param {pc.UnityComponent} component     Component to add.
      */
-    Entity.prototype.addUnityComponent = function ( component ) {
-        this._app.systems.unity.addComponent( this, component );
+    Entity.prototype.addUnityComponent = function ( type, component ) {
+        this._app.systems[ type ].addComponent( this, component );
     }
 
     /**
