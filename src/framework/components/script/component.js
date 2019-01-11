@@ -360,8 +360,6 @@ Object.assign(pc, function () {
                 script = list.items[list.loopIndex];
                 if (!script.$ui && script.update && script._enabled) {
                     self._scriptMethod(script, ScriptComponent.scriptMethods.update, dt);
-                } else if (script.hasCoroutines) {
-                    this._scriptMethod(script, "handleCoroutines", dt);
                 }
             }
 
