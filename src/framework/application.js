@@ -461,8 +461,7 @@ Object.assign(pc, function () {
             { class: pc.PhysicsSystem,                      args: [ this ] },
             { class: pc.RigidbodySystem,                    args: [ this ] },
             { class: pc.ColliderSystem,                     args: [ this ] },
-            { class: pc.MonoBehaviourSystem,                args: [ this ] },
-            { class: pc.CoroutinesSystem,                   args: [ this ] }
+            { class: pc.MonoBehaviourSystem,                args: [ this ] }
         ];
 
         for ( var i = 0; i < systemClasses.length; i++ ) {
