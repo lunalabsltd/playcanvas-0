@@ -345,6 +345,38 @@ Object.assign(pc, (function () {
 
         /**
          * @function
+         * @name pc.Quat#nearest
+         * @description Returns a quaternion equivalent to target but having least possible
+         * difference with current one.
+         * @returns {pc.Quat} The nearest rotation.
+         */
+        nearest: function (target, result) {
+            result = result || new pc.Quat();
+
+            var differenceDot = (this.x - target.x) * (this.x - target.x) + 
+                (this.y - target.y) * (this.y - target.y) + 
+                (this.z - target.z) * (this.z - target.z) + 
+                (this.w - target.w) * (this.w - target.w);
+
+            var sumDot = (this.x + target.x) * (this.x + target.x) + 
+                (this.y + target.y) * (this.y + target.y) + 
+                (this.z + target.z) * (this.z + target.z) + 
+                (this.w + target.w) * (this.w + target.w);
+
+            result.copy( target );
+
+            if (differenceDot > sumDot) {
+                result.x *= -1;
+                result.y *= -1;
+                result.z *= -1;
+                result.w *= -1;
+            }
+
+            return result;
+        },
+
+        /**
+         * @function
          * @name pc.Quat#normalize
          * @description Returns the specified quaternion converted in place to a unit quaternion.
          * @returns {pc.Quat} The result of the normalization.
