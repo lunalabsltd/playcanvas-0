@@ -48,6 +48,8 @@ Object.assign(pc, function () {
         this._right = null;
         this._up = null;
         this._forward = null;
+        this._static = false;
+        this._staticVersion = 0;
 
         this._parent = null;
         this._children = [];
@@ -58,6 +60,20 @@ Object.assign(pc, function () {
 
         this.scaleCompensation = false;
     };
+
+    /**
+     * @name pc.GraphNode#static
+     * @description Hints the engine the object is static and won't move often.
+     * @type pc.Vec3
+     */
+    Object.defineProperty(GraphNode.prototype, 'static', {
+        get: function () {
+            return this._static;
+        },
+        set: function ( value ) {
+            this._static = value;  
+        }
+    });
 
     /**
      * @readonly
@@ -1370,8 +1386,9 @@ Object.assign(pc, function () {
          * @description Updates the world transformation matrices at this node and all of its descendants.
          */
         syncHierarchy: function () {
-            if (!this._enabled)
+            if (!this._enabled) {
                 return;
+            }
 
             this._sync();
 
