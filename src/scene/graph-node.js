@@ -62,7 +62,6 @@ Object.assign(pc, function () {
     };
 
     /**
-     * @readonly
      * @name pc.GraphNode#static
      * @description Hints the engine the object is static and won't move often.
      * @type pc.Vec3
