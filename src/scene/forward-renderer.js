@@ -437,6 +437,8 @@ Object.assign(pc, function () {
 
         this.fogColor = new Float32Array(3);
         this.ambientColor = new Float32Array(3);
+
+        this.removeShadows = false;
     }
 
     function mat3FromMat4(m3, m4) {
@@ -1318,6 +1320,11 @@ Object.assign(pc, function () {
         },
 
         renderShadows: function (lights, cameraPass) {
+
+            if(this.removeShadows) {
+                return;
+            }
+
             var device = this.device;
             // #ifdef PROFILER
             var shadowMapStartTime = pc.now();
