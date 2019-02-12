@@ -56,7 +56,9 @@ pc.extend(pc, function () {
 
         this._screenType = pc.SCREEN_TYPE_CAMERA;
         this._screenDistance = 1.0;
+
         this._screenMatrix = new pc.Mat4();
+        this._inverseScreenMatrix = new pc.Mat4();
 
         system.app.graphicsDevice.on("resizecanvas", this._onResize, this);
     };
@@ -129,97 +131,66 @@ pc.extend(pc, function () {
         },
 
         _calcProjectionMatrix: function () {
-            var left;
-            var right;
-            var bottom;
-            var top;
             var near = 1E5;
             var far = -1E5;
 
             var w = this._resolution.x / this.scale;
             var h = this._resolution.y / this.scale;
 
-            left = 0;
-            right = w;
-            bottom = 0;
-            top = h;
-
             // default screen matrix is obviously plain ortho one: UI space with (0, 0) origin
             // at the lower left corner and (w, h) in size maps onto clipspace of the device.
-            this._screenMatrix.setOrtho(0, w, 0, h, near, far);
+            this._screenMatrix.setOrtho(0, this._resolution.x, 0, this._resolution.y, near, far);
 
+            var camera = this.camera;
             var screenType = this._screenType;
 
-            if (!this._camera && screenType == pc.SCREEN_TYPE_CAMERA) {
+            if (!camera && screenType == pc.SCREEN_TYPE_CAMERA) {
                 screenType = pc.SCREEN_TYPE_SCREEN;
             }
 
-            if (screenType == pc.SCREEN_TYPE_CAMERA) {
-                // camera case requires special consideration, however
-                //var camera = this.camera;
-                var camera = this._camera;
-
-                // first off, decide where the UI plane will end up in camera's sight
-                var nearClipOffset     = this._screenDistance;
-                // this will be our clip-space-to-camera-space transform
-                var clipSpaceToNearClipSpace = new pc.Mat4();
-
-                if (camera.projection == pc.PROJECTION_PERSPECTIVE) {
-                    // we are in pespective camera
-                    // we cannot just inverse projection matrix as this will break transforms, so
-                    // we have to compue clip-space-to-camera-space transform ourself
-
-                    // we extract fov from the camera
-                    var fov = camera.fov / 2;
-                    // then we compute the viewport height at nearClipOffset distance which is conveniently
-                    // fov angle tangents times offset of the place
-                    var nearClipHalfHeight = Math.tan( fov * Math.PI / 180.0 ) * Math.abs( nearClipOffset );
-                    // the near clip width comes from screen proportions
-                    var nearClipHalfWidth  = nearClipHalfHeight * w / h;
-                    
-                    // while the clip space to near clip space would be just scale
-                    clipSpaceToNearClipSpace.setTRS( pc.Vec3.ZERO, pc.Quat.IDENTITY, new pc.Vec3( nearClipHalfWidth, nearClipHalfHeight, 1 ) );
+            // do we follow the camera?
+            if ( screenType == pc.SCREEN_TYPE_CAMERA ) {
+                if ( camera.projection == pc.PROJECTION_PERSPECTIVE ) {
+                    this._planeHeight = Math.tan( camera.fov / 2.0 * Math.PI / 180.0 ) * Math.abs( 2 * this._screenDistance );
                 } else {
-                    // we are in ortho camera
-                    clipSpaceToNearClipSpace.setTRS( pc.Vec3.ZERO, pc.Quat.IDENTITY, new pc.Vec3( camera.orthoHeight * w / h, camera.orthoHeight, 1 ) );    
+                    this._planeHeight = camera.orthoHeight * 2.0;
                 }
 
-                // the clipOffset will be the transform to move from (0, 0, 0) onto the desired UI pane
-                var clipOffset = new pc.Mat4().setTRS( new pc.Vec3(0, 0, -nearClipOffset), pc.Quat.IDENTITY, pc.Vec3.ONE );
-
-                // and the screen matrix is effectively the chain of transforms:
-                // UI plane -> Clip space -> Camera Origin -> Camera plane
-                this._screenMatrix = camera._node.getWorldTransform().clone().
-                    mul( clipOffset ).
-                    mul( clipSpaceToNearClipSpace ).
-                    mul( this._screenMatrix );
-            } else if (this._screenType == pc.SCREEN_TYPE_WORLD) {
-                w = this._resolution.x;
-                h = this._resolution.y;
-
-                // in case of the the world everything is very simple – just normalize the size to match
-                // the desired "resolution"
-                var worldMatrix = new pc.Mat4();
-                //worldMatrix.setTRS( new pc.Vec3( 0, 0, 0 ), pc.Quat.IDENTITY, new pc.Vec3( 1, 1, 1 ) );
-                worldMatrix.setTRS( new pc.Vec3( this._offset.x, this._offset.y, 0 ), pc.Quat.IDENTITY, new pc.Vec3( 1, 1, 1 ) );
-
-                this._screenMatrix = worldMatrix; 
+                // compose a transform to convert screen points into world space onto the screen plane (whether it's ortho or perspective)
+                this._screenMatrix.setIdentity();
+            } else if ( screenType == pc.SCREEN_TYPE_WORLD ) {
+                // world-space camera couldn't be simplier: it doesn't transform object's coordinates
+                this._screenMatrix.setIdentity();
+                w = 0;
+                h = 0;
             }
 
             this._width = w;
             this._height = h;
+
             this.entity._dirtyLocal = true;
             this.entity._dirtyWorld = true;
 
+            // check if the parent element has screen attached; if it does, matrix
+            // and resolution should be borrowed from there
             if (this.entity.parent && this.entity.parent.screen) {
                 var screen = this.entity.parent.screen;
 
-                this._screenMatrix = screen._screenMatrix.clone();
+                this._screenMatrix.copy( screen._screenMatrix );
+
                 this._width = screen._width;
                 this._height = screen._height;
             }
 
-            this._inverseScreenMatrix = this._screenMatrix.clone().invert();
+            // compute inverse screen matrix for ray casts and pointer clicks
+            // (conviently, it will convert points from world space )
+            this._inverseScreenMatrix.copy( this._screenMatrix ).invert();
+        },
+
+        onRemove: function () {
+            if ( this._camera ) {
+                this._camera._detachScreen( this );
+            }
         },
 
         _updateScale: function () {
@@ -236,9 +207,11 @@ pc.extend(pc, function () {
         },
 
         _onResize: function (width, height) {
-            if (this._camera && this._camera.renderTarget) {
-                width = this._camera.renderTarget.width;
-                height = this._camera.renderTarget.height;
+            var camera = this.camera;
+
+            if (camera && camera.renderTarget) {
+                width = camera.renderTarget.width;
+                height = camera.renderTarget.height;
             }
 
             if (this._screenType != pc.SCREEN_TYPE_WORLD) {
@@ -301,13 +274,15 @@ pc.extend(pc, function () {
     */
     Object.defineProperty(ScreenComponent.prototype, "resolution", {
         set: function (value) {
-            if (this.camera && this.camera.renderTarget) {
+            var camera = this.camera;
+
+            if ( camera && camera.renderTarget ) {
                 return;
             }
 
-            if (this._screenType != pc.SCREEN_TYPE_SCREEN) {
+            if ( this._screenType != pc.SCREEN_TYPE_SCREEN ) {
                 this._resolution.set(value.x, value.y);
-            } else if (!this._camera || !this._camera.renderTarget) {
+            } else if ( !camera || !camera.renderTarget ) {
                 // ignore input when using screenspace.
                 this._resolution.set(this.system.app.graphicsDevice.width, this.system.app.graphicsDevice.height);
             }
@@ -488,7 +463,15 @@ pc.extend(pc, function () {
     */
     Object.defineProperty(ScreenComponent.prototype, "camera", {
         set: function (value) {
+            if ( this._camera ) {
+                this._camera._detachScreen( this );
+            }
+
             this._camera = value;
+
+            if ( this._camera ) {
+                this._camera._attachScreen( this );
+            }
 
             if (value && value.renderTarget != null) {
                 // for the case of a camera rendering to a render target, we actually need to update the resolution
@@ -498,7 +481,15 @@ pc.extend(pc, function () {
             this._calcProjectionMatrix();
         },
         get: function () {
-            return this._camera;
+            if ( this._camera ) {
+                return this._camera;
+            }
+
+            var mainCamera = UnityEngine.Camera.getmain();
+
+            if ( mainCamera ) {
+                return mainCamera.handle.camera;
+            }
         }
     });
 

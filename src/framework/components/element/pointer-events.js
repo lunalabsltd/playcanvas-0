@@ -58,9 +58,6 @@ pc.extend(pc, function() {
             point.x *= this.system.app.graphicsDevice.width / this.system.app.graphicsDevice.canvas.scrollWidth;
             point.y *= this.system.app.graphicsDevice.height / this.system.app.graphicsDevice.canvas.scrollHeight;
 
-            point.x *= window.androidInstantGameScale;
-            point.y *= window.androidInstantGameScale;
-
             // if we are screen-space guys, camera transforms will be no help – we are 
             // using our own ortho matrix anyway
             if (this._screenType == pc.SCREEN_TYPE_SCREEN) {
@@ -76,13 +73,10 @@ pc.extend(pc, function() {
                     -1
                 );
             } else {
-                if (this.camera == null) {
-                    var cameraInstance = UnityEngine.Camera.getmain().handle;
-                    this.camera = cameraInstance ? cameraInstance.camera : null;
-                }
+                var camera = this.camera;
 
-                this.camera.screenToWorld( point.x, point.y, this.camera.farClip, this.system.app.graphicsDevice.width, this.system.app.graphicsDevice.height, ray.direction );
-                this.camera.screenToWorld( point.x, point.y, this.camera.nearClip, this.system.app.graphicsDevice.width, this.system.app.graphicsDevice.height, ray.origin );
+                camera.screenToWorld( point.x, point.y, camera.farClip, this.system.app.graphicsDevice.width, this.system.app.graphicsDevice.height, ray.direction );
+                camera.screenToWorld( point.x, point.y, camera.nearClip, this.system.app.graphicsDevice.width, this.system.app.graphicsDevice.height, ray.origin );
 
                 ray.direction.sub( ray.origin );
                 ray.direction.normalize();
@@ -106,8 +100,8 @@ pc.extend(pc, function() {
                 return pointerPosition;
             }
 
-            var wt  = this.entity.element._pivotWorldTransform;
-            var iwt = this.entity.element._inversePivotWorldTransform;
+            var wt  = this.entity.worldTransform;
+            var iwt = this.entity.inverseWorldTransform;
 
             var l0 = ray.origin.clone();
             var l  = ray.direction.clone();
@@ -118,7 +112,7 @@ pc.extend(pc, function() {
             var t  = p0.sub(l0).dot(n) / l.dot(n);
             var p  = l0.add( l.scale(t) );
 
-            return iwt.transformPoint(p);
+            return iwt.transformPoint(p).add( this.entity.element._pivotPoint );
         },
 
         // Iterates over all children and passes the event through to them.
