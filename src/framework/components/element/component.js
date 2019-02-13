@@ -27,7 +27,6 @@ pc.extend(pc, function () {
      * @param {pc.Entity} entity The Entity this Component is attached to
      * @extends pc.Component
      * @property {String} type Type of the element extension to attach.
-     * @property {pc.Color} debugColor Color of the debug outline.
      * @property {pc.Vec4} corners Corner offsets from anchor points.
      * @property {Number} drawOrder Drawing priority of the element.
      * @property {Number} width Effective width of the element.
@@ -50,8 +49,6 @@ pc.extend(pc, function () {
         this._pivot = new pc.Vec2(0.5, 0.5);
         this._width = 0;
         this._height = 0;
-
-        this._debugColor = null;
 
         // default stencil layer of the element
         this._stencilLayer = 255;
@@ -351,7 +348,7 @@ pc.extend(pc, function () {
                         // screen-space origin is at bottom left corner
                         _tmpVector.set( element._width, element._height, 0 ).scale( 0.5 * this.screen.scale );
 
-                        // update the scale of the entity
+                        // update the scale of the entity to match screen-scale
                         this.localScale.set( this.screen.scale, this.screen.scale, this.screen.scale );
                     }
 
@@ -361,7 +358,7 @@ pc.extend(pc, function () {
                         // start with camera's transform
                         this.worldTransform.copy( camera.getWorldTransform() );
 
-                        // move away to -place distance
+                        // move away to place distance
                         _tmpMatrix.setTranslate( 0, 0, this.screen._screenDistance );
 
                         // screen-space origin is at bottom left corner
@@ -370,14 +367,16 @@ pc.extend(pc, function () {
                         // add it up to the world transform
                         this.worldTransform.mul( _tmpMatrix );
 
-                        // we don't need local rotation
+                        // we don't need local rotation (and cannot set it as all these values are driven by canvas)
                         this.localRotation.copy( pc.Quat.IDENTITY );
 
-                        // update the scale of the entity
+                        // update the scale of the entity: it has to squeeze all pixels into camera's world-space
+                        // view-port (which is pre-computed based on projection matrix in screen component)
                         this.localScale.set( 1, 1, 1 ).scale( this.screen._planeHeight / element._height );
                     }
 
                     if ( this.screen.screenType === pc.SCREEN_TYPE_WORLD ) {
+                        // world-space, as usual, is the easiest
                         this.worldTransform.copy( this._parent.worldTransform );
                         _tmpVector.copy( this.localPosition );
                     }
@@ -430,36 +429,6 @@ pc.extend(pc, function () {
                 }
 
                 element.fire("resize", element._width, element._height);
-            }
-        },
-
-        _drawDebugBox: function(dt) {
-            var bottomLeft = new pc.Vec3();
-            var r = new pc.Vec3( this._width, 0, 0 );
-            var u = new pc.Vec3( 0, this._height, 0 );
-
-            var corners = [
-                bottomLeft.clone(),
-                bottomLeft.clone().add(u),
-                bottomLeft.clone().add(r).add(u),
-                bottomLeft.clone().add(r)
-            ];
-
-            var points = [
-                corners[0], corners[1],
-                corners[1], corners[2],
-                corners[2], corners[3],
-                corners[3], corners[0]
-            ];
-
-            var transform = this.entity.worldTransform;
-
-            for(var i = 0; i < points.length; i++) {
-                points[i] = transform.transformPoint( points[i] );
-            }
-
-            if (this.screen && this.screen.screen) {
-                this.system.app.renderLines(points, this._debugColor, this.screen.screen._screenType == pc.SCREEN_TYPE_SCREEN ? pc.LINEBATCH_SCREEN : pc.LINEBATCH_WORLD);
             }
         },
 
@@ -682,33 +651,6 @@ pc.extend(pc, function () {
                     this._text = new pc.TextElement(this);
                 }
 
-            }
-        }
-    });
-
-    /**
-    * @name pc.ElementComponent#debugColor
-    * @type pc.Color
-    * @description The color for the debug outline of the element. When set to a non-null value, the element will draw
-    * a box to indicate what are the actual bounds it takes. Please use that for debugging purposes only as the debug outline
-    * has very poor rendering performance.
-    * @example
-    * // make element show it's layout box in red.
-    * var element = this.entity.element;
-    * element.debugColor = new pc.Color( 1, 0, 0 );
-    */
-    Object.defineProperty(ElementComponent.prototype, "debugColor", {
-        get: function () {
-            return this._debugColor;
-        },
-
-        set: function (value) {
-            this._debugColor = value;
-
-            if (this._debugColor) {
-                pc.ComponentSystem.on("update", this._drawDebugBox, this);
-            } else {
-                pc.ComponentSystem.off("update", this._drawDebugBox, this);
             }
         }
     });

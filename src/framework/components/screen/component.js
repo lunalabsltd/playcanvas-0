@@ -25,7 +25,6 @@ pc.extend(pc, function () {
      * @param {pc.Entity} entity The Entity this Component is attached to
      * @extends pc.Component
      * @property {pc.Vec2} resolution The resolution to apply. Please note setting this value has no effect for screen-space screen.
-     * @property {pc.Color} debugColor Color of the debug outline.
      * @property {pc.Vec2} referenceResolution The reference resolution for screen scaling.
      * @property {String} screenType Type of the screen rendering mode.
      * <ul>
@@ -52,7 +51,6 @@ pc.extend(pc, function () {
         this._scaleMode = pc.ScreenComponent.SCALEMODE_NONE;
         this.scale = 1;
         this._scaleBlend = 0.5;
-        this._debugColor = null;
 
         this._screenType = pc.SCREEN_TYPE_CAMERA;
         this._screenDistance = 1.0;
@@ -85,43 +83,6 @@ pc.extend(pc, function () {
             this.syncDrawOrder();
         },
 
-        // Draws a debug box transforming local-spaced corners using current transformation matrix.
-        // Helps to understand where the bounds of the screen really are.
-        _drawDebugBox: function (dt) {
-            var p = new pc.Vec3(0, 0, 0);
-            var r = this.entity.right.clone().scale(this._resolution.x).sub(new pc.Vec3(0, 0, 0));
-            var u = this.entity.up.clone().scale(this._resolution.y).sub(new pc.Vec3(0, 0, 0));
-
-            // corners are obviously origin (0, 0, 0) plus all combinations of Right
-            // and Up vectors, which have the length of horizontal and vertical resolution
-            // respectively
-            var corners = [
-                p.clone().add(u).add(new pc.Vec3(0, 0, 0)),
-                p.clone().add(r).add(u),
-                p.clone().add(r).add(new pc.Vec3(0, 0, 0)),
-                p.clone().add(new pc.Vec3(0, 0, 0))
-            ];
-
-            // the points denote the lines between the corners.
-            var points = [
-                corners[0], corners[1],
-                corners[1], corners[2],
-                corners[2], corners[3],
-                corners[3], corners[0]
-            ];
-
-            var transform = this._screenMatrix;
-
-            // we use _screenMatrix to do the transforms as that's the matrix
-            // all nested components rely on
-            for(var i = 0; i < points.length; i++) {
-                points[i] = transform.transformPoint( points[i] );
-            }
-
-            // use immediate API to avoid material and transform glitches
-            this.system.app.renderLines(points, this._debugColor, this._screenType == pc.SCREEN_TYPE_SCREEN ? pc.LINEBATCH_SCREEN : pc.LINEBATCH_WORLD);
-        },
-
         syncDrawOrder: function () {
             var system = pc.Application.getApplication().systems.screen;
             
@@ -137,14 +98,16 @@ pc.extend(pc, function () {
             var w = this._resolution.x / this.scale;
             var h = this._resolution.y / this.scale;
 
-            // default screen matrix is obviously plain ortho one: UI space with (0, 0) origin
+            // default screen matrix (for screen-space) is obviously plain ortho one: UI space with (0, 0) origin
             // at the lower left corner and (w, h) in size maps onto clipspace of the device.
             this._screenMatrix.setOrtho(0, this._resolution.x, 0, this._resolution.y, near, far);
 
+            // cache camera and screen type
             var camera = this.camera;
             var screenType = this._screenType;
 
             if (!camera && screenType == pc.SCREEN_TYPE_CAMERA) {
+                // no camera leaves us with the only choice: fall back to screen-space canvas
                 screenType = pc.SCREEN_TYPE_SCREEN;
             }
 
@@ -156,7 +119,8 @@ pc.extend(pc, function () {
                     this._planeHeight = camera.orthoHeight * 2.0;
                 }
 
-                // compose a transform to convert screen points into world space onto the screen plane (whether it's ortho or perspective)
+                // camera-space matrix is identity - because scaling would be handled by CanvasScaler amending RectTransform values
+                // this is effectively implemented in element/component.js
                 this._screenMatrix.setIdentity();
             } else if ( screenType == pc.SCREEN_TYPE_WORLD ) {
                 // world-space camera couldn't be simplier: it doesn't transform object's coordinates
@@ -298,33 +262,6 @@ pc.extend(pc, function () {
         },
         get: function () {
             return this._resolution;
-        }
-    });
-
-    /**
-    * @name pc.ScreenComponent#debugColor
-    * @type pc.Color
-    * @description The color for the debug outline of the screen. When set to a non-null value, the screen will draw
-    * a box to indicate what are the actual bounds it takes. Please use that for debugging purposes only as the debug outline
-    * has very poor rendering performance.
-    * @example
-    * // make element show it's layout box in red.
-    * var element = this.entity.screen;
-    * screen.debugColor = new pc.Color( 1, 0, 0 );
-    */
-    Object.defineProperty(ScreenComponent.prototype, "debugColor", {
-        get: function () {
-            return this._debugColor;
-        },
-
-        set: function (value) {
-            this._debugColor = value;
-
-            if (this._debugColor) {
-                pc.ComponentSystem.on("update", this._drawDebugBox, this);
-            } else {
-                pc.ComponentSystem.off("update", this._drawDebugBox, this);
-            }
         }
     });
 
