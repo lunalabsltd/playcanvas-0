@@ -320,7 +320,7 @@ Object.assign(pc, function () {
      * firstChild.destroy(); // delete child, all components and remove from hierarchy
      */
     Entity.prototype.destroy = function () {
-        var name;
+        var name, id;
 
         this._destroying = true;
 
@@ -335,6 +335,14 @@ Object.assign(pc, function () {
         // Remove all components
         for (name in this.c) {
             this.c[name].system.removeComponent(this);
+        }
+
+        // Remove all components
+        for (name in this._unityComponents) {
+            var components = this._unityComponents[name];
+            for (id in components) {
+                components[id]._system.removeComponent(this, components[id]);
+            }
         }
 
         // Detach from parent

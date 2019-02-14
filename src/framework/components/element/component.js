@@ -4,6 +4,8 @@ pc.extend(pc, function () {
     pc.ELEMENTTYPE_TEXT     = 'text';
 
     var _warning = false;
+    var _tmpMatrix = new pc.Mat4();
+    var _tmpVector = new pc.Vec3();
 
     /**
      * @component
@@ -25,7 +27,6 @@ pc.extend(pc, function () {
      * @param {pc.Entity} entity The Entity this Component is attached to
      * @extends pc.Component
      * @property {String} type Type of the element extension to attach.
-     * @property {pc.Color} debugColor Color of the debug outline.
      * @property {pc.Vec4} corners Corner offsets from anchor points.
      * @property {Number} drawOrder Drawing priority of the element.
      * @property {Number} width Effective width of the element.
@@ -49,8 +50,6 @@ pc.extend(pc, function () {
         this._width = 0;
         this._height = 0;
 
-        this._debugColor = null;
-
         // default stencil layer of the element
         this._stencilLayer = 255;
         this._masksChildren = false;
@@ -63,23 +62,10 @@ pc.extend(pc, function () {
         this._anchoredPosition = new pc.Vec2(0, 0);
         this._sizeDelta = new pc.Vec2(0, 0);
 
-        // this.entity.addChild( this._pivotGraph );
-
-        // the model transform used to render
-        this._modelTransform = new pc.Mat4();
-        // parent-to-local transform (like regular localTransform, but with anchors and stuff)
-        this._localModelTransform = new pc.Mat4();
-
         this._screenToWorld = new pc.Mat4();
-
-        this._inversePivotWorldTransform = new pc.Mat4();
-        this._pivotWorldTransform = new pc.Mat4();
 
         // the position of the element in canvas co-ordinate system. (0,0 = top left)
         this._canvasPosition = new pc.Vec2();
-
-        // transform that updates local position according to anchor values
-        this._anchorTransform = new pc.Mat4();
 
         this._anchorDirty = true;
 
@@ -135,12 +121,14 @@ pc.extend(pc, function () {
         _patch: function () {
             this.entity._dirtyLocal = true;
             
+            this.entity.inverseWorldTransform = new pc.Mat4();
             this.entity._sync = this._sync;
             this.entity._presync = this._presync;
             this.entity.setPosition = this._setPosition;
         },
 
         _unpatch: function () {
+            delete this.entity.inverseWorldTransform;
             this.entity._sync = pc.Entity.prototype._sync;
             this.entity._presync = pc.Entity.prototype._presync;
             this.entity.setPosition = pc.Entity.prototype.setPosition;
@@ -225,7 +213,7 @@ pc.extend(pc, function () {
                 }
             }
             
-            if (container) {
+            if ( container ) {
                 this._elementRect.set(
                     container._width  * this._anchor.x + this._corners.x,
                     container._height * this._anchor.y + this._corners.y,
@@ -333,98 +321,107 @@ pc.extend(pc, function () {
             element._width = rect.z - rect.x;
             element._height = rect.w - rect.y;
 
-            element._anchorTransform.setTranslate(rect.x, rect.y, 0);
             element._anchorDirty = false;
             element._cornerDirty = false;
 
             if (this._dirtyWorld) {
-                // before recomputing the transforms let's agree on a few matrices used below:
-                //
-                //    * world: it's either clip box of the WebGL (for screen and camera screen types) OR
-                //             real world box (for world screen type).
-                //             basically, the "ouput" coords sans local transforms of the element
-                //    * _screenToWorld: transforms screen point to the "world" point
-                //    * _modelTransform: transforms screen point further down the heirarchy
-                //    * localTransform: this is normal entity transforms (local, of course)
-                //    * _anchorTransform: just the offset to satisfy anchoring settings (the offset of lower left corner)
-                //    * toPivotTransform: just the offset to pivot point of the element
-                //
-                if (this._parent === null) {
-                    // no parent? _screenToWorld is basically the local transform
-                    element._screenToWorld.copy(this.localTransform);
-                } else {
-                    // ok, we have a parent. does it own an element?
-                    // TODO: lookup up to the scene root would be more correct – what if there is a blank 
-                    //       object between two elements?
-                    if (_parentWithElement) {
-                        // our _screenToWorld starts off by offsetting current transform (which is parent's) by
-                        // anchor offset – like we move the box to match the anchor settings first
-                        element._screenToWorld.mul2(_parentWithElement.element._modelTransform, element._anchorTransform);
-                    } else {
-                        // no element means we start with plain local transform. Zhora approved. Bodybag!
-                        element._screenToWorld.copy(element._anchorTransform);
+                // let's compute the pivot point – remember it's local to element coord space
+                element._pivotPoint.set( element._width * element.pivot.x, element._height * element.pivot.y, 0 );
+                _tmpVector.copy( element._pivotPoint );
+
+                // check if we are in canvas-enabled element
+                if ( this.screen ) {
+                    // yes we do: in this case screen matrix is our base
+                    this.worldTransform.copy( this.screen._screenMatrix );
+
+                    // and the size is driven by canvas
+                    element._width = this.screen._width;
+                    element._height = this.screen._height;
+
+                    // make sure pivot point is still correct
+                    element._pivotPoint.set( element._width * element.pivot.x, element._height * element.pivot.y, 0 );
+
+                    // reset rect (it's driven by screen and scale)
+                    rect.x = rect.y = 0;
+
+                    if ( this.screen.screenType === pc.SCREEN_TYPE_SCREEN ) {
+                        // screen-space origin is at bottom left corner
+                        _tmpVector.set( element._width, element._height, 0 ).scale( 0.5 * this.screen.scale );
+
+                        // update the scale of the entity to match screen-scale
+                        this.localScale.set( this.screen.scale, this.screen.scale, this.screen.scale );
                     }
 
-                    // let's compute the pivot point – remember it's local to element coord space
-                    element._pivotPoint.set( element._width * element.pivot.x, element._height * element.pivot.y, 0 );
-                    // and compose a transform to move TO the pivot – as all local transformations,
-                    // i.e. rotation should happen around the pivot
-                    element._toPivotTransform.setTranslate( element._pivotPoint.x, element._pivotPoint.y, element._pivotPoint.z );
-                    element._fromPivotTransform.copy( element._toPivotTransform );
-                    element._fromPivotTransform.invert();
+                    if ( this.screen.screenType === pc.SCREEN_TYPE_CAMERA ) {
+                        var camera = this.screen.camera._component.entity;
 
-                    // we will maintain parent-to-local transform for optimization purposes as well
-                    //element._localModelTransform.copy(element._anchorTransform);
-                    // ... then we move onto pivot point
-                    //element._localModelTransform.mul( element._toPivotTransform );
-                    // ... then we transform the model using local transformation matrix
-                    //element._localModelTransform.mul( this.localTransform )
-                    // ... and get away from our pivot point
-                    //element._localModelTransform.mul( element._fromPivotTransform );
-                    // ... and finally invert the matrix
-                    //element._localModelTransform.invert();
+                        // start with camera's transform
+                        this.worldTransform.copy( camera.getWorldTransform() );
 
-                    // our model transform starts off with what we've got from parent
-                    element._modelTransform.copy( element._screenToWorld );
-                    // ... then we move onto pivot point
-                    element._modelTransform.mul( element._toPivotTransform );
-                    // ... then we transform the model using local transformation matrix
-                    element._modelTransform.mul( this.localTransform )
-                    // ... and get away from our pivot point
-                    element._modelTransform.mul( element._fromPivotTransform );
+                        // move away to place distance
+                        _tmpMatrix.setTranslate( 0, 0, this.screen._screenDistance );
 
-                    if (screen) {
-                        // if we have the screen somewhere is our heirarchy we apply screen matrix
-                        element._screenToWorld.mul2(screen.screen._screenMatrix, element._screenToWorld);
+                        // screen-space origin is at bottom left corner
+                        _tmpVector.set( 0, 0, 0 );
 
-                        // unless it's screen-space we need to account screen's world transform as well
-                        if (screen.screen.screenType == pc.SCREEN_TYPE_WORLD) {
-                            var screenWorldTransform = screen.parent ? screen.parent.worldTransform : pc.Mat4.IDENTITY;
-                            element._screenToWorld.mul2(screenWorldTransform, element._screenToWorld);
+                        // add it up to the world transform
+                        this.worldTransform.mul( _tmpMatrix );
+
+                        // we don't need local rotation (and cannot set it as all these values are driven by canvas)
+                        this.localRotation.copy( pc.Quat.IDENTITY );
+
+                        // update the scale of the entity: it has to squeeze all pixels into camera's world-space
+                        // view-port (which is pre-computed based on projection matrix in screen component)
+                        this.localScale.set( 1, 1, 1 ).scale( this.screen._planeHeight / element._height );
+                    }
+
+                    if ( this.screen.screenType === pc.SCREEN_TYPE_WORLD ) {
+                        // world-space, as usual, is the easiest
+                        this.worldTransform.copy( this._parent.worldTransform );
+                        _tmpVector.copy( this.localPosition );
+                    }
+                } else {
+                    // no, we are just a normal child. in this case, we need to get back to paren't origin (
+                    // as worldTransform leaves us at pivot)
+                    if ( this._parent !== null ) {
+                        // start off with parent's transform
+                        this.worldTransform.copy( this._parent.worldTransform );
+
+                        // and check if we need to account pivot back
+                        if ( this._parent.element ) {
+                            var pivot = this._parent.element._pivotPoint;
+
+                            _tmpMatrix.setTranslate( -pivot.x, -pivot.y, 0 );
+                            this.worldTransform.mul( _tmpMatrix );
                         }
-
-                        // world transform if effectively the same as model transform,
-                        // BUT should account screen transformations applied on top of it
-                        this.worldTransform.copy( element._screenToWorld );
-                        this.worldTransform.mul( element._toPivotTransform ).mul( this.localTransform );
-
-                        // element._pivotGraph.localTransform.mul2( this.worldTransform, element._fromPivotTransform );
-                        
-                        // element._pivotGraph._dirtyLocal = false;
-                        // element._pivotGraph._dirtyWorld = true;
-                        // element._pivotGraph.sync();
-
-                        element._pivotWorldTransform.mul2( this.worldTransform, element._fromPivotTransform );
-                        element._inversePivotWorldTransform.copy( element._pivotWorldTransform );
-                        element._inversePivotWorldTransform.invert();
                     } else {
-                        this.worldTransform.copy(element._modelTransform);
+                        // well, easy: just identity
+                        this.worldTransform.setIdentity();    
                     }
                 }
 
+                // now, let's find the transform for our origin point: our bottom left corner
+                _tmpMatrix.setTranslate( rect.x, rect.y, 0 );
+
+                // add it up to the world transform
+                this.worldTransform.mul( _tmpMatrix );
+
+                // now, let's apply transforms (rotations and scale) relative to pivot
+                _tmpMatrix.setTRS( _tmpVector, this.localRotation, this.localScale );
+
+                // add it up to the world transform
+                this.worldTransform.mul( _tmpMatrix );
+
+                // pre-calc inverse transform: we need it for raycasts
+                this.inverseWorldTransform.copy( this.worldTransform );
+                this.inverseWorldTransform.invert();
+
+                // we are done! please note worldTransform's origin now sits at pivot point
+                // rendering and layout has to account it!
                 this._dirtyWorld = false;
 
                 var child;
+
                 for (var i = 0, len = this._children.length; i < len; i++) {
                     child = this._children[i];
                     child._dirtifyWorld();
@@ -432,36 +429,6 @@ pc.extend(pc, function () {
                 }
 
                 element.fire("resize", element._width, element._height);
-            }
-        },
-
-        _drawDebugBox: function(dt) {
-            var bottomLeft = new pc.Vec3();
-            var r = new pc.Vec3( this._width, 0, 0 );
-            var u = new pc.Vec3( 0, this._height, 0 );
-
-            var corners = [
-                bottomLeft.clone(),
-                bottomLeft.clone().add(u),
-                bottomLeft.clone().add(r).add(u),
-                bottomLeft.clone().add(r)
-            ];
-
-            var points = [
-                corners[0], corners[1],
-                corners[1], corners[2],
-                corners[2], corners[3],
-                corners[3], corners[0]
-            ];
-
-            var transform = this.entity.worldTransform;
-
-            for(var i = 0; i < points.length; i++) {
-                points[i] = transform.transformPoint( points[i] );
-            }
-
-            if (this.screen && this.screen.screen) {
-                this.system.app.renderLines(points, this._debugColor, this.screen.screen._screenType == pc.SCREEN_TYPE_SCREEN ? pc.LINEBATCH_SCREEN : pc.LINEBATCH_WORLD);
             }
         },
 
@@ -630,18 +597,6 @@ pc.extend(pc, function () {
             f( this.entity );
         },
 
-        // internal - apply offset x,y to local position and find point in world space
-        getOffsetPosition: function (x, y) {
-            var p = this.entity.getLocalPosition().clone();
-
-            p.x += x;
-            p.y += y;
-
-            this._screenToWorld.transformPoint(p, p);
-
-            return p;
-        },
-
         onEnable: function () {
             pc.Component.prototype.onEnable.call(this);
             if (this._image) this._image.onEnable();
@@ -696,33 +651,6 @@ pc.extend(pc, function () {
                     this._text = new pc.TextElement(this);
                 }
 
-            }
-        }
-    });
-
-    /**
-    * @name pc.ElementComponent#debugColor
-    * @type pc.Color
-    * @description The color for the debug outline of the element. When set to a non-null value, the element will draw
-    * a box to indicate what are the actual bounds it takes. Please use that for debugging purposes only as the debug outline
-    * has very poor rendering performance.
-    * @example
-    * // make element show it's layout box in red.
-    * var element = this.entity.element;
-    * element.debugColor = new pc.Color( 1, 0, 0 );
-    */
-    Object.defineProperty(ElementComponent.prototype, "debugColor", {
-        get: function () {
-            return this._debugColor;
-        },
-
-        set: function (value) {
-            this._debugColor = value;
-
-            if (this._debugColor) {
-                pc.ComponentSystem.on("update", this._drawDebugBox, this);
-            } else {
-                pc.ComponentSystem.off("update", this._drawDebugBox, this);
             }
         }
     });
