@@ -1241,7 +1241,11 @@ Object.assign(pc, function () {
         },
 
         _drawInstance: function (device, meshInstance, mesh, style, normal) {
+            modelMatrix = meshInstance.node.worldTransform;
+            this.modelMatrixId.setValue(modelMatrix.data);
+
             instancingData = meshInstance.instancingData;
+            
             if (instancingData) {
                 this._instancedDrawCalls++;
                 this._removedByInstancing += instancingData.count;
@@ -1252,9 +1256,6 @@ Object.assign(pc, function () {
                     return instancingData.count - 1;
                 }
             } else {
-                modelMatrix = meshInstance.node.worldTransform;
-                this.modelMatrixId.setValue(modelMatrix.data);
-
                 if (normal) {
                     normalMatrix = meshInstance.node.normalMatrix;
                     if (meshInstance.node._dirtyNormal) {
