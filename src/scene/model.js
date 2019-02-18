@@ -12,10 +12,19 @@ Object.assign(pc, function () {
      * @property {pc.MeshInstance[]} meshInstances An array of meshInstances contained in this model.
      */
     var Model = function Model() {
-        this.graph = null;
+        this.graph = new pc.GraphNode();
         this.meshInstances = [];
         this.skinInstances = [];
         this.morphInstances = [];
+
+        this._materials = [];
+        this._mesh = null;
+        this._skin = null;
+        this._bones = null;
+        this._sortingLayerIndex = 0;
+        this._sortingOrder = 0;
+        this._cullingLayer = 0;
+        this._entity = null;
 
         this.cameras = [];
         this.lights = [];
