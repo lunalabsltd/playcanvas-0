@@ -423,7 +423,7 @@ Object.assign(pc, (function () {
             z = new pc.Vec3();
 
             return function (position, target, up) {
-                z.sub2(position, target).normalize();
+                z.sub2(target, position).normalize();
                 y.copy(up).normalize();
                 x.cross(y, z).normalize();
                 y.cross(z, x);

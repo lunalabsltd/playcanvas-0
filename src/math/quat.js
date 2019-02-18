@@ -144,6 +144,82 @@ Object.assign(pc, (function () {
 
         /**
          * @function
+         * @name pc.Quat#dot
+         * @description Calculates dot product of two quaternions.
+         * @param {pc.Quat} rhs The quaternion to be calculated against.
+         * @returns {Number} Dot product of quaternions
+         * @example
+         * var a = new pc.Quat();
+         * var b = new pc.Quat();
+         * console.log("The dot is " + a.dot(b));
+         */
+        dot: function (rhs) {
+            return this.x * rhs.x + this.y * rhs.y + this.z * rhs.z + this.w * rhs.w;
+        },
+
+        /**
+         * @function
+         * @name pc.Quat#negate
+         * @description Scales the quaternion by -1.
+         * @returns {pc.Quat} Self for chaining
+         * @example
+         * var a = new pc.Quat();
+         * console.log("The negated is " + a.negate());
+         */
+        negate: function () {
+            this.x *= -1;
+            this.y *= -1;
+            this.z *= -1;
+            this.w *= -1;
+
+            return this;
+        },
+
+        transformVectorInverse: function ( v, res ) {
+            res = res || new pc.Vec3();
+
+            var vx = 2.0 * v.x;
+            var vy = 2.0 * v.y;
+            var vz = 2.0 * v.z;
+            var w2 = this.w * this.w - 0.5;
+            var dot2 = (this.x * vx + this.y * vy + this.z * vz);
+            
+            res.x = ( vx * w2 - ( this.y * vz - this.z * vy ) * this.w + this.x * dot2 ); 
+            res.y = ( vy * w2 - ( this.z * vx - this.x * vz ) * this.w + this.y * dot2 ); 
+            res.z = ( vz * w2 - ( this.x * vy - this.y * vx ) * this.w + this.z * dot2 );
+
+            return res;
+        },
+
+        extractAxes: function ( ax, ay, az ) {
+            var x = this.x;
+            var y = this.y;
+            var z = this.z;
+            var w = this.w;
+
+            var x2 = x + x;
+            var y2 = y + y;
+            var z2 = z + z;
+
+            var xx = x2 * x;
+            var yy = y2 * y;
+            var zz = z2 * z;
+
+            var xy = x2 * y;
+            var xz = x2 * z;
+            var xw = x2 * w;
+
+            var yz = y2 * z;
+            var yw = y2 * w;
+            var zw = z2 * w;
+
+            ax.set( 1.0 - yy - zz, xy + zw, xz - yw );
+            ay.set( xy - zw, 1.0 - xx - zz, yz + xw );
+            az.set( xz + yw, yz - xw, 1.0 - xx - yy );
+        },
+
+        /**
+         * @function
          * @name pc.Quat#getAxisAngle
          * @description Gets the rotation axis and angle for a given
          *  quaternion. If a quaternion is created with
@@ -425,6 +501,42 @@ Object.assign(pc, (function () {
             this.y = y;
             this.z = z;
             this.w = w;
+
+            return this;
+        },
+
+        /**
+         * @function
+         * @name pc.Quat#fromTo
+         * @description Sets the specified quaternion to rotation from vector from to vector to.
+         * @param {pc.Vec3} f The vector to rotate from.
+         * @param {pc.Vec3} t The vector to rotate to.
+         * @returns {pc.Quat} Self for chaining.
+         * @example
+         * var q = new pc.Quat();
+         * q.fromTo(pc.Vec3.RIGHT, pc.Vec3.LEFT);
+         *
+         * // Should output 0, 1, 0, 0
+         * console.log("The result of the vector set is: " + q.toString());
+         */
+        fromTo: function ( f, t ) {
+            var ll = f.length();
+            var lx = f.x / ll;
+            var ly = f.y / ll;
+            var lz = f.z / ll;
+
+            var rl = t.length();
+            var rx = t.x / rl;
+            var ry = t.y / rl;
+            var rz = t.z / rl;
+
+            this.w = Math.cos( Math.acos( lx * rx + ly * ry + lz * rz ) / 2.0 );
+
+            var sine = Math.sqrt( 1 - this.w * this.w );
+
+            this.x = ( ly * rz - ry * lz ) * sine;
+            this.y = ( lz * rx - rz * lx ) * sine;
+            this.z = ( lx * ry - rx * ly ) * sine;
 
             return this;
         },
@@ -734,7 +846,11 @@ Object.assign(pc, (function () {
          * @returns {pc.Quat} The look rotation quaternion.
          */
         setLookAt: function (target, up) {
-            var m = new pc.Mat4().setLookAt(pc.Vec3.ZERO, target.clone().scale(-1), up);
+            if ( target.equals( pc.Vec3.ZERO ) ) {
+                return this.copy( pc.Quat.IDENTITY );
+            }
+
+            var m = new pc.Mat4().setLookAt(pc.Vec3.ZERO, target, up);
             this.setFromMat4(m);
 
             return this;

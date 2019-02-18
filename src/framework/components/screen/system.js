@@ -45,7 +45,6 @@ Object.assign(pc, function () {
             if (data.screenType !== undefined) component.screenType = data.screenType;
             if (data.scaleMode !== undefined) component.scaleMode = data.scaleMode;
             if (data.scaleBlend !== undefined) component.scaleBlend = data.scaleBlend;
-            if (data.debugColor !== undefined) component.debugColor = data.debugColor;
             if (data.screenDistance !== undefined) component.screenDistance = data.screenDistance;
             if (data.layer !== undefined) component.layer = data.layer;
             if (data.drawOrder !== undefined) component.drawOrder = data.drawOrder;

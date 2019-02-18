@@ -468,12 +468,12 @@ Object.assign(pc, function () {
             var materialB = drawCallB._material;
 
             // FIXME EN-62 should remove the below
-            if (drawCallA.sortingLayerIndex != drawCallB.sortingLayerIndex) {
-                return drawCallA.sortingLayerIndex - drawCallB.sortingLayerIndex;
-            }
-
             if (materialA.renderQueue != materialB.renderQueue) {
                 return materialA.renderQueue - materialB.renderQueue;
+            }
+
+            if (drawCallA.sortingLayerIndex != drawCallB.sortingLayerIndex) {
+                return drawCallA.sortingLayerIndex - drawCallB.sortingLayerIndex;
             }
 
             if (drawCallA.sortingOrder != drawCallB.sortingOrder) {
@@ -496,12 +496,12 @@ Object.assign(pc, function () {
             var materialB = drawCallB._material;
 
             // FIXME EN-62 should remove the below
-            if (drawCallA.sortingLayerIndex != drawCallB.sortingLayerIndex) {
-                return drawCallA.sortingLayerIndex - drawCallB.sortingLayerIndex;
-            }
-
             if (materialA.renderQueue != materialB.renderQueue) {
                 return materialA.renderQueue - materialB.renderQueue;
+            }
+
+            if (drawCallA.sortingLayerIndex != drawCallB.sortingLayerIndex) {
+                return drawCallA.sortingLayerIndex - drawCallB.sortingLayerIndex;
             }
 
             if (drawCallA.sortingOrder != drawCallB.sortingOrder) {
@@ -2772,7 +2772,7 @@ Object.assign(pc, function () {
                 drawTime = pc.now();
                 // #endif
 
-                if (camera) camera.frameBegin(layer.renderTarget);
+                if (camera) camera.frameBegin(camera.renderTarget);
 
                 // Call prerender callback if there's one
                 if (!transparent && layer.onPreRenderOpaque) {
@@ -2786,13 +2786,13 @@ Object.assign(pc, function () {
                     if (layer.onPreRender) layer.onPreRender(cameraPass);
                     layer._preRenderCalledForCameras |= 1 << cameraPass;
                     if (layer.overrideClear) {
-                        this.clearView(camera, layer.renderTarget, layer._clearOptions);
+                        this.clearView(camera, camera.renderTarget, layer._clearOptions);
                     }
                 }
 
                 if (camera) {
                     // Each camera must only clear each render target once
-                    rt = layer.renderTarget;
+                    rt = camera.renderTarget;
                     processedThisCameraAndRt = false;
                     for (k = 0; k < renderedLength; k++) {
                         if (renderedRt[k] === rt && renderedByCam[k] === camera) {
@@ -2803,7 +2803,7 @@ Object.assign(pc, function () {
 
                     if (!processedThisCameraAndRt) {
                         // clear once per camera + RT
-                        if (!layer.overrideClear) this.clearView(camera, layer.renderTarget); // TODO: deprecate camera.renderTarget?
+                        if (!layer.overrideClear) this.clearView(camera, camera.renderTarget); // TODO: deprecate camera.renderTarget?
                         renderedRt[renderedLength] = rt;
                         renderedByCam[renderedLength] = camera;
                         renderedLength++;
@@ -2835,7 +2835,7 @@ Object.assign(pc, function () {
                     this.scene._activeCamera = camera.camera;
 
                     // Set camera shader constants, viewport, scissor, render target
-                    this.setCamera(camera.camera, layer.renderTarget);
+                    this.setCamera(camera.camera, camera.renderTarget);
 
                     // #ifdef PROFILER
                     draws = this._forwardDrawCalls;

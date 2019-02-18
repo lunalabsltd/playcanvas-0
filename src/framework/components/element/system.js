@@ -221,10 +221,6 @@ Object.assign(pc, function () {
                 component.layers = data.layers.slice(0);
             }
 
-            if (data.debugColor !== undefined) {
-                component.debugColor = data.debugColor;
-            }
-
             if (data.corners !== undefined) {
                 component._corners = data.corners;
             }
