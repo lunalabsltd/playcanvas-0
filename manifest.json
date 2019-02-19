@@ -1,0 +1,658 @@
+[
+  {
+    "src": "core/core.js",
+    "priority": 0
+  },
+  {
+    "src": "polyfill/fullscreen.js",
+    "priority": 0
+  },
+  {
+    "src": "polyfill/math-log2.js",
+    "priority": 0
+  },
+  {
+    "src": "polyfill/object-assign.js",
+    "priority": 0
+  },
+  {
+    "src": "polyfill/pointer-lock.js",
+    "priority": 0
+  },
+  {
+    "src": "polyfill/request-animation-frame.js",
+    "priority": 0
+  },
+  {
+    "src": "polyfill/string.js",
+    "priority": 0
+  },
+  {
+    "src": "core/color.js",
+    "priority": 0
+  },
+  {
+    "src": "core/guid.js",
+    "priority": 0
+  },
+  {
+    "src": "core/time.js",
+    "priority": 0
+  },
+  {
+    "src": "core/hash.js",
+    "priority": 0
+  },
+  {
+    "src": "core/uri.js",
+    "priority": 0
+  },
+  {
+    "src": "core/log.js",
+    "priority": 0
+  },
+  {
+    "src": "core/path.js",
+    "priority": 0
+  },
+  {
+    "src": "core/string.js",
+    "priority": 0
+  },
+  {
+    "src": "core/debug.js",
+    "priority": 0
+  },
+  {
+    "src": "core/events.js",
+    "priority": 0
+  },
+  {
+    "src": "core/tags.js",
+    "priority": 0
+  },
+  {
+    "src": "core/object-pool.js",
+    "priority": 0
+  },
+  {
+    "src": "core/platform.js",
+    "priority": 0
+  },
+  {
+    "src": "core/indexed-list.js",
+    "priority": 0
+  },
+  {
+    "src": "math/math.js",
+    "priority": 0
+  },
+  {
+    "src": "math/vec2.js",
+    "priority": 0
+  },
+  {
+    "src": "math/vec3.js",
+    "priority": 0
+  },
+  {
+    "src": "math/vec4.js",
+    "priority": 0
+  },
+  {
+    "src": "math/mat3.js",
+    "priority": 0
+  },
+  {
+    "src": "math/mat4.js",
+    "priority": 0
+  },
+  {
+    "src": "math/quat.js",
+    "priority": 0
+  },
+  {
+    "src": "math/curve.js",
+    "priority": 0
+  },
+  {
+    "src": "math/curve-set.js",
+    "priority": 0
+  },
+  {
+    "src": "shape/bounding-box.js",
+    "priority": 0
+  },
+  {
+    "src": "shape/bounding-sphere.js",
+    "priority": 0
+  },
+  {
+    "src": "shape/frustum.js",
+    "priority": 0
+  },
+  {
+    "src": "shape/plane.js",
+    "priority": 0
+  },
+  {
+    "src": "shape/ray.js",
+    "priority": 0
+  },
+  {
+    "src": "shape/oriented-box.js",
+    "priority": 0
+  },
+  {
+    "src": "graphics/graphics.js",
+    "priority": 0
+  },
+  {
+    "src": "graphics/scope-id.js",
+    "priority": 0
+  },
+  {
+    "src": "graphics/scope-space.js",
+    "priority": 0
+  },
+  {
+    "src": "graphics/version.js",
+    "priority": 0
+  },
+  {
+    "src": "graphics/versioned-object.js",
+    "priority": 0
+  },
+  {
+    "src": "graphics/vertex-iterator.js",
+    "priority": 0
+  },
+  {
+    "src": "graphics/vertex-format.js",
+    "priority": 0
+  },
+  {
+    "src": "graphics/vertex-buffer.js",
+    "priority": 0
+  },
+  {
+    "src": "graphics/index-buffer.js",
+    "priority": 0
+  },
+  {
+    "src": "graphics/transform-feedback.js",
+    "priority": 0
+  },
+  {
+    "src": "graphics/texture.js",
+    "priority": 0
+  },
+  {
+    "src": "graphics/render-target.js",
+    "priority": 0
+  },
+  {
+    "src": "graphics/shader-input.js",
+    "priority": 0
+  },
+  {
+    "src": "graphics/shader.js",
+    "priority": 0
+  },
+  {
+    "src": "graphics/program-library.js",
+    "priority": 0
+  },
+  {
+    "src": "graphics/device.js",
+    "priority": 0
+  },
+  {
+    "src": "graphics/chunks.js",
+    "priority": 0
+  },
+  {
+    "src": "graphics/simple-post-effect.js",
+    "priority": 0
+  },
+  {
+    "src": "graphics/prefilter-cubemap.js",
+    "priority": 0
+  },
+  {
+    "src": "graphics/paraboloid.js",
+    "priority": 0
+  },
+  {
+    "src": "graphics/program-lib/chunks/generated-shader-chunks.js",
+    "priority": 0
+  },
+  {
+    "src": "graphics/program-lib/program-lib.js",
+    "priority": 0
+  },
+  {
+    "src": "graphics/program-lib/basic.js",
+    "priority": 0
+  },
+  {
+    "src": "graphics/program-lib/particle.js",
+    "priority": 0
+  },
+  {
+    "src": "graphics/program-lib/standard.js",
+    "priority": 0
+  },
+  {
+    "src": "graphics/program-lib/skybox.js",
+    "priority": 0
+  },
+  {
+    "src": "graphics/post-effect.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/scene.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/forward-renderer.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/graph-node.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/camera.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/light.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/materials/material.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/materials/basic-material.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/materials/depth-material.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/materials/standard-material.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/materials/standard-material-parameters.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/materials/standard-material-validator.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/materials/standard-material-options-builder.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/mesh.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/skin.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/skin-partition.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/morph.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/model.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/particle-emitter.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/pick.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/procedural.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/materials/default-material.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/layer.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/layer-composition.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/sprite.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/texture-atlas.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/stencil-parameters.js",
+    "priority": 0
+  },
+  {
+    "src": "anim/animation.js",
+    "priority": 0
+  },
+  {
+    "src": "anim/skeleton.js",
+    "priority": 0
+  },
+  {
+    "src": "sound/manager.js",
+    "priority": 0
+  },
+  {
+    "src": "sound/sound.js",
+    "priority": 0
+  },
+  {
+    "src": "sound/listener.js",
+    "priority": 0
+  },
+  {
+    "src": "sound/instance.js",
+    "priority": 0
+  },
+  {
+    "src": "sound/instance3d.js",
+    "priority": 0
+  },
+  {
+    "src": "audio/channel.js",
+    "priority": 0
+  },
+  {
+    "src": "audio/channel3d.js",
+    "priority": 0
+  },
+  {
+    "src": "input/input.js",
+    "priority": 0
+  },
+  {
+    "src": "input/mouse.js",
+    "priority": 0
+  },
+  {
+    "src": "input/touch.js",
+    "priority": 0
+  },
+  {
+    "src": "net/http.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/application.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/stats.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/scene-registry.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/registry.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/system.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/component.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/data.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/animation/component.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/animation/system.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/animation/data.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/model/component.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/model/system.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/model/data.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/camera/component.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/camera/system.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/camera/data.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/camera/post-effect-queue.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/camera/post-effect-pass.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/light/component.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/light/system.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/light/data.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/sound/constants.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/sound/slot.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/sound/component.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/sound/system.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/sound/data.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/audio-source/component.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/audio-source/system.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/audio-source/data.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/audio-listener/component.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/audio-listener/system.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/audio-listener/data.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/collision/trigger.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/collision/component.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/collision/system.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/collision/data.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/particle-system/component.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/particle-system/system.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/particle-system/data.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/screen/component.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/screen/system.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/screen/data.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/element/component.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/element/system.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/element/data.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/element/image-element.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/element/text-element.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/element/pointer-events.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/text/font.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/components/text/canvas-font.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/entity.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/utils/entity-reference.js",
+    "priority": 0
+  },
+  {
+    "src": "framework/utils/sorted-loop-array.js",
+    "priority": 0
+  },
+  {
+    "src": "resources/script.js",
+    "priority": 0
+  },
+  {
+    "src": "asset/asset.js",
+    "priority": 0
+  },
+  {
+    "src": "asset/asset-variants.js",
+    "priority": 0
+  },
+  {
+    "src": "asset/asset-registry.js",
+    "priority": 0
+  },
+  {
+    "src": "asset/asset-reference.js",
+    "priority": 0
+  },
+  {
+    "src": "backwards-compatibility.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/immediate.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/lightmapper.js",
+    "priority": 0
+  },
+  {
+    "src": "scene/batching.js",
+    "priority": 0
+  }
+]

@@ -103,12 +103,6 @@ Object.assign(pc, function () {
      */
 
     /**
-     * @name pc.Application#scripts
-     * @type pc.ScriptRegistry
-     * @description The Script Registry of the Application
-     */
-
-    /**
      * @name pc.Application#batcher
      * @type pc.BatchManager
      * @description The Batch Manager of the Application
@@ -154,7 +148,7 @@ Object.assign(pc, function () {
 
         // enable if you want entity type script attributes
         // to not be re-mapped when an entity is cloned
-        this.useLegacyScriptAttributeCloning = pc.script.legacy;
+        this.useLegacyScriptAttributeCloning = false;
 
         this._librariesLoaded = false;
         this._fillMode = pc.FILLMODE_KEEP_ASPECT;
@@ -180,7 +174,6 @@ Object.assign(pc, function () {
         this.assets = new pc.AssetRegistry(this.loader);
         if (options.assetPrefix) this.assets.prefix = options.assetPrefix;
         this.scriptsOrder = options.scriptsOrder || [];
-        this.scripts = new pc.ScriptRegistry(this);
 
         this._sceneRegistry = new pc.SceneRegistry(this);
 
@@ -449,7 +442,6 @@ Object.assign(pc, function () {
             { class: pc.ModelComponentSystem,               args: [ this ] },
             { class: pc.CameraComponentSystem,              args: [ this ] },
             { class: pc.LightComponentSystem,               args: [ this ] },
-            { class: pc.ScriptComponentSystem,              args: [ this ] },
             { class: pc.AudioSourceComponentSystem,         args: [ this, this._audioManager ] },
             { class: pc.SoundComponentSystem,               args: [ this, this._audioManager ] },
             { class: pc.AudioListenerComponentSystem,       args: [ this, this._audioManager ] },
@@ -693,46 +685,7 @@ Object.assign(pc, function () {
         },
 
         _preloadScripts: function (sceneData, callback) {
-            if (!pc.script.legacy) {
-                callback();
-                return;
-            }
-
-            var self = this;
-
-            self.systems.script.preloading = true;
-
-            var scripts = this._getScriptReferences(sceneData);
-
-            var i = 0, l = scripts.length;
-            var progress = new Progress(l);
-            var scriptUrl;
-            var regex = /^http(s)?:\/\//;
-
-            if (l) {
-                var onLoad = function (err, ScriptType) {
-                    if (err)
-                        console.error(err);
-
-                    progress.inc();
-                    if (progress.done()) {
-                        self.systems.script.preloading = false;
-                        callback();
-                    }
-                };
-
-                for (i = 0; i < l; i++) {
-                    scriptUrl = scripts[i];
-                    // support absolute URLs (for now)
-                    if (!regex.test(scriptUrl.toLowerCase()) && self._scriptPrefix)
-                        scriptUrl = pc.path.join(self._scriptPrefix, scripts[i]);
-
-                    this.loader.load(scriptUrl, 'script', onLoad);
-                }
-            } else {
-                self.systems.script.preloading = false;
-                callback();
-            }
+            callback();
         },
 
         // set application properties from data file
@@ -825,27 +778,22 @@ Object.assign(pc, function () {
 
             var scriptsIndex = { };
 
-            if (!pc.script.legacy) {
-                // add scripts in order of loading first
-                for (i = 0; i < this.scriptsOrder.length; i++) {
-                    id = this.scriptsOrder[i];
-                    if (!assets[id])
-                        continue;
+            // add scripts in order of loading first
+            for (i = 0; i < this.scriptsOrder.length; i++) {
+                id = this.scriptsOrder[i];
+                if (!assets[id])
+                    continue;
 
-                    scriptsIndex[id] = true;
-                    list.push(assets[id]);
-                }
+                scriptsIndex[id] = true;
+                list.push(assets[id]);
+            }
 
-                // then add rest of assets
-                for (id in assets) {
-                    if (scriptsIndex[id])
-                        continue;
+            // then add rest of assets
+            for (id in assets) {
+                if (scriptsIndex[id])
+                    continue;
 
-                    list.push(assets[id]);
-                }
-            } else {
-                for (id in assets)
-                    list.push(assets[id]);
+                list.push(assets[id]);
             }
 
             for (i = 0; i < list.length; i++) {
@@ -934,10 +882,6 @@ Object.assign(pc, function () {
             // #ifdef PROFILER
             this.stats.frame.updateStart = pc.now();
             // #endif
-
-            // Perform ComponentSystem update
-            if (pc.script.legacy)
-                pc.ComponentSystem.fixedUpdate(1.0 / 60.0, this._inTools);
 
             pc.ComponentSystem.update(dt, this._inTools);
             pc.ComponentSystem.postUpdate(dt, this._inTools);
