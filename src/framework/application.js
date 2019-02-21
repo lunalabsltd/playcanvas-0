@@ -173,7 +173,6 @@ Object.assign(pc, function () {
         this._enableList.size = 0;
         this.assets = new pc.AssetRegistry(this.loader);
         if (options.assetPrefix) this.assets.prefix = options.assetPrefix;
-        this.scriptsOrder = options.scriptsOrder || [];
 
         this._sceneRegistry = new pc.SceneRegistry(this);
 
@@ -454,7 +453,8 @@ Object.assign(pc, function () {
             { class: pc.RigidbodySystem,                    args: [ this ] },
             { class: pc.ColliderSystem,                     args: [ this ] },
             { class: pc.JointSystem,                        args: [ this ] },
-            { class: pc.MonoBehaviourSystem,                args: [ this ] }
+            { class: pc.MonoBehaviourSystem,                args: [ this ] },
+            { class: pc.AnimatorSystem,                     args: [ this ] }
         ];
 
         for ( var i = 0; i < systemClasses.length; i++ ) {
