@@ -2039,6 +2039,10 @@ Object.assign(pc, function () {
             var samplers = shader.samplers;
             var uniforms = shader.uniforms;
 
+            if (numInstances === 0) {
+                return;
+            }
+
             if (numInstances > 0) {
                 this.boundBuffer = null;
                 this.attributesInvalidated = true;
