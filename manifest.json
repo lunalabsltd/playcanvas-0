@@ -408,18 +408,6 @@
     "priority": 0
   },
   {
-    "src": "src/script/script-registry.js",
-    "priority": 0
-  },
-  {
-    "src": "src/script/script.js",
-    "priority": 0
-  },
-  {
-    "src": "src/framework/script.js",
-    "priority": 0
-  },
-  {
     "src": "src/framework/application.js",
     "priority": 0
   },
@@ -501,18 +489,6 @@
   },
   {
     "src": "src/framework/components/light/data.js",
-    "priority": 0
-  },
-  {
-    "src": "src/framework/components/script/component.js",
-    "priority": 0
-  },
-  {
-    "src": "src/framework/components/script/system.js",
-    "priority": 0
-  },
-  {
-    "src": "src/framework/components/script/data.js",
     "priority": 0
   },
   {

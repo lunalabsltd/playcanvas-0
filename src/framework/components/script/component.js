@@ -358,7 +358,7 @@ Object.assign(pc, function () {
 
             for (list.loopIndex = 0; list.loopIndex < list.length; list.loopIndex++) {
                 script = list.items[list.loopIndex];
-                if (!script.$ui && script.update && script._enabled) {
+                if (script.update && script._enabled) {
                     self._scriptMethod(script, ScriptComponent.scriptMethods.update, dt);
                 }
             }
@@ -377,7 +377,7 @@ Object.assign(pc, function () {
 
             for (list.loopIndex = 0; list.loopIndex < list.length; list.loopIndex++) {
                 script = list.items[list.loopIndex];
-                if (!script.$ui && script.postUpdate && script._enabled) {
+                if (script.postUpdate && script._enabled) {
                     self._scriptMethod(script, ScriptComponent.scriptMethods.postUpdate, dt);
                 }
             }
