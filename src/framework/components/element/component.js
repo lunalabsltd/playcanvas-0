@@ -335,7 +335,7 @@ pc.extend(pc, function () {
                     this.worldTransform.copy( this.screen._screenMatrix );
 
                     if ( this.screen.screenType !== pc.SCREEN_TYPE_WORLD ) {
-                        // and the size is driven by canvas
+                        // only overlay canvases drive their RectTransform's size
                         element._width = this.screen._width;
                         element._height = this.screen._height;
                     }
