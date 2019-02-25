@@ -2124,23 +2124,25 @@ Object.assign(pc, function () {
             var mode = this.glPrimitive[primitive.type];
             var count = primitive.count;
 
-            if (primitive.indexed) {
-                var indexBuffer = this.indexBuffer;
-                var format = indexBuffer.glFormat;
-                var offset = primitive.base * indexBuffer.bytesPerIndex;
+            if ( numInstances !== 0 ) {
+                if (primitive.indexed) {
+                    var indexBuffer = this.indexBuffer;
+                    var format = indexBuffer.glFormat;
+                    var offset = primitive.base * indexBuffer.bytesPerIndex;
 
-                if (numInstances > 0) {
-                    gl.drawElementsInstanced(mode, count, format, offset, numInstances);
+                    if (numInstances > 0) {
+                        gl.drawElementsInstanced(mode, count, format, offset, numInstances);
+                    } else {
+                        gl.drawElements(mode, count, format, offset);
+                    }
                 } else {
-                    gl.drawElements(mode, count, format, offset);
-                }
-            } else {
-                var first = primitive.base;
+                    var first = primitive.base;
 
-                if (numInstances > 0) {
-                    gl.drawArraysInstanced(mode, first, count, numInstances);
-                } else {
-                    gl.drawArrays(mode, first, count);
+                    if (numInstances > 0) {
+                        gl.drawArraysInstanced(mode, first, count, numInstances);
+                    } else {
+                        gl.drawArrays(mode, first, count);
+                    }
                 }
             }
 
