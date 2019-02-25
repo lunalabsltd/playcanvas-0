@@ -1298,7 +1298,7 @@ Object.assign(pc, function () {
                 result += this._drawInstance.call( this, device, meshInstance, mesh, style, normal );
             }
 
-            return result;
+            return 0;
         },
 
         // used for stereo
