@@ -105,6 +105,10 @@ Object.assign(pc, function () {
     Object.defineProperty(CameraComponent.prototype, "projectionMatrix", {
         get: function () {
             return this.data.camera.getProjectionMatrix();
+        },
+
+        set: function (value) {
+            this.data.camera.setProjectionMatrix( value );
         }
     });
 
