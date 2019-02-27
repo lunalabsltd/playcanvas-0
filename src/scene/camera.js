@@ -28,6 +28,7 @@ Object.assign(pc, function () {
         this._projMat = new pc.Mat4();
         this._viewMat = new pc.Mat4();
         this._viewProjMat = new pc.Mat4();
+        this._projMatOverride = null;
         this._screens = [];
 
         this.vrDisplay = null;
