@@ -334,9 +334,11 @@ pc.extend(pc, function () {
                     // yes we do: in this case screen matrix is our base
                     this.worldTransform.copy( this.screen._screenMatrix );
 
-                    // and the size is driven by canvas
-                    element._width = this.screen._width;
-                    element._height = this.screen._height;
+                    if ( this.screen.screenType !== pc.SCREEN_TYPE_WORLD ) {
+                        // only overlay canvases drive their RectTransform's size
+                        element._width = this.screen._width;
+                        element._height = this.screen._height;
+                    }
 
                     // make sure pivot point is still correct
                     element._pivotPoint.set( element._width * element.pivot.x, element._height * element.pivot.y, 0 );
