@@ -41,7 +41,7 @@ pc.extend(pc, function() {
             }
 
             // having NO single script means it's just a rect transform, which does nothing to raycasts
-            if (!this.entity.script) {
+            if ( !( this.entity._unityComponents && this.entity._unityComponents.monoBehaviour ) ) {
                 failureResult = POINTER_TEST_RESULT_PASS_THROUGH;   
             }
 
