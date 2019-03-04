@@ -529,9 +529,6 @@ Object.assign(pc, function () {
             device.setDepthWrite( material.depthWrite );
             device.setDepthTest( material.depthTest );
 
-            var gl = device.gl;
-            gl.blendFuncSeparate( gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA );
-
             device.setShader( shader );
         },
 
