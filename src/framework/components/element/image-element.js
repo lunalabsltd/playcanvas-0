@@ -512,7 +512,7 @@ pc.extend(pc, function () {
         },
         set: function (value) {
             if (! value) {
-                var screenSpace = this._element.screen ? (this._element.screen.screen.screenType == pc.SCREEN_TYPE_SCREEN) : false;
+                var screenSpace = (this._element.screen && this._element.screen.screen) ? (this._element.screen.screen.screenType == pc.SCREEN_TYPE_SCREEN) : false;
                 value = screenSpace ? this._system.defaultScreenSpaceImageMaterial : this._system.defaultImageMaterial;
             }
 
@@ -673,7 +673,7 @@ pc.extend(pc, function () {
                 this.alphaTest = 0;
             }
 
-            var screenSpace = this._element.screen ? (this._element.screen.screen.screenType == pc.SCREEN_TYPE_SCREEN) : false;
+            var screenSpace = (this._element.screen && this._element.screen.screen) ? (this._element.screen.screen.screenType == pc.SCREEN_TYPE_SCREEN) : false;
             this._updateMaterial( screenSpace );
         }
     });
