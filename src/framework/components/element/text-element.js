@@ -1,4 +1,4 @@
-pc.extend(pc, function () {
+pc.extend(pc, function() {
 
     /**
      * @name pc.TextElement
@@ -26,9 +26,9 @@ pc.extend(pc, function () {
      * @property {Number} fontSize The size of the letters to render.
      * @property {pc.Asset} fontAsset The asset to gather the font from.
      * @property {pc.Font} font The font to use for rendering.
-     */  
+     */
 
-    var TextElement = function TextElement (element) {
+    var TextElement = function TextElement(element) {
         this._element = element;
         this._system = element.system;
         this._entity = element.entity;
@@ -45,7 +45,7 @@ pc.extend(pc, function () {
         this._fontAsset = null;
         this._font = null;
 
-        this._color = new pc.Color(1,1,1,1);
+        this._color = new pc.Color(1, 1, 1, 1);
 
         this._spacing = 1;
         this._fontSize = 32;
@@ -57,7 +57,7 @@ pc.extend(pc, function () {
         this.width = 0;
         this.height = 0;
 
-        this._textMaterial = this._system.defaultTextMaterial;
+        this._material = null;
 
         // private
         this._layoutNode = new pc.GraphNode();
@@ -66,12 +66,11 @@ pc.extend(pc, function () {
         this._layoutNode.forcedLocalTransform = element._fromPivotTransform;
 
         this._node = new pc.GraphNode();
-        this._layoutNode.addChild( this._node );
+        this._layoutNode.addChild(this._node);
 
         this._model = null;
         this._mesh = null;
         this._meshInstance = null;
-        this._material = null;
 
         this._positions = [];
         this._normals = [];
@@ -83,7 +82,7 @@ pc.extend(pc, function () {
 
         // initialize based on screen
         this._onScreenChange(this._element.screen);
-        this._createMesh( "" );
+        this._createMesh("");
 
         // start listening for element events
         element.on('resize', this._onParentResize, this);
@@ -94,7 +93,7 @@ pc.extend(pc, function () {
     };
 
     pc.extend(TextElement.prototype, {
-        destroy: function () {
+        destroy: function() {
             if (this._model) {
                 this._system.app.scene.removeModel(this._model);
                 this._model.destroy();
@@ -108,7 +107,7 @@ pc.extend(pc, function () {
             this._element.off('set:stencillayer', this._onStencilLayerChange, this);
         },
 
-        _onParentResize: function (width, height) {
+        _onParentResize: function(width, height) {
             if (this._noResize) return;
             if (this._font) this._updateText(this._text);
         },
@@ -121,7 +120,7 @@ pc.extend(pc, function () {
             }
         },
 
-        _onScreenChange: function (screen) {
+        _onScreenChange: function(screen) {
             if (screen) {
                 this._updateMaterial(screen.screen.screenType == pc.SCREEN_TYPE_SCREEN);
             } else {
@@ -129,11 +128,11 @@ pc.extend(pc, function () {
             }
         },
 
-        _onScreenTypeChange: function (value) {
+        _onScreenTypeChange: function(value) {
             this._updateMaterial(value == pc.SCREEN_TYPE_SCREEN);
         },
 
-        _onDrawOrderChange: function (order) {
+        _onDrawOrderChange: function(order) {
             this._drawOrder = order;
 
             if (this._meshInstance) {
@@ -143,10 +142,9 @@ pc.extend(pc, function () {
             this._setLayerFromScreen();
         },
 
-        _onPreRender: function () {
-        },
+        _onPreRender: function() {},
 
-        _updateText: function (text) {
+        _updateText: function(text) {
             if (!this._font) {
                 return;
             }
@@ -183,7 +181,7 @@ pc.extend(pc, function () {
                 this._model = new pc.Model();
                 this._model.graph = this._node;
 
-                this._meshInstance = new pc.MeshInstance(this._node, this._mesh, this._material);
+                this._meshInstance = new pc.MeshInstance(this._node, this._mesh, this._material || this._element.system.defaultTextMaterial);
                 this._meshInstance.preRender = this;
                 this._onStencilLayerChange();
 
@@ -195,7 +193,7 @@ pc.extend(pc, function () {
                 }
                 this._meshInstance.screenSpace = screenSpace;
                 this._meshInstance.setParameter("screenSpaceFactor", screenSpace ? 1 : 0);
-                
+
                 this._meshInstance.setParameter("texture_msdfMap", this._font.texture);
                 this._meshInstance.setParameter("_MainTex", this._font.texture);
 
@@ -232,8 +230,8 @@ pc.extend(pc, function () {
                 var minScale = this._minFontSize / this._fontSize;
                 var maxScale = this._maxFontSize / this._fontSize;
 
-                scale = Math.min( xScale, yScale );
-                scale = Math.min( maxScale, Math.max( minScale, scale ) );
+                scale = Math.min(xScale, yScale);
+                scale = Math.min(maxScale, Math.max(minScale, scale));
 
                 this._node.setLocalScale(scale, scale, scale);
             }
@@ -261,18 +259,18 @@ pc.extend(pc, function () {
                 return;
             }
 
-            var bottomLeftCorner = pc.Vec3.ZERO.clone();// this._mesh.aabb.getMin().scale(scale);
+            var bottomLeftCorner = pc.Vec3.ZERO.clone(); // this._mesh.aabb.getMin().scale(scale);
             bottomLeftCorner.x += this._spacings.x * scale;
             bottomLeftCorner.y += this._spacings.w * scale;
 
             //this._node.setLocalPosition( new pc.Vec3( wd, hd, 0 ).sub(bottomLeftCorner) );
         },
 
-        _setLayerFromScreen: function () {
+        _setLayerFromScreen: function() {
             if (!this._meshInstance) {
                 return;
             }
-            
+
             if (this._element.screen) {
                 this._meshInstance.sortingLayerIndex = this._element._nearestScreen.sortingLayerIndex;
                 this._meshInstance.sortingOrder = this._element._nearestScreen.sortingOrder;
@@ -286,11 +284,11 @@ pc.extend(pc, function () {
             this._meshInstance.drawOrder = this._drawOrder;
         },
 
-        _updateMaterial: function (screenSpace) {
-            this._material = this._textMaterial;
+        _updateMaterial: function(screenSpace) {
+            var material = this._material || (screenSpace ? this._element.system.defaultScreenSpaceTextMaterial : this._element.system.defaultTextMaterial);
 
             if (this._meshInstance) {
-                this._meshInstance.material = this._material;
+                this._meshInstance.material = material;
                 this._meshInstance.screenSpace = screenSpace;
                 this._meshInstance.setParameter("screenSpaceFactor", screenSpace ? 1 : 0);
             }
@@ -300,7 +298,7 @@ pc.extend(pc, function () {
         },
 
         // build the mesh for the text
-        _createMesh: function (text) {
+        _createMesh: function(text) {
             var l = text.length;
 
             // handle null string
@@ -310,24 +308,24 @@ pc.extend(pc, function () {
             }
 
             // create empty arrays
-            this._positions = new Array(l*3*4);
-            this._normals = new Array(l*3*4);
-            this._uvs = new Array(l*2*4);
-            this._indices = new Array(l*3*2);
+            this._positions = new Array(l * 3 * 4);
+            this._normals = new Array(l * 3 * 4);
+            this._uvs = new Array(l * 2 * 4);
+            this._indices = new Array(l * 3 * 2);
 
             // create index buffer now
             // index buffer doesn't change as long as text length stays the same
             for (var i = 0; i < l; i++) {
-                this._indices.push((i*4), (i*4)+1, (i*4)+3);
-                this._indices.push((i*4)+2, (i*4)+3, (i*4)+1);
+                this._indices.push((i * 4), (i * 4) + 1, (i * 4) + 3);
+                this._indices.push((i * 4) + 2, (i * 4) + 3, (i * 4) + 1);
             };
 
-            var mesh = pc.createMesh(this._system.app.graphicsDevice, this._positions, {uvs: this._uvs, normals: this._normals, indices: this._indices});
+            var mesh = pc.createMesh(this._system.app.graphicsDevice, this._positions, { uvs: this._uvs, normals: this._normals, indices: this._indices });
             this._updateMesh(mesh, text);
             return mesh;
         },
 
-        _updateMesh: function (mesh, text) {
+        _updateMesh: function(mesh, text) {
             var json = this._font.data;
             var vb = mesh.vertexBuffer;
             var it = new pc.VertexIterator(vb);
@@ -344,7 +342,9 @@ pc.extend(pc, function () {
             this._positions.length = 0;
             this._normals.length = 0;
             this._uvs.length = 0;
-            this._lines = [[]];
+            this._lines = [
+                []
+            ];
 
             var miny = Number.MAX_VALUE;
             var maxy = Number.MIN_VALUE;
@@ -368,11 +368,11 @@ pc.extend(pc, function () {
                     continue;
                 }
 
-                this._lines[ this._lines.length - 1 ].push( i );
+                this._lines[this._lines.length - 1].push(i);
 
                 if (char === 32) {
                     // space
-                    lastWordIndex = i+1;
+                    lastWordIndex = i + 1;
                 }
 
                 var x = 0;
@@ -394,73 +394,73 @@ pc.extend(pc, function () {
                     scale = this._fontSize;
                 }
 
-                this._positions[i*4*3+0] = _x - x;
-                this._positions[i*4*3+1] = _y - y;
-                this._positions[i*4*3+2] = _z;
+                this._positions[i * 4 * 3 + 0] = _x - x;
+                this._positions[i * 4 * 3 + 1] = _y - y;
+                this._positions[i * 4 * 3 + 2] = _z;
 
-                this._positions[i*4*3+3] = _x - (x - scale);
-                this._positions[i*4*3+4] = _y - y;
-                this._positions[i*4*3+5] = _z;
+                this._positions[i * 4 * 3 + 3] = _x - (x - scale);
+                this._positions[i * 4 * 3 + 4] = _y - y;
+                this._positions[i * 4 * 3 + 5] = _z;
 
-                this._positions[i*4*3+6] = _x - (x - scale);
-                this._positions[i*4*3+7] = _y - y + scale;
-                this._positions[i*4*3+8] = _z;
+                this._positions[i * 4 * 3 + 6] = _x - (x - scale);
+                this._positions[i * 4 * 3 + 7] = _y - y + scale;
+                this._positions[i * 4 * 3 + 8] = _z;
 
-                this._positions[i*4*3+9]  = _x - x;
-                this._positions[i*4*3+10] = _y - y + scale;
-                this._positions[i*4*3+11] = _z;
+                this._positions[i * 4 * 3 + 9] = _x - x;
+                this._positions[i * 4 * 3 + 10] = _y - y + scale;
+                this._positions[i * 4 * 3 + 11] = _z;
 
-                if (this._positions[i*4*3+7] > maxy) maxy = this._positions[i*4*3+7];
-                if (this._positions[i*4*3+1] < miny) miny = this._positions[i*4*3+1];
+                if (this._positions[i * 4 * 3 + 7] > maxy) maxy = this._positions[i * 4 * 3 + 7];
+                if (this._positions[i * 4 * 3 + 1] < miny) miny = this._positions[i * 4 * 3 + 1];
 
                 // advance cursor
-                _x = _x + (this._spacing*advance);
+                _x = _x + (this._spacing * advance);
 
-                this._normals[i*4*3+0] = 0;
-                this._normals[i*4*3+1] = 0;
-                this._normals[i*4*3+2] = -1;
+                this._normals[i * 4 * 3 + 0] = 0;
+                this._normals[i * 4 * 3 + 1] = 0;
+                this._normals[i * 4 * 3 + 2] = -1;
 
-                this._normals[i*4*3+3] = 0;
-                this._normals[i*4*3+4] = 0;
-                this._normals[i*4*3+5] = -1;
+                this._normals[i * 4 * 3 + 3] = 0;
+                this._normals[i * 4 * 3 + 4] = 0;
+                this._normals[i * 4 * 3 + 5] = -1;
 
-                this._normals[i*4*3+6] = 0;
-                this._normals[i*4*3+7] = 0;
-                this._normals[i*4*3+8] = -1;
+                this._normals[i * 4 * 3 + 6] = 0;
+                this._normals[i * 4 * 3 + 7] = 0;
+                this._normals[i * 4 * 3 + 8] = -1;
 
-                this._normals[i*4*3+9] = 0;
-                this._normals[i*4*3+10] = 0;
-                this._normals[i*4*3+11] = -1;
+                this._normals[i * 4 * 3 + 9] = 0;
+                this._normals[i * 4 * 3 + 10] = 0;
+                this._normals[i * 4 * 3 + 11] = -1;
 
                 var uv = this._getUv(char);
 
-                this._uvs[i*4*2+0] = uv[0];
-                this._uvs[i*4*2+1] = uv[1];
+                this._uvs[i * 4 * 2 + 0] = uv[0];
+                this._uvs[i * 4 * 2 + 1] = uv[1];
 
-                this._uvs[i*4*2+2] = uv[2];
-                this._uvs[i*4*2+3] = uv[1];
+                this._uvs[i * 4 * 2 + 2] = uv[2];
+                this._uvs[i * 4 * 2 + 3] = uv[1];
 
-                this._uvs[i*4*2+4] = uv[2];
-                this._uvs[i*4*2+5] = uv[3];
+                this._uvs[i * 4 * 2 + 4] = uv[2];
+                this._uvs[i * 4 * 2 + 5] = uv[3];
 
-                this._uvs[i*4*2+6] = uv[0];
-                this._uvs[i*4*2+7] = uv[3];
+                this._uvs[i * 4 * 2 + 6] = uv[0];
+                this._uvs[i * 4 * 2 + 7] = uv[3];
 
-                this._indices.push((i*4), (i*4)+1, (i*4)+3);
-                this._indices.push((i*4)+2, (i*4)+3, (i*4)+1);
+                this._indices.push((i * 4), (i * 4) + 1, (i * 4) + 3);
+                this._indices.push((i * 4) + 2, (i * 4) + 3, (i * 4) + 1);
             }
 
-            for(var lineIndex = 0; lineIndex < this._lines.length; lineIndex++) {
-                var lineIndices = this._lines[ lineIndex ];
+            for (var lineIndex = 0; lineIndex < this._lines.length; lineIndex++) {
+                var lineIndices = this._lines[lineIndex];
 
                 if (lineIndices.length == 0) {
                     continue;
                 }
 
-                var leftIndex   = lineIndices[0] * 4 * 3;
-                var rightIndex  = lineIndices[ lineIndices.length - 1 ] * 4 * 3 + 9;
-                width           = this._positions[ rightIndex ] - this._positions[ leftIndex ];
-                var wd          = this._element.width - width;
+                var leftIndex = lineIndices[0] * 4 * 3;
+                var rightIndex = lineIndices[lineIndices.length - 1] * 4 * 3 + 9;
+                width = this._positions[rightIndex] - this._positions[leftIndex];
+                var wd = this._element.width - width;
 
                 if (this._align == pc.TEXT_ALIGN_CENTER) {
                     wd *= 0.5;
@@ -470,8 +470,8 @@ pc.extend(pc, function () {
                     wd *= 0;
                 }
 
-                for(var idx = 0; idx < lineIndices.length; idx++) {
-                    var i = lineIndices[ idx ];
+                for (var idx = 0; idx < lineIndices.length; idx++) {
+                    var i = lineIndices[idx];
 
                     this._positions[i * 4 * 3 + 0] += wd;
                     this._positions[i * 4 * 3 + 3] += wd;
@@ -485,11 +485,11 @@ pc.extend(pc, function () {
             this._noResize = false;
 
             // update vertex buffer
-            var numVertices = l*4;
+            var numVertices = l * 4;
             for (var i = 0; i < numVertices; i++) {
-                it.element[pc.SEMANTIC_POSITION].set(this._positions[i*3+0], this._positions[i*3+1], this._positions[i*3+2]);
-                it.element[pc.SEMANTIC_NORMAL].set(this._normals[i*3+0], this._normals[i*3+1], this._normals[i*3+2]);
-                it.element[pc.SEMANTIC_TEXCOORD0].set(this._uvs[i*2+0], this._uvs[i*2+1]);
+                it.element[pc.SEMANTIC_POSITION].set(this._positions[i * 3 + 0], this._positions[i * 3 + 1], this._positions[i * 3 + 2]);
+                it.element[pc.SEMANTIC_NORMAL].set(this._normals[i * 3 + 0], this._normals[i * 3 + 1], this._normals[i * 3 + 2]);
+                it.element[pc.SEMANTIC_TEXCOORD0].set(this._uvs[i * 2 + 0], this._uvs[i * 2 + 1]);
 
                 it.next();
             }
@@ -503,7 +503,7 @@ pc.extend(pc, function () {
             this._updateAligns();
         },
 
-        _onFontAdded: function (asset) {
+        _onFontAdded: function(asset) {
             this._system.app.assets.off('add:' + asset.id, this._onFontAdded, this);
 
             if (asset.id === this._fontAsset) {
@@ -511,7 +511,7 @@ pc.extend(pc, function () {
             }
         },
 
-        _bindFont: function (asset) {
+        _bindFont: function(asset) {
             asset.on("load", this._onFontLoad, this);
             asset.on("change", this._onFontChange, this);
             asset.on("remove", this._onFontRemove, this);
@@ -523,45 +523,45 @@ pc.extend(pc, function () {
             }
         },
 
-        setVerticesDirty: function () {
+        setVerticesDirty: function() {
             if (this._mesh) {
                 this._updateMesh(this._mesh, text);
             }
         },
 
-        _onFontLoad: function (asset) {
+        _onFontLoad: function(asset) {
             if (this.font !== asset.resource) {
                 this.font = asset.resource;
             }
         },
 
-        _onFontChange: function (asset) {
+        _onFontChange: function(asset) {
 
         },
 
-        _onFontRemove: function (asset) {
+        _onFontRemove: function(asset) {
 
         },
 
-        _setConstantColor: function (color, alpha) {
+        _setConstantColor: function(color, alpha) {
             // Alpha is set separately cause it can be modified by canvas group alpha modifiers
             if (this._meshInstance) {
-                this._meshInstance.setParameter( "COLOR", {const: [ color.r, color.g, color.b, alpha ]} );
+                this._meshInstance.setParameter("COLOR", { const: [color.r, color.g, color.b, alpha] });
             }
         },
 
-        _getUv: function (char) {
+        _getUv: function(char) {
             var data = this._font.data;
             var width = data.info.width;
             var height = data.info.height;
 
             if (!data.chars[char]) {
                 // missing char
-                return [0,0,1,1]
+                return [0, 0, 1, 1]
             }
 
             var x = data.chars[char].x;
-            var y =  data.chars[char].y;
+            var y = data.chars[char].y;
 
             var x1 = x;
             var y1 = y;
@@ -573,17 +573,17 @@ pc.extend(pc, function () {
                 edge - (y1 / height), // bottom left
 
                 (x2 / width),
-                edge - (y2 / height)  // top right
+                edge - (y2 / height) // top right
             ];
         },
 
-        onEnable: function () {
+        onEnable: function() {
             if (this._model && !this._system.app.scene.containsModel(this._model)) {
                 this._system.app.scene.addModel(this._model);
             }
         },
 
-        onDisable: function () {
+        onDisable: function() {
             if (this._model && this._system.app.scene.containsModel(this._model)) {
                 this._system.app.scene.removeModel(this._model);
             }
@@ -591,11 +591,11 @@ pc.extend(pc, function () {
     });
 
     Object.defineProperty(TextElement.prototype, "text", {
-        get: function () {
+        get: function() {
             return this._text
         },
 
-        set: function (value) {
+        set: function(value) {
             var str = (value || "").toString();
 
             if (this._text == str) {
@@ -610,20 +610,20 @@ pc.extend(pc, function () {
     });
 
     /**
-    * @name pc.TextElement#color
-    * @type pc.Color
-    * @description The color to multiply the text pixels by.
-    * @example
-    * // make text be red.
-    * var element = this.entity.element;
-    * element.color = new pc.Color( 1, 0, 0 );
-    */
+     * @name pc.TextElement#color
+     * @type pc.Color
+     * @description The color to multiply the text pixels by.
+     * @example
+     * // make text be red.
+     * var element = this.entity.element;
+     * element.color = new pc.Color( 1, 0, 0 );
+     */
     Object.defineProperty(TextElement.prototype, "color", {
-        get: function () {
+        get: function() {
             return this._color;
         },
 
-        set: function (value) {
+        set: function(value) {
             this._color.data[0] = value.data[0];
             this._color.data[1] = value.data[1];
             this._color.data[2] = value.data[2];
@@ -635,16 +635,16 @@ pc.extend(pc, function () {
     });
 
     /**
-    * @name pc.TextElement#opacity
-    * @type Number
-    * @description The alpha multiplier for the text material.
-    */
+     * @name pc.TextElement#opacity
+     * @type Number
+     * @description The alpha multiplier for the text material.
+     */
     Object.defineProperty(TextElement.prototype, "opacity", {
-        get: function () {
+        get: function() {
             return this._color.data[3];
         },
 
-        set: function (value) {
+        set: function(value) {
             this._color.data[3] = value;
             if (this._meshInstance) {
                 this._meshInstance.setParameter("material_opacity", value);
@@ -653,16 +653,16 @@ pc.extend(pc, function () {
     });
 
     /**
-    * @name pc.TextElement#lineHeight
-    * @type Number
-    * @description The size of a single text line.
-    */
+     * @name pc.TextElement#lineHeight
+     * @type Number
+     * @description The size of a single text line.
+     */
     Object.defineProperty(TextElement.prototype, "lineHeight", {
-        get: function () {
+        get: function() {
             return this._lineHeight
         },
 
-        set: function (value) {
+        set: function(value) {
             var _prev = this._lineHeight
             this._lineHeight = value;
             if (_prev !== value && this._font) {
@@ -672,16 +672,16 @@ pc.extend(pc, function () {
     });
 
     /**
-    * @name pc.TextElement#spacing
-    * @type Number
-    * @description The spacing multiplier for the text (to make it more condensed or sparse).
-    */
+     * @name pc.TextElement#spacing
+     * @type Number
+     * @description The spacing multiplier for the text (to make it more condensed or sparse).
+     */
     Object.defineProperty(TextElement.prototype, "spacing", {
-        get: function () {
+        get: function() {
             return this._spacing
         },
 
-        set: function (value) {
+        set: function(value) {
             var _prev = this._spacing;
             this._spacing = value;
             if (_prev !== value && this._font) {
@@ -691,11 +691,11 @@ pc.extend(pc, function () {
     });
 
     /**
-    * @name pc.TextElement#align
-    * @type String
-    * @description The way the text should be aligned in relation to element's bounds. It not only affects the 
-    * bounding box positioning, but also changes the text flow, making it be left-aligned, right-aligned or centered.
-    */
+     * @name pc.TextElement#align
+     * @type String
+     * @description The way the text should be aligned in relation to element's bounds. It not only affects the 
+     * bounding box positioning, but also changes the text flow, making it be left-aligned, right-aligned or centered.
+     */
     Object.defineProperty(TextElement.prototype, "align", {
         get: function() {
             return this._align;
@@ -711,11 +711,11 @@ pc.extend(pc, function () {
     });
 
     /**
-    * @name pc.TextElement#verticalAlign
-    * @type String
-    * @description The way the text should be vertically aligned in relation to element's bounds. It only affects the 
-    * bounding box positioning, making it be top-aligned, bottom-aligned or centered.
-    */
+     * @name pc.TextElement#verticalAlign
+     * @type String
+     * @description The way the text should be vertically aligned in relation to element's bounds. It only affects the 
+     * bounding box positioning, making it be top-aligned, bottom-aligned or centered.
+     */
     Object.defineProperty(TextElement.prototype, "verticalAlign", {
         get: function() {
             return this._veticalAlign;
@@ -731,16 +731,16 @@ pc.extend(pc, function () {
     });
 
     /**
-    * @name pc.TextElement#fontSize
-    * @type Number
-    * @description The font size to use when rendering the text.
-    */
+     * @name pc.TextElement#fontSize
+     * @type Number
+     * @description The font size to use when rendering the text.
+     */
     Object.defineProperty(TextElement.prototype, "fontSize", {
-        get: function () {
+        get: function() {
             return this._fontSize;
         },
 
-        set: function (value) {
+        set: function(value) {
             var _prev = this._fontSize;
             this._fontSize = value;
             if (_prev !== value && this._font) {
@@ -764,16 +764,16 @@ pc.extend(pc, function () {
     });
 
     /**
-    * @name pc.ImageElement#fontAsset
-    * @type pc.Asset
-    * @description The font asset to gather the font from.
-    */
+     * @name pc.ImageElement#fontAsset
+     * @type pc.Asset
+     * @description The font asset to gather the font from.
+     */
     Object.defineProperty(TextElement.prototype, "fontAsset", {
-        get function () {
+        get function() {
             return this._fontAsset;
         },
 
-        set: function (value) {
+        set: function(value) {
             var assets = this._system.app.assets;
             var _id = value;
 
@@ -795,7 +795,7 @@ pc.extend(pc, function () {
                 this._fontAsset = _id;
                 if (this._fontAsset) {
                     var asset = assets.get(this._fontAsset);
-                    if (! asset) {
+                    if (!asset) {
                         assets.on('add:' + this._fontAsset, this._onFontAdded, this);
                     } else {
                         this._bindFont(asset);
@@ -806,16 +806,16 @@ pc.extend(pc, function () {
     });
 
     /**
-    * @name pc.ImageElement#font
-    * @type pc.Font
-    * @description The font currently used for rendering.
-    */
+     * @name pc.ImageElement#font
+     * @type pc.Font
+     * @description The font currently used for rendering.
+     */
     Object.defineProperty(TextElement.prototype, "font", {
-        get: function () {
+        get: function() {
             return this._font;
         },
 
-        set: function (value) {
+        set: function(value) {
             this._font = value;
             if (this._font)
                 this._updateText();
@@ -823,11 +823,11 @@ pc.extend(pc, function () {
     });
 
     Object.defineProperty(TextElement.prototype, "bestFit", {
-        get: function () {
+        get: function() {
             return this._bestFit;
         },
 
-        set: function (value) {
+        set: function(value) {
             this._bestFit = value;
             if (this._font) {
                 this._updateText();
@@ -836,11 +836,11 @@ pc.extend(pc, function () {
     });
 
     Object.defineProperty(TextElement.prototype, "minFontSize", {
-        get: function () {
+        get: function() {
             return this._minFontSize;
         },
 
-        set: function (value) {
+        set: function(value) {
             this._minFontSize = value;
             if (this._font) {
                 this._updateText();
@@ -849,11 +849,11 @@ pc.extend(pc, function () {
     });
 
     Object.defineProperty(TextElement.prototype, "maxFontSize", {
-        get: function () {
+        get: function() {
             return this._maxFontSize;
         },
 
-        set: function (value) {
+        set: function(value) {
             this._maxFontSize = value;
             if (this._font) {
                 this._updateText();
@@ -862,13 +862,13 @@ pc.extend(pc, function () {
     });
 
     Object.defineProperty(TextElement.prototype, "enabled", {
-        get: function () {
+        get: function() {
             return this._enabled;
         },
 
-        set: function (value) {
+        set: function(value) {
             this._enabled = value;
-            
+
             if (this._meshInstance) {
                 this._meshInstance.visible = value;
             }
@@ -876,17 +876,19 @@ pc.extend(pc, function () {
     });
 
     Object.defineProperty(TextElement.prototype, "material", {
-        get: function () {
-            return this._textMaterial;
+        get: function() {
+            return this._material;
         },
 
-        set: function (value) {
-            this._textMaterial = value || this._system.defaultTextMaterial;
-            
+        set: function(value) {
+            this._material = value;
+
             var screen = this._element.screen;
-            
+
             if (screen && screen.screen) {
                 this._updateMaterial(screen.screen.screenType == pc.SCREEN_TYPE_SCREEN);
+            } else {
+                this._updateMaterial(false);
             }
         }
     });
@@ -902,4 +904,3 @@ pc.extend(pc, function () {
         TEXT_VERTICAL_ALIGN_BOTTOM: 'bottom'
     };
 }());
-

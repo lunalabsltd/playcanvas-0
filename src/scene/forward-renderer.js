@@ -1,4 +1,4 @@
-Object.assign(pc, function () {
+Object.assign(pc, function() {
 
     // Global shadowmap resources
     var scaleShift = new pc.Mat4().mul2(
@@ -129,8 +129,8 @@ Object.assign(pc, function () {
         var maxz = -9999999999;
         var z;
 
-        for ( var i = 0; i < 8; ++i ) {
-            w2sc.transformPoint( _sceneAABB_LS[i], _sceneAABB_LS[i] );
+        for (var i = 0; i < 8; ++i) {
+            w2sc.transformPoint(_sceneAABB_LS[i], _sceneAABB_LS[i]);
             z = _sceneAABB_LS[i].z;
             if (z < minz) minz = z;
             if (z > maxz) maxz = z;
@@ -457,9 +457,9 @@ Object.assign(pc, function () {
 
     var layerDrawOrders = {};
 
-    layerDrawOrders[ pc.LAYER_HUD ]     = 3000;
-    layerDrawOrders[ pc.LAYER_FX ]      = 2450;
-    layerDrawOrders[ pc.LAYER_WORLD ]   = 2000;
+    layerDrawOrders[pc.LAYER_HUD] = 3000;
+    layerDrawOrders[pc.LAYER_FX] = 2450;
+    layerDrawOrders[pc.LAYER_WORLD] = 2000;
 
     Object.assign(ForwardRenderer.prototype, {
 
@@ -488,7 +488,7 @@ Object.assign(pc, function () {
                 return drawCallB.zdist - drawCallA.zdist;
             }
 
-            return materialA.id - materialB.id; 
+            return materialA.id - materialB.id;
         },
 
         sortCompare: function(drawCallA, drawCallB) {
@@ -519,23 +519,20 @@ Object.assign(pc, function () {
             return drawCallA.mesh.id - drawCallB.mesh.id;
         },
 
-        _switchMaterialPass: function (device, material, shader) {
-            material.applyRenderStateSettings( shader.renderState );
+        _switchMaterialPass: function(device, material, shader) {
+            material.applyRenderStateSettings(shader.renderState);
 
-            device.setBlending( material.blend );
-            device.setBlendFunction( material.blendSrc, material.blendDst );
-            device.setBlendEquation( material.blendEquation );
-            device.setCullMode( material.cull );
-            device.setDepthWrite( material.depthWrite );
-            device.setDepthTest( material.depthTest );
+            device.setBlending(material.blend);
+            device.setBlendFunction(material.blendSrc, material.blendDst);
+            device.setBlendEquation(material.blendEquation);
+            device.setCullMode(material.cull);
+            device.setDepthWrite(material.depthWrite);
+            device.setDepthTest(material.depthTest);
 
-            var gl = device.gl;
-            gl.blendFuncSeparate( gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA );
-
-            device.setShader( shader );
+            device.setShader(shader);
         },
 
-        depthSortCompare: function (drawCallA, drawCallB) {
+        depthSortCompare: function(drawCallA, drawCallB) {
             keyA = drawCallA._key[pc.SORTKEY_DEPTH];
             keyB = drawCallB._key[pc.SORTKEY_DEPTH];
 
@@ -546,11 +543,11 @@ Object.assign(pc, function () {
             return keyB - keyA;
         },
 
-        lightCompare: function (lightA, lightB) {
+        lightCompare: function(lightA, lightB) {
             return lightA.key - lightB.key;
         },
 
-        _isVisible: function (camera, meshInstance) {
+        _isVisible: function(camera, meshInstance) {
             if (!meshInstance.visible) return false;
 
             // custom visibility method on MeshInstance
@@ -570,7 +567,7 @@ Object.assign(pc, function () {
             return camera.frustum.containsSphere(tempSphere);
         },
 
-        getShadowCamera: function (device, light) {
+        getShadowCamera: function(device, light) {
             var shadowCam = light._shadowCamera;
             var shadowBuffer;
 
@@ -587,7 +584,7 @@ Object.assign(pc, function () {
             return shadowCam;
         },
 
-        updateCameraFrustum: function (camera) {
+        updateCameraFrustum: function(camera) {
             if (camera.vrDisplay && camera.vrDisplay.presenting) {
                 projMat = camera.vrDisplay.combinedProj;
                 var parent = camera._node.getParent();
@@ -619,7 +616,7 @@ Object.assign(pc, function () {
         },
 
         // make sure colorWrite is set to true to all channels, if you want to fully clear the target
-        setCamera: function (camera, target, clear, cullBorder) {
+        setCamera: function(camera, target, clear, cullBorder) {
             var vrDisplay = camera.vrDisplay;
             if (!vrDisplay || !vrDisplay.presenting) {
                 // Projection Matrix
@@ -657,8 +654,8 @@ Object.assign(pc, function () {
                 this.viewPosId.setValue(this.viewPos);
 
                 // Screen Parameters
-                screenParams[ 0 ] = ( camera.renderTarget || this.device ).width;
-                screenParams[ 1 ] = ( camera.renderTarget || this.device ).height;
+                screenParams[0] = (camera.renderTarget || this.device).width;
+                screenParams[1] = (camera.renderTarget || this.device).height;
                 this.screenParamsId.setValue(screenParams);
 
                 camera.frustum.update(projMat, viewMat);
@@ -759,7 +756,7 @@ Object.assign(pc, function () {
             if (cullBorder) device.setScissor(1, 1, pixelWidth - 2, pixelHeight - 2); // optionally clip borders when rendering
         },
 
-        dispatchGlobalLights: function (scene) {
+        dispatchGlobalLights: function(scene) {
             var i;
             this.mainLight = -1;
 
@@ -776,7 +773,7 @@ Object.assign(pc, function () {
             if (scene.skyboxModel) this.skyboxIntensityId.setValue(scene.skyboxIntensity);
         },
 
-        _resolveLight: function (scope, i) {
+        _resolveLight: function(scope, i) {
             var light = "light" + i;
             this.lightColorId[i] = scope.resolve(light + "_color");
             this.lightDir[i] = new Float32Array(3);
@@ -800,7 +797,7 @@ Object.assign(pc, function () {
             this.lightCookieOffsetId[i] = scope.resolve(light + "_cookieOffset");
         },
 
-        dispatchDirectLights: function (dirs, scene, mask) {
+        dispatchDirectLights: function(dirs, scene, mask) {
             var numDirs = dirs.length;
             var i;
             var directional, wtm;
@@ -870,7 +867,7 @@ Object.assign(pc, function () {
             return cnt;
         },
 
-        dispatchPointLight: function (scene, scope, point, cnt) {
+        dispatchPointLight: function(scene, scope, point, cnt) {
             var wtm = point._node.getWorldTransform();
 
             if (!this.lightColorId[cnt]) {
@@ -903,7 +900,7 @@ Object.assign(pc, function () {
             }
         },
 
-        dispatchSpotLight: function (scene, scope, spot, cnt) {
+        dispatchSpotLight: function(scene, scope, spot, cnt) {
             var wtm = spot._node.getWorldTransform();
 
             if (!this.lightColorId[cnt]) {
@@ -985,7 +982,7 @@ Object.assign(pc, function () {
             }
         },
 
-        dispatchLocalLights: function (sortedLights, scene, mask, usedDirLights, staticLightList) {
+        dispatchLocalLights: function(sortedLights, scene, mask, usedDirLights, staticLightList) {
             var i;
             var point, spot;
 
@@ -1037,7 +1034,7 @@ Object.assign(pc, function () {
             }
         },
 
-        cull: function (camera, drawCalls, visibleList) {
+        cull: function(camera, drawCalls, visibleList) {
             // #ifdef PROFILER
             var cullTime = pc.now();
             var numDrawCallsCulled = 0;
@@ -1055,12 +1052,11 @@ Object.assign(pc, function () {
                     drawCall = drawCalls[i];
                     if (!drawCall.visible && !drawCall.command) continue;
 
-                    var mask = drawCall.node.cullingLayer || 0xFFFFFFFF; 
-                    
+                    var mask = drawCall.node.cullingLayer || 0xFFFFFFFF;
+
                     if (!drawCall.node.cullingLayer && drawCall.node._parent && (drawCall.node._parent.cullingLayer || drawCall.node._parent.constructor == pc.Entity)) {
                         mask = drawCall.node._parent.cullingLayer;
-                    }
-                    else {
+                    } else {
                         if (!drawCall.node.cullingLayer && drawCall.node._parent && drawCall.node._parent._parent) {
                             mask = drawCall.node._parent._parent.cullingLayer;
                         }
@@ -1117,7 +1113,7 @@ Object.assign(pc, function () {
             return visibleLength;
         },
 
-        cullLights: function (camera, lights) {
+        cullLights: function(camera, lights) {
             var i, light, type;
             for (i = 0; i < lights.length; i++) {
                 light = lights[i];
@@ -1132,7 +1128,7 @@ Object.assign(pc, function () {
             }
         },
 
-        updateCpuSkinMatrices: function (drawCalls) {
+        updateCpuSkinMatrices: function(drawCalls) {
             var drawCallsCount = drawCalls.length;
             if (drawCallsCount === 0) return;
 
@@ -1154,7 +1150,7 @@ Object.assign(pc, function () {
             // #endif
         },
 
-        updateGpuSkinMatrices: function (drawCalls) {
+        updateGpuSkinMatrices: function(drawCalls) {
             // #ifdef PROFILER
             var skinTime = pc.now();
             // #endif
@@ -1177,7 +1173,7 @@ Object.assign(pc, function () {
             // #endif
         },
 
-        updateMorphedBounds: function (drawCalls) {
+        updateMorphedBounds: function(drawCalls) {
             // #ifdef PROFILER
             var morphTime = pc.now();
             // #endif
@@ -1195,7 +1191,7 @@ Object.assign(pc, function () {
             // #endif
         },
 
-        updateMorphing: function (drawCalls) {
+        updateMorphing: function(drawCalls) {
             // #ifdef PROFILER
             var morphTime = pc.now();
             // #endif
@@ -1215,7 +1211,7 @@ Object.assign(pc, function () {
             // #endif
         },
 
-        setBaseConstants: function (device, material) {
+        setBaseConstants: function(device, material) {
             // Cull mode
             device.setCullMode(material.cull);
             // Alpha test
@@ -1225,7 +1221,7 @@ Object.assign(pc, function () {
             }
         },
 
-        setSkinning: function (device, meshInstance, material) {
+        setSkinning: function(device, meshInstance, material) {
             if (meshInstance.skinInstance) {
                 this._skinDrawCalls++;
                 if (device.supportsBoneTextures) {
@@ -1240,7 +1236,7 @@ Object.assign(pc, function () {
             }
         },
 
-        _drawInstance: function (device, meshInstance, mesh, style, normal) {
+        _drawInstance: function(device, meshInstance, mesh, style, normal) {
             instancingData = meshInstance.instancingData;
             if (instancingData) {
                 this._instancedDrawCalls++;
@@ -1280,28 +1276,28 @@ Object.assign(pc, function () {
             if (meshInstance._screen) {
                 var id = meshInstance._screen._guid;
 
-                if (!this._screensRendered[ id ]) {
-                    this._screensRendered[ id ] = true;
-                    this.device.clear( {flags: pc.CLEARFLAG_STENCIL} );
+                if (!this._screensRendered[id]) {
+                    this._screensRendered[id] = true;
+                    this.device.clear({ flags: pc.CLEARFLAG_STENCIL });
                 }
             }
 
             if (meshInstance.material && meshInstance.material.shader && meshInstance.material.shader._multipassShader) {
                 var shaders = meshInstance.material.shader.shaders;
 
-                for(var i = 0; i < shaders.length; i++) {
-                    this._switchMaterialPass( device, meshInstance.material, shaders[i] );
-                    result += this._drawInstance.call( this, device, meshInstance, mesh, style, normal );    
+                for (var i = 0; i < shaders.length; i++) {
+                    this._switchMaterialPass(device, meshInstance.material, shaders[i]);
+                    result += this._drawInstance.call(this, device, meshInstance, mesh, style, normal);
                 }
             } else {
-                result += this._drawInstance.call( this, device, meshInstance, mesh, style, normal );
+                result += this._drawInstance.call(this, device, meshInstance, mesh, style, normal);
             }
 
             return result;
         },
 
         // used for stereo
-        drawInstance2: function (device, meshInstance, mesh, style) {
+        drawInstance2: function(device, meshInstance, mesh, style) {
             instancingData = meshInstance.instancingData;
             if (instancingData) {
                 this._instancedDrawCalls++;
@@ -1319,9 +1315,9 @@ Object.assign(pc, function () {
             }
         },
 
-        renderShadows: function (lights, cameraPass) {
+        renderShadows: function(lights, cameraPass) {
 
-            if(this.removeShadows) {
+            if (this.removeShadows) {
                 return;
             }
 
@@ -1568,13 +1564,13 @@ Object.assign(pc, function () {
             // #endif
         },
 
-        updateShader: function (meshInstance, objDefs, staticLightList, pass, sortedLights) {
+        updateShader: function(meshInstance, objDefs, staticLightList, pass, sortedLights) {
             meshInstance.material._scene = this.scene;
             meshInstance.material.updateShader(this.device, this.scene, objDefs, staticLightList, pass, sortedLights);
             meshInstance._shader[pass] = meshInstance.material.shader;
         },
 
-        renderForward: function (camera, drawCalls, drawCallsCount, sortedLights, pass, cullingMask, drawCallback, layer) {
+        renderForward: function(camera, drawCalls, drawCallsCount, sortedLights, pass, cullingMask, drawCallback, layer) {
             var device = this.device;
             var scene = this.scene;
             var vrDisplay = camera.vrDisplay;
@@ -1587,7 +1583,8 @@ Object.assign(pc, function () {
             // #endif
 
             var i, drawCall, mesh, material, objDefs, variantKey, lightMask, style, usedDirLights;
-            var prevMaterial = null, prevObjDefs, prevLightMask, prevStatic;
+            var prevMaterial = null,
+                prevObjDefs, prevLightMask, prevStatic;
             var paramName, parameter, parameters;
             var stencilFront, stencilBack;
 
@@ -1834,7 +1831,7 @@ Object.assign(pc, function () {
             // #endif
         },
 
-        setupInstancing: function (device) {
+        setupInstancing: function(device) {
             if (!pc._instanceVertexFormat) {
                 var formatDesc = [
                     { semantic: pc.SEMANTIC_TEXCOORD2, components: 4, type: pc.TYPE_FLOAT32 },
@@ -1852,7 +1849,7 @@ Object.assign(pc, function () {
             }
         },
 
-        revertStaticMeshes: function (meshInstances) {
+        revertStaticMeshes: function(meshInstances) {
             var i;
             var drawCalls = meshInstances;
             var drawCallsCount = drawCalls.length;
@@ -1879,7 +1876,7 @@ Object.assign(pc, function () {
             }
         },
 
-        prepareStaticMeshes: function (meshInstances, lights) {
+        prepareStaticMeshes: function(meshInstances, lights) {
             // #ifdef PROFILER
             var prepareTime = pc.now();
             var searchTime = 0;
@@ -2175,7 +2172,7 @@ Object.assign(pc, function () {
             // #endif
         },
 
-        updateShaders: function (drawCalls) {
+        updateShaders: function(drawCalls) {
 
             // #ifdef PROFILER
             var time = pc.now();
@@ -2206,7 +2203,7 @@ Object.assign(pc, function () {
             // #endif
         },
 
-        updateLitShaders: function (drawCalls) {
+        updateLitShaders: function(drawCalls) {
             // #ifdef PROFILER
             var time = pc.now();
             // #endif
@@ -2232,7 +2229,7 @@ Object.assign(pc, function () {
         },
 
 
-        beginFrame: function (comp) {
+        beginFrame: function(comp) {
             var device = this.device;
             var scene = this.scene;
             var meshInstances = comp._meshInstances;
@@ -2272,7 +2269,7 @@ Object.assign(pc, function () {
             }
         },
 
-        beginLayers: function (comp) {
+        beginLayers: function(comp) {
             var scene = this.scene;
             var len = comp.layerList.length;
             var layer;
@@ -2327,7 +2324,7 @@ Object.assign(pc, function () {
             }
         },
 
-        cullLocalShadowmap: function (light, drawCalls) {
+        cullLocalShadowmap: function(light, drawCalls) {
             var i, type, shadowCam, shadowCamNode, passes, pass, numInstances, meshInstance, visibleList, vlen, visible;
             var lightNode;
             type = light._type;
@@ -2392,7 +2389,7 @@ Object.assign(pc, function () {
         },
 
 
-        cullDirectionalShadowmap: function (light, drawCalls, camera, pass) {
+        cullDirectionalShadowmap: function(light, drawCalls, camera, pass) {
             var i, shadowCam, shadowCamNode, lightNode, frustumSize, vlen, visibleList;
             var unitPerTexel, delta, p;
             var minx, miny, minz, maxx, maxy, maxz, centerx, centery;
@@ -2419,12 +2416,12 @@ Object.assign(pc, function () {
             _getFrustumPoints(camera, light.shadowDistance || camera._farClip, frustumPoints);
 
             // 2. Figure out the maximum diagonal of the frustum in light's projected space.
-            frustumSize = frustumDiagonal.sub2( frustumPoints[0], frustumPoints[6] ).length();
-            frustumSize = Math.max( frustumSize, frustumDiagonal.sub2( frustumPoints[4], frustumPoints[6] ).length() );
+            frustumSize = frustumDiagonal.sub2(frustumPoints[0], frustumPoints[6]).length();
+            frustumSize = Math.max(frustumSize, frustumDiagonal.sub2(frustumPoints[4], frustumPoints[6]).length());
 
             // 3. Transform the 8 corners of the camera frustum into the shadow camera's view space
-            shadowCamView.copy( shadowCamNode.getWorldTransform() ).invert();
-            c2sc.copy( shadowCamView ).mul( camera._node.worldTransform );
+            shadowCamView.copy(shadowCamNode.getWorldTransform()).invert();
+            c2sc.copy(shadowCamView).mul(camera._node.worldTransform);
             for (i = 0; i < 8; i++) {
                 c2sc.transformPoint(frustumPoints[i], frustumPoints[i]);
             }
@@ -2448,9 +2445,9 @@ Object.assign(pc, function () {
             // And also snap the frustum to align with shadow texel. ( Avoid shadow shimmering )
             unitPerTexel = frustumSize / light._shadowResolution;
             delta = (frustumSize - (maxx - minx)) * 0.5;
-            minx = Math.floor( (minx - delta) / unitPerTexel ) * unitPerTexel;
+            minx = Math.floor((minx - delta) / unitPerTexel) * unitPerTexel;
             delta = (frustumSize - (maxy - miny)) * 0.5;
-            miny = Math.floor( (miny - delta) / unitPerTexel ) * unitPerTexel;
+            miny = Math.floor((miny - delta) / unitPerTexel) * unitPerTexel;
             maxx = minx + frustumSize;
             maxy = miny + frustumSize;
 
@@ -2506,7 +2503,7 @@ Object.assign(pc, function () {
             // Fit clipping planes tightly around visible shadow casters
 
             // 1. Calculate minz/maxz based on casters' AABB
-            var z = _getZFromAABBSimple( shadowCamView, visibleSceneAabb.getMin(), visibleSceneAabb.getMax(), minx, maxx, miny, maxy );
+            var z = _getZFromAABBSimple(shadowCamView, visibleSceneAabb.getMin(), visibleSceneAabb.getMax(), minx, maxx, miny, maxy);
 
             // Always use the scene's aabb's Z value
             // Otherwise object between the light and the frustum won't cast shadow.
@@ -2532,13 +2529,13 @@ Object.assign(pc, function () {
         },
 
 
-        gpuUpdate: function (drawCalls) {
+        gpuUpdate: function(drawCalls) {
             // skip everything with visibleThisFrame === false
             this.updateGpuSkinMatrices(drawCalls);
             this.updateMorphing(drawCalls);
         },
 
-        clearView: function (camera, target, options) {
+        clearView: function(camera, target, options) {
             camera = camera.camera;
             var device = this.device;
             device.setRenderTarget(target);
@@ -2560,7 +2557,7 @@ Object.assign(pc, function () {
             device.clear(options ? options : camera._clearOptions); // clear full RT
         },
 
-        setSceneConstants: function () {
+        setSceneConstants: function() {
             var i;
             var device = this.device;
             var scene = this.scene;
@@ -2595,7 +2592,7 @@ Object.assign(pc, function () {
             this.screenSizeId.setValue(this._screenSize);
         },
 
-        renderComposition: function (comp) {
+        renderComposition: function(comp) {
             var device = this.device;
             var camera;
             var renderedRt = comp._renderedRt;
@@ -2825,9 +2822,9 @@ Object.assign(pc, function () {
 
                     layer._sortVisible(transparent, camera.node, cameraPass);
 
-                     // #ifdef PROFILER
+                    // #ifdef PROFILER
                     this._sortTime += pc.now() - sortTime;
-                     // #endif
+                    // #endif
 
                     visible = transparent ? objects.visibleTransparent[cameraPass] : objects.visibleOpaque[cameraPass];
 
@@ -2841,13 +2838,13 @@ Object.assign(pc, function () {
                     draws = this._forwardDrawCalls;
                     // #endif
                     this.renderForward(camera.camera,
-                                       visible.list,
-                                       visible.length,
-                                       layer._sortedLights,
-                                       layer.shaderPass,
-                                       layer.cullingMask,
-                                       layer.onDrawCall,
-                                       layer);
+                        visible.list,
+                        visible.length,
+                        layer._sortedLights,
+                        layer.shaderPass,
+                        layer.cullingMask,
+                        layer.onDrawCall,
+                        layer);
                     // #ifdef PROFILER
                     layer._forwardDrawCalls += this._forwardDrawCalls - draws;
                     // #endif
@@ -2876,7 +2873,7 @@ Object.assign(pc, function () {
                     }
                 }
 
-               // #ifdef PROFILER
+                // #ifdef PROFILER
                 layer._renderTime += pc.now() - drawTime;
                 // #endif
             }
