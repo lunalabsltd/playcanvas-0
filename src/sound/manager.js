@@ -67,10 +67,10 @@ Object.assign(pc, function () {
                         source.disconnect();
 
                         // no further need for this so remove the listener
-                        window.removeEventListener('touchend', unlock);
+                        options.canvas.removeEventListener('touchstart', unlock);
                     };
 
-                    window.addEventListener('touchend', unlock);
+                    options.canvas.addEventListener('touchstart', unlock);
                 }
             }
         } else {
