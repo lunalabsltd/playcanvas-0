@@ -485,10 +485,10 @@ Object.assign(pc, (function () {
             r[5] = temp1 / temp3;
             r[6] = 0;
             r[7] = 0;
-            r[8] = (right + left) / temp2;
-            r[9] = (top + bottom) / temp3;
-            r[10] = (-zfar - znear) / temp4;
-            r[11] = -1;
+            r[8] = -(right + left) / temp2;
+            r[9] = -(top + bottom) / temp3;
+            r[10] = -(-zfar - znear) / temp4;
+            r[11] = 1;
             r[12] = 0;
             r[13] = 0;
             r[14] = (-temp1 * zfar) / temp4;
@@ -558,7 +558,7 @@ Object.assign(pc, (function () {
             r[7] = 0;
             r[8] = 0;
             r[9] = 0;
-            r[10] = -2 / (far - near);
+            r[10] = 2 / (far - near);
             r[11] = 0;
             r[12] = -(right + left) / (right - left);
             r[13] = -(top + bottom) / (top - bottom);

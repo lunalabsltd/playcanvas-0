@@ -529,9 +529,6 @@ Object.assign(pc, function () {
             device.setDepthWrite( material.depthWrite );
             device.setDepthTest( material.depthTest );
 
-            var gl = device.gl;
-            gl.blendFuncSeparate( gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA );
-
             device.setShader( shader );
         },
 
@@ -1269,6 +1266,8 @@ Object.assign(pc, function () {
                 device.draw(mesh.primitive[style]);
                 return 0;
             }
+
+            return 0;
         },
 
         drawInstance: function(device, meshInstance, mesh, style, normal) {
