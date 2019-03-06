@@ -1266,6 +1266,8 @@ Object.assign(pc, function () {
                 device.draw(mesh.primitive[style]);
                 return 0;
             }
+
+            return 0;
         },
 
         drawInstance: function(device, meshInstance, mesh, style, normal) {
