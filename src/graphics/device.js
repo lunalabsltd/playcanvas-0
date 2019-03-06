@@ -1934,6 +1934,18 @@ Object.assign(pc, function () {
                     //     attribute.scopeId.value = null;
                     // }
 
+                    if (element !== null) {
+                        // Retrieve the vertex buffer that contains this element
+                        vertexBuffer = this.vertexBuffers[element.stream];
+                        vbOffset = this.vbOffsets[element.stream] || 0;
+
+                        // check if the attribute has actually "leaked" from another draw call
+                        // this might happen with single shader rendering different meshes (with diff formats)
+                        if ( !vertexBuffer.format.elementMap[ element.name ] ) {
+                            element = null;
+                        }
+                    }
+
                     // Check the vertex element is valid
                     if (element !== null) {
                         if (element.const) {
@@ -1943,10 +1955,6 @@ Object.assign(pc, function () {
 
                             continue;
                         }
-
-                        // Retrieve the vertex buffer that contains this element
-                        vertexBuffer = this.vertexBuffers[element.stream];
-                        vbOffset = this.vbOffsets[element.stream] || 0;
 
                         // Set the active vertex buffer object
                         bufferId = vertexBuffer.bufferId;
@@ -1961,6 +1969,7 @@ Object.assign(pc, function () {
                             gl.enableVertexAttribArray(locationId);
                             this.enabledAttributes[locationId] = true;
                         }
+
                         gl.vertexAttribPointer(
                             locationId,
                             element.numComponents,
