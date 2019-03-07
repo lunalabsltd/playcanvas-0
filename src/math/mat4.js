@@ -474,7 +474,7 @@ Object.assign(pc, (function () {
             temp1 = 2 * znear;
             temp2 = right - left;
             temp3 = top - bottom;
-            temp4 = zfar / znear;
+            temp4 = zfar - znear;
 
             r = this.data;
             r[0] = temp1 / temp2;
@@ -485,9 +485,9 @@ Object.assign(pc, (function () {
             r[5] = temp1 / temp3;
             r[6] = 0;
             r[7] = 0;
-            r[8] = (right + left) / temp2;
-            r[9] = (top + bottom) / temp3;
-            r[10] = (-zfar - znear) / temp4;
+            r[8] = -(right + left) / temp2;
+            r[9] = -(top + bottom) / temp3;
+            r[10] = -(-zfar - znear) / temp4;
             r[11] = 1;
             r[12] = 0;
             r[13] = 0;
