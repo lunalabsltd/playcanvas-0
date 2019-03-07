@@ -330,7 +330,7 @@ pc.extend(pc, function () {
                 _tmpVector.copy( element._pivotPoint );
 
                 // check if we are in canvas-enabled element
-                if ( this.screen ) {
+                if ( this.screen && !this.screen._findParentScreen() ) {
                     // yes we do: in this case screen matrix is our base
                     this.worldTransform.copy( this.screen._screenMatrix );
 

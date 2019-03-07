@@ -159,7 +159,7 @@ Object.assign(pc, function () {
             if (this._projection === pc.PROJECTION_PERSPECTIVE) {
                 // Calculate the screen click as a point on the far plane of the
                 // normalized device coordinate 'box' (z=1)
-                _far.set(x / cw * 2 - 1, (ch - y) / ch * 2 - 1, 1);
+                _far.set(x / cw * 2 - 1, y / ch * 2 - 1, 1);
 
                 // Transform to world space
                 _invViewProjMat.transformPoint(_far, _farW);

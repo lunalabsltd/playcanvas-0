@@ -617,16 +617,7 @@ Object.assign(pc, function () {
             this._model = value;
 
             if (this._model) {
-                var meshInstances = this._model.meshInstances;
-
-                for (var i = 0; i < meshInstances.length; i++) {
-                    meshInstances[i].castShadow = this._castShadows;
-                    meshInstances[i].receiveShadow = this._receiveShadows;
-                    meshInstances[i].isStatic = this._isStatic;
-                }
-
                 this.lightmapped = this._lightmapped; // update meshInstances
-
                 this.entity.addChild(this._model.graph);
 
                 if (this.enabled && this.entity.enabled) {
@@ -634,11 +625,12 @@ Object.assign(pc, function () {
                 }
 
                 // Store the entity that owns this model
-                this._model._entity = this.entity;
+                this._model.entity = this.entity;
 
                 // Update any animation component
-                if (this.entity.animation)
-                    this.entity.animation.setModel(this._model);
+                if (this.entity.animation) {
+                    this.entity.animation.setModel( this._model );
+                }
 
                 // trigger event handler to load mapping
                 // for new model

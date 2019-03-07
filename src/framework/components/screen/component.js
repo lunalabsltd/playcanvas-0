@@ -135,20 +135,23 @@ pc.extend(pc, function () {
             this.entity._dirtyLocal = true;
             this.entity._dirtyWorld = true;
 
-            // check if the parent element has screen attached; if it does, matrix
-            // and resolution should be borrowed from there
-            if (this.entity.parent && this.entity.parent.screen) {
-                var screen = this.entity.parent.screen;
-
-                this._screenMatrix.copy( screen._screenMatrix );
-
-                this._width = screen._width;
-                this._height = screen._height;
-            }
-
             // compute inverse screen matrix for ray casts and pointer clicks
             // (conviently, it will convert points from world space )
             this._inverseScreenMatrix.copy( this._screenMatrix ).invert();
+        },
+
+        _findParentScreen: function () {
+            var node = this.entity.parent;
+
+            while ( node ) {
+                if ( node.screen ) {
+                    return node.screen;
+                } else {
+                    node = node.parent;
+                }
+            }
+
+            return null;
         },
 
         onRemove: function () {

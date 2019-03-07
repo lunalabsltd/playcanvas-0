@@ -34,6 +34,8 @@ Object.assign(pc, function () {
 
         // AABB for object space mesh vertices
         this._aabb = new pc.BoundingBox();
+        this.bindposes = [];
+        this.subMeshes = [];
 
         // Array of object space AABBs of vertices affected by each bone
         this.boneAabb = null;

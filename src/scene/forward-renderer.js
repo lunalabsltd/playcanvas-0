@@ -468,12 +468,12 @@ Object.assign(pc, function () {
             var materialB = drawCallB._material;
 
             // FIXME EN-62 should remove the below
-            if (drawCallA.sortingLayerIndex != drawCallB.sortingLayerIndex) {
-                return drawCallA.sortingLayerIndex - drawCallB.sortingLayerIndex;
-            }
-
             if (materialA.renderQueue != materialB.renderQueue) {
                 return materialA.renderQueue - materialB.renderQueue;
+            }
+
+            if (drawCallA.sortingLayerIndex != drawCallB.sortingLayerIndex) {
+                return drawCallA.sortingLayerIndex - drawCallB.sortingLayerIndex;
             }
 
             if (drawCallA.sortingOrder != drawCallB.sortingOrder) {
@@ -496,12 +496,12 @@ Object.assign(pc, function () {
             var materialB = drawCallB._material;
 
             // FIXME EN-62 should remove the below
-            if (drawCallA.sortingLayerIndex != drawCallB.sortingLayerIndex) {
-                return drawCallA.sortingLayerIndex - drawCallB.sortingLayerIndex;
-            }
-
             if (materialA.renderQueue != materialB.renderQueue) {
                 return materialA.renderQueue - materialB.renderQueue;
+            }
+
+            if (drawCallA.sortingLayerIndex != drawCallB.sortingLayerIndex) {
+                return drawCallA.sortingLayerIndex - drawCallB.sortingLayerIndex;
             }
 
             if (drawCallA.sortingOrder != drawCallB.sortingOrder) {

@@ -43,7 +43,7 @@ Object.assign(pc, function () {
         this.normalMatrix = new pc.Mat3();
         this._dirtyNormal = true;
 
-        this._worldTransformDrivenByPhysics = false;
+        this._rigidbody = null;
 
         this._right = null;
         this._up = null;

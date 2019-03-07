@@ -846,7 +846,11 @@ Object.assign(pc, (function () {
          * @returns {pc.Quat} The look rotation quaternion.
          */
         setLookAt: function (target, up) {
-            var m = new pc.Mat4().setLookAt(pc.Vec3.ZERO, target.clone().scale(-1), up);
+            if ( target.equals( pc.Vec3.ZERO ) ) {
+                return this.copy( pc.Quat.IDENTITY );
+            }
+
+            var m = new pc.Mat4().setLookAt(pc.Vec3.ZERO, target, up);
             this.setFromMat4(m);
 
             return this;
