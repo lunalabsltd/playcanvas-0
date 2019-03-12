@@ -17,6 +17,19 @@ Object.assign(pc, function() {
         new pc.Quat().setFromEulerAngles(0, 0, 180)
     ];
 
+    // An array of Spherical Harmonics uniforms in the order
+    // Unity uses them. Each uniform is assumed to be
+    // vec4 and the values can be obtained from pc.SphericalHarmonicsL2
+    var lightProbeUniforms = [
+        "unity_SHAr",
+        "unity_SHAg",
+        "unity_SHAb",
+        "unity_SHBr",
+        "unity_SHBg",
+        "unity_SHBb",
+        "unity_SHC"
+    ];
+
     var numShadowModes = 5;
     var shadowMapCache = [{}, {}, {}, {}, {}]; // must be a size of numShadowModes
 
@@ -392,6 +405,15 @@ Object.assign(pc, function() {
 
         this.alphaTestId = scope.resolve('alpha_ref');
         this.opacityMapId = scope.resolve('texture_opacityMap');
+
+        // allocate the array for SH uniforms
+        this.lightProbeIds = new Array( lightProbeUniforms.length );
+
+        // resolve uniforms in the order of definition to match the order
+        // in pc.SphericalHarmonicsL2 class
+        for ( var i = 0; i < lightProbeUniforms.length; i++ ) {
+            this.lightProbeIds[ i ] = scope.resolve( lightProbeUniforms[i] );
+        }
 
         this.ambientId = scope.resolve("light_globalAmbient");
         this.exposureId = scope.resolve("exposure");
@@ -770,7 +792,21 @@ Object.assign(pc, function() {
             }
             this.ambientId.setValue(this.ambientColor);
             this.exposureId.setValue(scene.exposure);
+
             if (scene.skyboxModel) this.skyboxIntensityId.setValue(scene.skyboxIntensity);
+
+            // check if the scene has ambient probe configured
+            if (scene.ambientProbe) {
+                // ok it does: the default uniform value should be one of ambient light then
+                // please note mesh instances *might* work out their own probe values
+                var probe = scene.ambientProbe;
+
+                // simply set the values of the uniform
+                for ( var i = 0; i < lightProbeUniforms.length; i++ ) {
+                    var value = probe.uniforms[ i ];
+                    this.lightProbeIds[ i ].setValue( [ value.x, value.y, value.z, value.w ] );
+                }
+            }
         },
 
         _resolveLight: function(scope, i) {
