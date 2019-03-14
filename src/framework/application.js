@@ -160,6 +160,7 @@ Object.assign(pc, function () {
 
         this.graphicsDevice = new pc.GraphicsDevice(canvas, options.graphicsDeviceOptions);
         this.stats = new pc.ApplicationStats(this.graphicsDevice);
+        options.canvas = canvas;
         this._audioManager = new pc.SoundManager(options);
 
         // stores all entities that have been created
