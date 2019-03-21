@@ -37,9 +37,6 @@ Object.assign(pc, function () {
         this._dirtyLocal = false;
         this._aabbVer = 0;
 
-        this.worldRotationTransform = new pc.Mat4();
-        this.localRotationTransform = new pc.Mat4();
-
         this.worldTransform = new pc.Mat4();
         this._dirtyWorld = false;
 
