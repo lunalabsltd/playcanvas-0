@@ -189,8 +189,8 @@ pc.extend(pc, function () {
             for (var i = 0; i < this._layoutElements.length; i++) {
                 var layoutElement = this._layoutElements[ i ];
                 if (layoutElement != null && layoutElement.m_Enabled) {
-                    layoutElement.calculateLayoutInputHorizontal();
-                    layoutElement.calculateLayoutInputVertical();
+                    layoutElement.CalculateLayoutInputHorizontal();
+                    layoutElement.CalculateLayoutInputVertical();
                 }
             }
 
