@@ -189,8 +189,8 @@ pc.extend(pc, function () {
             for (var i = 0; i < this._layoutElements.length; i++) {
                 var layoutElement = this._layoutElements[ i ];
                 if (layoutElement != null && layoutElement.m_Enabled) {
-                    layoutElement.calculateLayoutInputHorizontal();
-                    layoutElement.calculateLayoutInputVertical();
+                    layoutElement.CalculateLayoutInputHorizontal();
+                    layoutElement.CalculateLayoutInputVertical();
                 }
             }
 
@@ -299,8 +299,8 @@ pc.extend(pc, function () {
             for (var i = 0; i < this._layoutControllers.length; i++) {
                 var layoutController = this._layoutControllers[ i ];
                 if (layoutController != null && layoutController.m_Enabled) {
-                    layoutController.setLayoutHorizontal();
-                    layoutController.setLayoutVertical();
+                    layoutController.SetLayoutHorizontal();
+                    layoutController.SetLayoutVertical();
                 }    
             }
 
