@@ -372,7 +372,9 @@ Object.assign(pc, function () {
         for (var i = 0; i < meshInstances.length; i++) {
             m = meshInstances[i];
             mat = m.material;
-            if (mat.blendType === pc.BLEND_NONE) {
+            if (!mat) {
+                continue;
+            } else if (mat.blendType === pc.BLEND_NONE) {
                 arr = this.opaqueMeshInstances;
             } else {
                 arr = this.transparentMeshInstances;
