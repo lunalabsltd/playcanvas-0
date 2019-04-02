@@ -522,14 +522,14 @@ Object.assign(pc, function() {
         _switchMaterialPass: function(device, material, shader) {
             material.applyRenderStateSettings(shader.renderState);
 
-            device.setBlending(material.blend);
-            device.setBlendFunction(material.blendSrc, material.blendDst);
-            device.setBlendEquation(material.blendEquation);
-            device.setCullMode(material.cull);
-            device.setDepthWrite(material.depthWrite);
-            device.setDepthTest(material.depthTest);
+            device.setBlending( material.blend );
+            device.setBlendFunction( material.blendSrc, material.blendDst );
+            device.setBlendEquation( material.blendEquation );
+            device.setCullMode( material.cull );
+            device.setDepthWrite( material.depthWrite );
+            device.setDepthTest( material.depthTest );
 
-            device.setShader(shader);
+            device.setShader( shader );
         },
 
         depthSortCompare: function(drawCallA, drawCallB) {
@@ -1236,8 +1236,12 @@ Object.assign(pc, function() {
             }
         },
 
-        _drawInstance: function(device, meshInstance, mesh, style, normal) {
+        _drawInstance: function (device, meshInstance, mesh, style, normal) {
+            modelMatrix = meshInstance.node.worldTransform;
+            this.modelMatrixId.setValue(modelMatrix.data);
+
             instancingData = meshInstance.instancingData;
+            
             if (instancingData) {
                 this._instancedDrawCalls++;
                 this._removedByInstancing += instancingData.count;
@@ -1248,9 +1252,6 @@ Object.assign(pc, function() {
                     return instancingData.count - 1;
                 }
             } else {
-                modelMatrix = meshInstance.node.worldTransform;
-                this.modelMatrixId.setValue(modelMatrix.data);
-
                 if (normal) {
                     normalMatrix = meshInstance.node.normalMatrix;
                     if (meshInstance.node._dirtyNormal) {
@@ -1264,6 +1265,8 @@ Object.assign(pc, function() {
                 device.draw(mesh.primitive[style]);
                 return 0;
             }
+
+            return 0;
         },
 
         drawInstance: function(device, meshInstance, mesh, style, normal) {

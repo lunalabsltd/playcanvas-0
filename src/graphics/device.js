@@ -1934,6 +1934,18 @@ Object.assign(pc, function () {
                     //     attribute.scopeId.value = null;
                     // }
 
+                    if (element !== null) {
+                        // Retrieve the vertex buffer that contains this element
+                        vertexBuffer = this.vertexBuffers[element.stream];
+                        vbOffset = this.vbOffsets[element.stream] || 0;
+
+                        // check if the attribute has actually "leaked" from another draw call
+                        // this might happen with single shader rendering different meshes (with diff formats)
+                        if ( !vertexBuffer.format.elementMap[ element.name ] ) {
+                            element = null;
+                        }
+                    }
+
                     // Check the vertex element is valid
                     if (element !== null) {
                         if (element.const) {
@@ -1943,10 +1955,6 @@ Object.assign(pc, function () {
 
                             continue;
                         }
-
-                        // Retrieve the vertex buffer that contains this element
-                        vertexBuffer = this.vertexBuffers[element.stream];
-                        vbOffset = this.vbOffsets[element.stream] || 0;
 
                         // Set the active vertex buffer object
                         bufferId = vertexBuffer.bufferId;
@@ -1961,6 +1969,7 @@ Object.assign(pc, function () {
                             gl.enableVertexAttribArray(locationId);
                             this.enabledAttributes[locationId] = true;
                         }
+
                         gl.vertexAttribPointer(
                             locationId,
                             element.numComponents,
@@ -1970,7 +1979,7 @@ Object.assign(pc, function () {
                             element.offset + vbOffset
                         );
 
-                        if (element.stream === 1 && numInstances > 1) {
+                        if (element.stream === 1 && numInstances > 0) {
                             if (!this.instancedAttribs[locationId]) {
                                 gl.vertexAttribDivisor(locationId, 1);
                                 this.instancedAttribs[locationId] = true;
@@ -2039,7 +2048,11 @@ Object.assign(pc, function () {
             var samplers = shader.samplers;
             var uniforms = shader.uniforms;
 
-            if (numInstances > 1) {
+            if (numInstances === 0) {
+                return;
+            }
+
+            if (numInstances > 0) {
                 this.boundBuffer = null;
                 this.attributesInvalidated = true;
             }
@@ -2125,7 +2138,7 @@ Object.assign(pc, function () {
                 var format = indexBuffer.glFormat;
                 var offset = primitive.base * indexBuffer.bytesPerIndex;
 
-                if (numInstances > 1) {
+                if (numInstances > 0) {
                     gl.drawElementsInstanced(mode, count, format, offset, numInstances);
                 } else {
                     gl.drawElements(mode, count, format, offset);
@@ -2133,7 +2146,7 @@ Object.assign(pc, function () {
             } else {
                 var first = primitive.base;
 
-                if (numInstances > 1) {
+                if (numInstances > 0) {
                     gl.drawArraysInstanced(mode, first, count, numInstances);
                 } else {
                     gl.drawArrays(mode, first, count);
@@ -2148,7 +2161,7 @@ Object.assign(pc, function () {
 
             // #ifdef PROFILER
             this._drawCallsPerFrame++;
-            this._primsPerFrame[primitive.type] += primitive.count * (numInstances > 1 ? numInstances : 1);
+            this._primsPerFrame[primitive.type] += primitive.count * (numInstances > 0 ? numInstances : 1);
             // #endif
         },
 

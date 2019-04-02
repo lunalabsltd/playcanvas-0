@@ -74,6 +74,7 @@ Object.assign(pc, function () {
         this.hasUv1 = false;
         this.hasColor = false;
         this.hasTangents = false;
+        this.elementMap = {};
 
         this.size = 0;
         for (i = 0, len = description.length; i < len; i++) {
@@ -111,6 +112,8 @@ Object.assign(pc, function () {
             element.stride = this.size;
 
             offset += element.size;
+
+            this.elementMap[ element.name ] = element;
         }
     };
 

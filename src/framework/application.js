@@ -445,7 +445,7 @@ Object.assign(pc, function () {
             { class: pc.AudioSourceComponentSystem,         args: [ this, this._audioManager ] },
             { class: pc.SoundComponentSystem,               args: [ this, this._audioManager ] },
             { class: pc.AudioListenerComponentSystem,       args: [ this, this._audioManager ] },
-            { class: pc.ParticleSystemComponentSystem,      args: [ this ] },
+            //{ class: pc.ParticleSystemComponentSystem,      args: [ this ] },
             { class: pc.ScreenComponentSystem,              args: [ this ] },
             { class: pc.ElementComponentSystem,             args: [ this ] },
             { class: pc.UnityComponentSystemManagerSystem,  args: [ this ] },
@@ -455,6 +455,8 @@ Object.assign(pc, function () {
             { class: pc.ColliderSystem,                     args: [ this ] },
             { class: pc.JointSystem,                        args: [ this ] },
             { class: pc.MonoBehaviourSystem,                args: [ this ] },
+            { class: pc.ParticleSystemSystem,               args: [ this ] },
+            { class: pc.ParticleSystemRendererSystem,       args: [ this ] },
             { class: pc.AnimatorSystem,                     args: [ this ] }
         ];
 
