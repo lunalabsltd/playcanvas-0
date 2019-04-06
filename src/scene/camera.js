@@ -177,7 +177,8 @@ Object.assign(pc, function () {
                 // Calculate the screen click as a point on the far plane of the
                 // normalized device coordinate 'box' (z=1)
                 var range = this._farClip - this._nearClip;
-                _deviceCoord.set(x / cw, y / ch, z / range);
+                // z needs to be biased by this._nearClip because it's not always close to 0
+                _deviceCoord.set(x / cw, y / ch, (z - this._nearClip) / range);
                 _deviceCoord.scale(2);
                 _deviceCoord.sub(pc.Vec3.ONE);
 
