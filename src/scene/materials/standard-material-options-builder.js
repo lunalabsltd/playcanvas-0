@@ -91,7 +91,6 @@ Object.assign(pc, function () {
         options.alphaToCoverage = stdMat.alphaToCoverage;
         options.needsNormalFloat = stdMat.normalizeNormalMap;
         options.sphereMap = !!stdMat.sphereMap;
-        options.cubeMap = !!stdMat.cubeMap;
         options.dpAtlas = !!stdMat.dpAtlas;
         options.useSpecular = useSpecular;
         options.emissiveFormat = stdMat.emissiveMap ? (stdMat.emissiveMap.rgbm ? 1 : (stdMat.emissiveMap.format === pc.PIXELFORMAT_RGBA32F ? 2 : 0)) : null;
@@ -147,12 +146,13 @@ Object.assign(pc, function () {
         options.toneMap = stdMat.useGammaTonemap ? scene.toneMapping : -1;
         options.rgbmAmbient = rgbmAmbient;
         options.hdrAmbient = hdrAmbient;
-        options.rgbmReflection = rgbmReflection;
         options.hdrReflection = hdrReflection;
         options.useRgbm = rgbmReflection || rgbmAmbient || (stdMat.emissiveMap ? stdMat.emissiveMap.rgbm : false) || (stdMat.lightMap ? stdMat.lightMap.rgbm : false);
         options.fixSeams = prefilteredCubeMap128 ? prefilteredCubeMap128.fixCubemapSeams : (stdMat.cubeMap ? stdMat.cubeMap.fixCubemapSeams : false);
         options.prefilteredCubemap = !!prefilteredCubeMap128;
         options.skyboxIntensity = (prefilteredCubeMap128 && globalSky128 && prefilteredCubeMap128 === globalSky128) && (scene.skyboxIntensity !== 1);
+        options.cubeMap = !!stdMat.cubeMap || !!scene.environmentProbe;
+        options.rgbmReflection = rgbmReflection || !!scene.environmentProbe;
     };
 
     StandardMaterialOptionsBuilder.prototype._updateLightOptions = function (options, stdMat, objDefs, sortedLights, staticLightList) {

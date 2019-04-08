@@ -975,8 +975,9 @@ pc.programlib.standard = {
         code += pc.programlib.gammaCode(options.gamma);
         code += pc.programlib.tonemapCode(options.toneMap);
         code += pc.programlib.fogCode(options.fog);
+        code += chunks.rgbmPS;
 
-        if (options.useRgbm) code += chunks.rgbmPS;
+        //if (options.useRgbm) code += chunks.rgbmPS;
         if (cubemapReflection || options.prefilteredCubemap) {
             code += options.fixSeams ? chunks.fixCubemapSeamsStretchPS : chunks.fixCubemapSeamsNonePS;
         }
