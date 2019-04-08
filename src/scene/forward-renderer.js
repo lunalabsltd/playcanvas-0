@@ -392,10 +392,6 @@ Object.assign(pc, function() {
         this.shadowMapLightRadiusId = scope.resolve('light_radius');
         this.screenParamsId = scope.resolve('_ScreenParams');
 
-        // this.fogColorId = scope.resolve('fog_color');
-        // this.fogStartId = scope.resolve('fog_start');
-        // this.fogEndId = scope.resolve('fog_end');
-        // this.fogDensityId = scope.resolve('fog_density');
         this.fogColorId = scope.resolve( "unity_FogColor" );
         this.fogParamsId = scope.resolve( "unity_FogParams" );
 

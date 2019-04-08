@@ -3,11 +3,11 @@ uniform vec4 unity_FogParams;
 
 vec3 addFog(vec3 color) {
     float depth = gl_FragCoord.z / gl_FragCoord.w;
-    float factor = depth * unity_FogParams.x;
-    factor *= -factor;
-    factor = exp2( factor );
+    float coord = depth;
+
+    float unityFogFactor = unity_FogParams.x * coord; 
+    unityFogFactor = exp2( -unityFogFactor * unityFogFactor );
+    unityFogFactor = clamp( unityFogFactor, 0.0, 1.0 );
     
-    factor = clamp( factor, 0.0, 1.0 );
-    
-    return (color - unity_FogColor) * factor + unity_FogColor;
+    return (color - unity_FogColor) * unityFogFactor + unity_FogColor;
 }
