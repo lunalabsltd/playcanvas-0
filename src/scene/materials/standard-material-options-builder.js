@@ -91,9 +91,7 @@ Object.assign(pc, function () {
         options.alphaToCoverage = stdMat.alphaToCoverage;
         options.needsNormalFloat = stdMat.normalizeNormalMap;
         options.sphereMap = !!stdMat.sphereMap;
-        options.cubeMap = !!stdMat.cubeMap;
         options.dpAtlas = !!stdMat.dpAtlas;
-        options.ambientSH = !!stdMat.ambientSH;
         options.useSpecular = useSpecular;
         options.emissiveFormat = stdMat.emissiveMap ? (stdMat.emissiveMap.rgbm ? 1 : (stdMat.emissiveMap.format === pc.PIXELFORMAT_RGBA32F ? 2 : 0)) : null;
         options.lightMapFormat = stdMat.lightMap ? (stdMat.lightMap.rgbm ? 1 : (stdMat.lightMap.format === pc.PIXELFORMAT_RGBA32F ? 2 : 0)) : null;
@@ -137,20 +135,24 @@ Object.assign(pc, function () {
             (stdMat.dpAtlas ? stdMat.dpAtlas.rgbm || stdMat.dpAtlas.format === pc.PIXELFORMAT_RGBA32F : false);
 
         var globalSky128;
-        if (stdMat.useSkybox)
-            globalSky128 = scene._skyboxPrefiltered[0];
 
+        if (stdMat.useSkybox) {
+            globalSky128 = scene._skyboxPrefiltered[0];
+        }
+
+        options.ambientSH = !!scene.ambientProbe;
         options.fog = stdMat.useFog ? scene.fog : "none";
         options.gamma = stdMat.useGammaTonemap ? scene.gammaCorrection : pc.GAMMA_NONE;
         options.toneMap = stdMat.useGammaTonemap ? scene.toneMapping : -1;
         options.rgbmAmbient = rgbmAmbient;
         options.hdrAmbient = hdrAmbient;
-        options.rgbmReflection = rgbmReflection;
         options.hdrReflection = hdrReflection;
         options.useRgbm = rgbmReflection || rgbmAmbient || (stdMat.emissiveMap ? stdMat.emissiveMap.rgbm : false) || (stdMat.lightMap ? stdMat.lightMap.rgbm : false);
         options.fixSeams = prefilteredCubeMap128 ? prefilteredCubeMap128.fixCubemapSeams : (stdMat.cubeMap ? stdMat.cubeMap.fixCubemapSeams : false);
         options.prefilteredCubemap = !!prefilteredCubeMap128;
         options.skyboxIntensity = (prefilteredCubeMap128 && globalSky128 && prefilteredCubeMap128 === globalSky128) && (scene.skyboxIntensity !== 1);
+        options.cubeMap = !!stdMat.cubeMap || !!scene.environmentProbe;
+        options.rgbmReflection = rgbmReflection || !!scene.environmentProbe;
     };
 
     StandardMaterialOptionsBuilder.prototype._updateLightOptions = function (options, stdMat, objDefs, sortedLights, staticLightList) {
@@ -165,12 +167,13 @@ Object.assign(pc, function () {
             options.noShadow = (objDefs & pc.SHADERDEF_NOSHADOW) !== 0;
 
             if ((objDefs & pc.SHADERDEF_LM) !== 0) {
-                options.lightMapFormat = 1; // rgbm
+                options.lightMapFormat = (objDefs & pc.SHADERDEF_LM_DLDR) === 0 ? 1 : 2;
                 options.lightMap = true;
                 options.lightMapChannel = "rgb";
-                options.lightMapUv = 1;
+                // Unity falls back to UV0 channel if mesh lacks UV1 and lightmaps' UVs haven't been unwrapped
+                options.lightMapUv = (objDefs & pc.SHADERDEF_LMUV0) !== 0 ? 0 : 1;
                 options.lightMapTransform = 0;
-                options.lightMapWithoutAmbient = !stdMat.lightMap;
+                options.lightMapWithoutAmbient = ((objDefs & pc.SHADERDEF_LM_BAKED_AMBIENT) === 0);
                 options.useRgbm = true;
                 if ((objDefs & pc.SHADERDEF_DIRLM) !== 0) {
                     options.dirLightMap = true;

@@ -234,6 +234,12 @@
         SHADERDEF_DIRLM: 128,
         SHADERDEF_SCREENSPACE: 256,
         SHADERDEF_TANGENTS: 512,
+        // forces shader to fetch lightmapped UVs from uv0 channel
+        SHADERDEF_LMUV0: 1024,
+        // notifies the shader the lightmaps are in dLDR format
+        SHADERDEF_LM_DLDR: 2048,
+        // notifies the shader the ambient IS baked into lightmaps
+        SHADERDEF_LM_BAKED_AMBIENT: 4096,
 
         LINEBATCH_WORLD: 0,
         LINEBATCH_OVERLAY: 1,

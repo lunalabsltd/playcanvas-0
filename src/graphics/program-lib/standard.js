@@ -311,6 +311,7 @@ pc.programlib.standard = {
             if (samplerFormat !== undefined) {
                 var fmt = samplerFormat === 0 ? "texture2DSRGB" : (samplerFormat === 1 ? "texture2DRGBM" : "texture2D");
                 subCode = subCode.replace(/\$texture2DSAMPLE/g, fmt);
+                subCode = "#define " + (propName.toUpperCase()) + "_MAP_SAMPLER_FORMAT_" + samplerFormat + "\n" + subCode;
             }
         }
 
@@ -974,8 +975,9 @@ pc.programlib.standard = {
         code += pc.programlib.gammaCode(options.gamma);
         code += pc.programlib.tonemapCode(options.toneMap);
         code += pc.programlib.fogCode(options.fog);
+        code += chunks.rgbmPS;
 
-        if (options.useRgbm) code += chunks.rgbmPS;
+        //if (options.useRgbm) code += chunks.rgbmPS;
         if (cubemapReflection || options.prefilteredCubemap) {
             code += options.fixSeams ? chunks.fixCubemapSeamsStretchPS : chunks.fixCubemapSeamsNonePS;
         }
@@ -1138,26 +1140,32 @@ pc.programlib.standard = {
             code += chunks.combineDiffusePS;
         }
 
+        // by default the ambient light is always on (worst case - it's gonna be black)
         var addAmbient = true;
+
+        // if the shader is lightmapped, ambient can be *optionally* disabled
         if (options.lightMap || options.lightVertexColor) {
             var lightmapChunkPropName = options.dirLightMap ? 'lightmapDirPS' : 'lightmapSinglePS';
             code += this._addMap("light", lightmapChunkPropName, options, chunks, options.lightMapFormat);
             addAmbient = options.lightMapWithoutAmbient;
         }
 
+        // if the ambient flag is still on, we need to understand which program to append
         if (addAmbient) {
-
-            var ambientDecode = options.rgbmAmbient ? "decodeRGBM" : (options.hdrAmbient ? "" : "gammaCorrectInput");
-
             if (options.ambientSH) {
+                // ambient light comes from light probe(s)
                 code += chunks.ambientSHPS;
             } else if (options.prefilteredCubemap) {
+                // ambient light comes from cubemap (skybox)
+                var ambientDecode = options.rgbmAmbient ? "decodeRGBM" : (options.hdrAmbient ? "" : "gammaCorrectInput");
+
                 if (useTexCubeLod) {
                     code += chunks.ambientPrefilteredCubeLodPS.replace(/\$DECODE/g, ambientDecode);
                 } else {
                     code += chunks.ambientPrefilteredCubePS.replace(/\$DECODE/g, ambientDecode);
                 }
             } else {
+                // ambient is just a constant color
                 code += chunks.ambientConstantPS;
             }
         }

@@ -1,6 +1,6 @@
 vec3 decodeRGBM(vec4 rgbm) {
-    vec3 color = (8.0 * rgbm.a) * rgbm.rgb;
-    return color * color;
+    vec3 color = (6.0 * rgbm.a) * rgbm.rgb;
+    return color;
 }
 
 vec3 texture2DRGBM(sampler2D tex, vec2 uv) {
