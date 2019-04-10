@@ -56,14 +56,10 @@ pc.extend(pc, function () {
 
         this._mesh = this._createMesh();
 
-        this._node = new pc.GraphNode();
-        this._node.localTransform = element._fromPivotTransform;
-        this._node.forcedLocalTransform = element._fromPivotTransform;
-
         this._model = new pc.Model();
-        this._model.graph = this._node;
+        this._model.graph = new pc.GraphNode();
         
-        this._meshInstance = new pc.MeshInstance(this._node, this._mesh, this._material);
+        this._meshInstance = new pc.MeshInstance(this._entity, this._mesh, this._material);
         this._meshInstance.preRender = this;
         this._onStencilLayerChange();
 

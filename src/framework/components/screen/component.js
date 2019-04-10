@@ -66,6 +66,7 @@ pc.extend(pc, function () {
 
     ScreenComponent.SCALEMODE_NONE = "none";
     ScreenComponent.SCALEMODE_BLEND = "blend";
+    ScreenComponent.SCALEMODE_EXPAND = "expand";
 
     var _transform = new pc.Mat4();
 
@@ -162,12 +163,21 @@ pc.extend(pc, function () {
         },
 
         _calcScale: function (resolution, referenceResolution) {
-            // Using log of scale values
-            // This produces a nicer outcome where if you have a xscale = 2 and yscale = 0.5
-            // the combined scale is 1 for an even blend
-            var lx = Math.log2(resolution.x / referenceResolution.x);
-            var ly = Math.log2(resolution.y / referenceResolution.y);
-            return Math.pow(2, (lx*(1-this._scaleBlend) + ly*this._scaleBlend));
+            if ( this._scaleMode === ScreenComponent.SCALEMODE_NONE ) {
+                return 1.0;
+            } else if ( this._scaleMode === ScreenComponent.SCALEMODE_EXPAND ) {
+                return Math.min( resolution.x / referenceResolution.x, resolution.y / referenceResolution.y );
+            } else if ( this._scaleMode === ScreenComponent.SCALEMODE_SHRINK ) {
+                return Math.max( resolution.x / referenceResolution.x, resolution.y / referenceResolution.y );
+            } else {
+                // Using log of scale values
+                // This produces a nicer outcome where if you have a xscale = 2 and yscale = 0.5
+                // the combined scale is 1 for an even blend
+                var lx = Math.log2( resolution.x / referenceResolution.x );
+                var ly = Math.log2( resolution.y / referenceResolution.y );
+
+                return Math.pow(2, (lx*(1-this._scaleBlend) + ly*this._scaleBlend));
+            }
         },
 
         _onResize: function (width, height) {
@@ -245,14 +255,10 @@ pc.extend(pc, function () {
             }
 
             if ( this._screenType != pc.SCREEN_TYPE_SCREEN ) {
-                this._resolution.set(value.x, value.y);
+                this._resolution.set( value.x, value.y );
             } else if ( !camera || !camera.renderTarget ) {
                 // ignore input when using screenspace.
-                this._resolution.set(this.system.app.graphicsDevice.width, this.system.app.graphicsDevice.height);
-            }
-
-            if (this._scaleMode === pc.ScreenComponent.SCALEMODE_NONE) {
-                this.referenceResolution = this._resolution;
+                this._resolution.set( this.system.app.graphicsDevice.width, this.system.app.graphicsDevice.height );
             }
 
             this._updateScale();
@@ -283,8 +289,8 @@ pc.extend(pc, function () {
     * in pixels and have everything scaled up or down for higher or lower resolutions.
     */
     Object.defineProperty(ScreenComponent.prototype, "referenceResolution", {
-        set: function (value) {
-            this._referenceResolution.set(value.x, value.y);
+        set: function ( value ) {
+            this._referenceResolution.set( value.x, value.y );
 
             this._updateScale();
             this._calcProjectionMatrix();
@@ -353,17 +359,18 @@ pc.extend(pc, function () {
     */
     Object.defineProperty(ScreenComponent.prototype, "scaleMode", {
         set: function (value) {
-            if (value !== pc.ScreenComponent.SCALEMODE_NONE && value !== pc.ScreenComponent.SCALEMODE_BLEND) {
+            if (value !== pc.ScreenComponent.SCALEMODE_NONE && value !== pc.ScreenComponent.SCALEMODE_BLEND && value !== pc.ScreenComponent.SCALEMODE_EXPAND && value !== pc.ScreenComponent.SCALEMODE_SHRINK ) {
                 value = pc.ScreenComponent.SCALEMODE_NONE;
             }
 
             // world space screens do not support scale modes
-            if (this._screenType == pc.SCREEN_TYPE_WORLD && value !== pc.ScreenComponent.SCALEMODE_NONE) {
+            if ( this._screenType == pc.SCREEN_TYPE_WORLD ) {
                 value = pc.ScreenComponent.SCALEMODE_NONE;
             }
 
             this._scaleMode = value;
             this.resolution = this._resolution; // force update
+
             this.fire("set:scalemode", this._scaleMode);
         },
         get: function () {
