@@ -179,7 +179,7 @@ pc.extend(pc, function () {
                 var lx = Math.log2( resolution.x / referenceResolution.x );
                 var ly = Math.log2( resolution.y / referenceResolution.y );
 
-                return Math.pow(2, (lx*(1-this._scaleBlend) + ly*this._scaleBlend));
+                return Math.pow( 2, ( lx * ( 1 - this._scaleBlend ) + ly * this._scaleBlend ) );
             }
         },
 
@@ -362,7 +362,11 @@ pc.extend(pc, function () {
     */
     Object.defineProperty(ScreenComponent.prototype, "scaleMode", {
         set: function (value) {
-            if (value !== pc.ScreenComponent.SCALEMODE_NONE && value !== pc.ScreenComponent.SCALEMODE_BLEND && value !== pc.ScreenComponent.SCALEMODE_EXPAND && value !== pc.ScreenComponent.SCALEMODE_SHRINK ) {
+            if ( value !== pc.ScreenComponent.SCALEMODE_NONE &&
+                value !== pc.ScreenComponent.SCALEMODE_BLEND &&
+                value !== pc.ScreenComponent.SCALEMODE_EXPAND &&
+                value !== pc.ScreenComponent.SCALEMODE_SHRINK ) {
+
                 value = pc.ScreenComponent.SCALEMODE_NONE;
             }
 
