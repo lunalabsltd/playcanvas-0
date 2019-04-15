@@ -1941,7 +1941,7 @@ Object.assign(pc, function () {
 
                         // check if the attribute has actually "leaked" from another draw call
                         // this might happen with single shader rendering different meshes (with diff formats)
-                        if ( !vertexBuffer.format.elementMap[ element.name ] ) {
+                        if ( vertexBuffer &&  !vertexBuffer.format.elementMap[ element.name ] ) {
                             element = null;
                         }
                     }
