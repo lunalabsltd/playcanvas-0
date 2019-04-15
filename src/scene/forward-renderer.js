@@ -1143,7 +1143,8 @@ Object.assign(pc, function() {
 
                     // if the object belongs to a screen-space canvas, only cull it based on camera (in)equality
                     if (drawCall.preRender && drawCall.preRender._element && drawCall.preRender._element.screen) {
-                        visible = (drawCall.preRender._element.screen.screen._camera == camera);
+                        var screen = drawCall.preRender._element.screen.screen;
+                        visible = (screen._camera == camera) || screen.screenType === 'screen';
                     } else if (drawCall.layer > pc.LAYER_FX) {
                         if (drawCall.cull) {
                             visible = this._isVisible(camera, drawCall);
