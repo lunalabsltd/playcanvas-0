@@ -1,5 +1,5 @@
-pc.extend(pc, function () {
-    
+pc.extend( pc, function() {
+
     /**
      * @component
      * @name pc.ScreenComponent
@@ -42,12 +42,12 @@ pc.extend(pc, function () {
      * @property {pc.Camera} camera The camera to use for screen positioning (only for pc.SCREEN_TYPE_WORLD mode).
      */
 
-    var ScreenComponent = function ScreenComponent (system, entity) {
-        pc.Component.call(this, system, entity);
-        
-        this._resolution = new pc.Vec2(this.system.app.graphicsDevice.width, this.system.app.graphicsDevice.height);
-        this._referenceResolution = new pc.Vec2(640,320);
-        this._offset = new pc.Vec2(0, 0);
+    var ScreenComponent = function ScreenComponent( system, entity ) {
+        pc.Component.call( this, system, entity );
+
+        this._resolution = new pc.Vec2( this.system.app.graphicsDevice.width, this.system.app.graphicsDevice.height );
+        this._referenceResolution = new pc.Vec2( 640, 320 );
+        this._offset = new pc.Vec2( 0, 0 );
         this._scaleMode = pc.ScreenComponent.SCALEMODE_NONE;
         this.scale = 1;
         this._scaleBlend = 0.5;
@@ -58,24 +58,26 @@ pc.extend(pc, function () {
         this._screenMatrix = new pc.Mat4();
         this._inverseScreenMatrix = new pc.Mat4();
 
-        system.app.graphicsDevice.on("resizecanvas", this._onResize, this);
+        system.app.graphicsDevice.on( "resizecanvas", this._onResize, this );
     };
 
-    ScreenComponent.prototype = Object.create(pc.Component.prototype);
+    ScreenComponent.prototype = Object.create( pc.Component.prototype );
     ScreenComponent.prototype.constructor = ScreenComponent;
 
     ScreenComponent.SCALEMODE_NONE = "none";
     ScreenComponent.SCALEMODE_BLEND = "blend";
+    ScreenComponent.SCALEMODE_EXPAND = "expand";
+    ScreenComponent.SCALEMODE_SHRINK = "shrink";
 
     var _transform = new pc.Mat4();
 
-    pc.extend(ScreenComponent.prototype, {
+    pc.extend( ScreenComponent.prototype, {
 
-        _updateScreenInChildren: function () {
-            for(var i = 0; i < this.entity._children.length; i++) {
-                var element = this.entity._children[i].element;
+        _updateScreenInChildren: function() {
+            for ( var i = 0; i < this.entity._children.length; i++ ) {
+                var element = this.entity._children[ i ].element;
 
-                if (element) {
+                if ( element ) {
                     element._updateScreen( element._findScreen(), true );
                 }
             }
@@ -83,15 +85,15 @@ pc.extend(pc, function () {
             this.syncDrawOrder();
         },
 
-        syncDrawOrder: function () {
+        syncDrawOrder: function() {
             var system = pc.Application.getApplication().systems.screen;
-            
-            if (system) {
+
+            if ( system ) {
                 system._dirtyOrder = true;
             }
         },
 
-        _calcProjectionMatrix: function () {
+        _calcProjectionMatrix: function() {
             var near = 1E5;
             var far = -1E5;
 
@@ -100,13 +102,13 @@ pc.extend(pc, function () {
 
             // default screen matrix (for screen-space) is obviously plain ortho one: UI space with (0, 0) origin
             // at the lower left corner and (w, h) in size maps onto clipspace of the device.
-            this._screenMatrix.setOrtho(0, this._resolution.x, 0, this._resolution.y, near, far);
+            this._screenMatrix.setOrtho( 0, this._resolution.x, 0, this._resolution.y, near, far );
 
             // cache camera and screen type
             var camera = this.camera;
             var screenType = this._screenType;
 
-            if (!camera && screenType == pc.SCREEN_TYPE_CAMERA) {
+            if ( !camera && screenType == pc.SCREEN_TYPE_CAMERA ) {
                 // no camera leaves us with the only choice: fall back to screen-space canvas
                 screenType = pc.SCREEN_TYPE_SCREEN;
             }
@@ -140,7 +142,7 @@ pc.extend(pc, function () {
             this._inverseScreenMatrix.copy( this._screenMatrix ).invert();
         },
 
-        _findParentScreen: function () {
+        _findParentScreen: function() {
             var node = this.entity.parent;
 
             while ( node ) {
@@ -154,52 +156,60 @@ pc.extend(pc, function () {
             return null;
         },
 
-        onRemove: function () {
+        onRemove: function() {
             if ( this._camera ) {
                 this._camera._detachScreen( this );
             }
         },
 
-        _updateScale: function () {
-            this.scale = this._calcScale(this._resolution, this.referenceResolution)
+        _updateScale: function() {
+            this.scale = this._calcScale( this._resolution, this.referenceResolution )
         },
 
-        _calcScale: function (resolution, referenceResolution) {
-            // Using log of scale values
-            // This produces a nicer outcome where if you have a xscale = 2 and yscale = 0.5
-            // the combined scale is 1 for an even blend
-            var lx = Math.log2(resolution.x / referenceResolution.x);
-            var ly = Math.log2(resolution.y / referenceResolution.y);
-            return Math.pow(2, (lx*(1-this._scaleBlend) + ly*this._scaleBlend));
+        _calcScale: function( resolution, referenceResolution ) {
+            if ( this._scaleMode === ScreenComponent.SCALEMODE_NONE ) {
+                return 1.0;
+            } else if ( this._scaleMode === ScreenComponent.SCALEMODE_EXPAND ) {
+                return Math.min( resolution.x / referenceResolution.x, resolution.y / referenceResolution.y );
+            } else if ( this._scaleMode === ScreenComponent.SCALEMODE_SHRINK ) {
+                return Math.max( resolution.x / referenceResolution.x, resolution.y / referenceResolution.y );
+            } else {
+                // Using log of scale values
+                // This produces a nicer outcome where if you have a xscale = 2 and yscale = 0.5
+                // the combined scale is 1 for an even blend
+                var lx = Math.log2( resolution.x / referenceResolution.x );
+                var ly = Math.log2( resolution.y / referenceResolution.y );
+                return Math.pow( 2, ( lx * ( 1 - this._scaleBlend ) + ly * this._scaleBlend ) );
+            }
         },
 
-        _onResize: function (width, height) {
+        _onResize: function( width, height ) {
             var camera = this.camera;
 
-            if (camera && camera.renderTarget) {
+            if ( camera && camera.renderTarget ) {
                 width = camera.renderTarget.width;
                 height = camera.renderTarget.height;
             }
 
-            if (this._screenType != pc.SCREEN_TYPE_WORLD) {
-                this._resolution.set(width, height);
+            if ( this._screenType != pc.SCREEN_TYPE_WORLD ) {
+                this._resolution.set( width, height );
                 this.resolution = this._resolution; // force update
             }
         },
 
-        _updateStencilParameters: function () {
-            var ref     = 255;
+        _updateStencilParameters: function() {
+            var ref = 255;
             var masking = 0;
-            var self    = this;
+            var self = this;
 
-            var walker = function (root) {
+            var walker = function( root ) {
                 var element = root.element;
-                
-                if (element) {
+
+                if ( element ) {
                     element._stencilLayer = ref;
                     element._masked = masking > 0;
 
-                    if (element._image && element._image._masksChildren) {
+                    if ( element._image && element._image._masksChildren ) {
                         element._topMostMask = masking == 0;
                         masking++;
 
@@ -208,39 +218,39 @@ pc.extend(pc, function () {
                     }
                 }
 
-                for(var i = 0; i < root._children.length; i++) {
-                    walker( root._children[i] );
+                for ( var i = 0; i < root._children.length; i++ ) {
+                    walker( root._children[ i ] );
                 }
 
-                if (element && element._image) {
-                    if (element._image._masksChildren) {
+                if ( element && element._image ) {
+                    if ( element._image._masksChildren ) {
                         masking--;
                     }
 
-                    element._image._updateMaterial(self.screenType == pc.SCREEN_TYPE_SCREEN);
+                    element._image._updateMaterial( self.screenType == pc.SCREEN_TYPE_SCREEN );
                 }
 
-                if (element && element._text) {
-                    element._text._updateMaterial(self.screenType == pc.SCREEN_TYPE_SCREEN);
+                if ( element && element._text ) {
+                    element._text._updateMaterial( self.screenType == pc.SCREEN_TYPE_SCREEN );
                 }
             }
 
-            if (this.entity) {
+            if ( this.entity ) {
                 walker( this.entity )
             }
         }
 
-    });
+    } );
 
     /**
-    * @name pc.ScreenComponent#resolution
-    * @type pc.Vec2
-    * @description The resolution to use for screen rendering. The value will be ignored for screen-space screens, and
-    * will overwrite reference resolution is scaling mode is set to none. If the screen scaling is enabled, the screen
-    * will compute the scaling factor to match the height and width difference and will scale all elements accordingly.
-    */
-    Object.defineProperty(ScreenComponent.prototype, "resolution", {
-        set: function (value) {
+     * @name pc.ScreenComponent#resolution
+     * @type pc.Vec2
+     * @description The resolution to use for screen rendering. The value will be ignored for screen-space screens, and
+     * will overwrite reference resolution is scaling mode is set to none. If the screen scaling is enabled, the screen
+     * will compute the scaling factor to match the height and width difference and will scale all elements accordingly.
+     */
+    Object.defineProperty( ScreenComponent.prototype, "resolution", {
+        set: function( value ) {
             var camera = this.camera;
 
             if ( camera && camera.renderTarget ) {
@@ -248,161 +258,161 @@ pc.extend(pc, function () {
             }
 
             if ( this._screenType != pc.SCREEN_TYPE_SCREEN ) {
-                this._resolution.set(value.x, value.y);
+                this._resolution.set( value.x, value.y );
             } else if ( !camera || !camera.renderTarget ) {
                 // ignore input when using screenspace.
-                this._resolution.set(this.system.app.graphicsDevice.width, this.system.app.graphicsDevice.height);
+                this._resolution.set( this.system.app.graphicsDevice.width, this.system.app.graphicsDevice.height );
             }
 
-            if (this._scaleMode === pc.ScreenComponent.SCALEMODE_NONE) {
+            if ( this._scaleMode === pc.ScreenComponent.SCALEMODE_NONE ) {
                 this.referenceResolution = this._resolution;
             }
 
             this._updateScale();
 
             this._calcProjectionMatrix();
-            this.fire("set:resolution", this._resolution);
+            this.fire( "set:resolution", this._resolution );
         },
-        get: function () {
+        get: function() {
             return this._resolution;
         }
-    });
+    } );
 
-    Object.defineProperty(ScreenComponent.prototype, "offset", {
-        set: function (value) {
-            this._offset.set(value.x, value.y);
+    Object.defineProperty( ScreenComponent.prototype, "offset", {
+        set: function( value ) {
+            this._offset.set( value.x, value.y );
             this._calcProjectionMatrix();
         },
-        get: function () {
+        get: function() {
             return this._offset;
         }
-    });
+    } );
 
     /**
-    * @name pc.ScreenComponent#referenceResolution
-    * @type pc.Vec2
-    * @description The reference resolution to compute screen scaling against. This is usually the size of UI mockups used
-    * to create and lay out the interface components from, allowing to specify font sizes, sprite borders, corner offsets etc
-    * in pixels and have everything scaled up or down for higher or lower resolutions.
-    */
-    Object.defineProperty(ScreenComponent.prototype, "referenceResolution", {
-        set: function (value) {
-            this._referenceResolution.set(value.x, value.y);
+     * @name pc.ScreenComponent#referenceResolution
+     * @type pc.Vec2
+     * @description The reference resolution to compute screen scaling against. This is usually the size of UI mockups used
+     * to create and lay out the interface components from, allowing to specify font sizes, sprite borders, corner offsets etc
+     * in pixels and have everything scaled up or down for higher or lower resolutions.
+     */
+    Object.defineProperty( ScreenComponent.prototype, "referenceResolution", {
+        set: function( value ) {
+            this._referenceResolution.set( value.x, value.y );
 
             this._updateScale();
             this._calcProjectionMatrix();
 
-            this.fire("set:referenceresolution", this._resolution);
+            this.fire( "set:referenceresolution", this._resolution );
         },
-        get: function () {
-            if (this._scaleMode === pc.ScreenComponent.SCALEMODE_NONE) {
+        get: function() {
+            if ( this._scaleMode === pc.ScreenComponent.SCALEMODE_NONE ) {
                 return this._resolution;
             } else {
                 return this._referenceResolution;
             }
         }
-    });
+    } );
 
     /**
-    * @name pc.ScreenComponent#screenType
-    * @type String
-    * @description The type of the screen, being either {@link pc.SCREEN_TYPE_WORLD}, {@link pc.SCREEN_TYPE_SCREEN} or
-    * {@link pc.SCREEN_TYPE_CAMERA}.
-    */
-    Object.defineProperty(ScreenComponent.prototype, "screenType", {
-        set: function (value) {
+     * @name pc.ScreenComponent#screenType
+     * @type String
+     * @description The type of the screen, being either {@link pc.SCREEN_TYPE_WORLD}, {@link pc.SCREEN_TYPE_SCREEN} or
+     * {@link pc.SCREEN_TYPE_CAMERA}.
+     */
+    Object.defineProperty( ScreenComponent.prototype, "screenType", {
+        set: function( value ) {
             this._screenType = value;
-            
-            if (this._screenType == pc.SCREEN_TYPE_SCREEN) {
-                this._resolution.set(this.system.app.graphicsDevice.width, this.system.app.graphicsDevice.height);
+
+            if ( this._screenType == pc.SCREEN_TYPE_SCREEN ) {
+                this._resolution.set( this.system.app.graphicsDevice.width, this.system.app.graphicsDevice.height );
             }
 
             this.resolution = this._resolution;
 
-            this.fire('set:screentype', this._screenType);
+            this.fire( 'set:screentype', this._screenType );
         },
-        get: function () {
+        get: function() {
             return this._screenType;
         }
-    });
+    } );
 
     /**
-    * @name pc.ScreenComponent#screenDistance
-    * @type Number
-    * @description Only for {@link pc.SCREEN_TYPE_CAMERA}: where to place the UI plane in camera's sight. Please note that
-    * placing the screen to close or too far to the camera will make it be discarded due to near / far plane clipping. Use that
-    * to control the amount of pespective distortion visible on the screen elements or to aling the screen in relation to
-    * other objects in the scene.
-    */
-    Object.defineProperty(ScreenComponent.prototype, "screenDistance", {
-        set: function (value) {
+     * @name pc.ScreenComponent#screenDistance
+     * @type Number
+     * @description Only for {@link pc.SCREEN_TYPE_CAMERA}: where to place the UI plane in camera's sight. Please note that
+     * placing the screen to close or too far to the camera will make it be discarded due to near / far plane clipping. Use that
+     * to control the amount of pespective distortion visible on the screen elements or to aling the screen in relation to
+     * other objects in the scene.
+     */
+    Object.defineProperty( ScreenComponent.prototype, "screenDistance", {
+        set: function( value ) {
             this._screenDistance = value;
             this._calcProjectionMatrix();
         },
-        get: function () {
+        get: function() {
             return this._screenDistance;
         }
-    });
+    } );
 
     /**
-    * @name pc.ScreenComponent#scaleMode
-    * @type String
-    * @description Setting this property to {@link ScreenComponent.SCALEMODE_BLEND} will make the screen scale its contents
-    * in accordance with scaleBlend value, trying to match height or width or a blend of the two. The screen will still take
-    * full viewport in screen-space and camera-space mode, but all elements will appear "up" or "down" scaled. This is useful
-    * to prevent the buttons and texts become too big or small for certain resolutions: when scaling is disabled the screen
-    * just uses target pixel resolution, and in this case having a button, of, say 100x50 pixels might look too small if it was
-    * designed for a lower pixel resolution initially.
-    */
-    Object.defineProperty(ScreenComponent.prototype, "scaleMode", {
-        set: function (value) {
-            if (value !== pc.ScreenComponent.SCALEMODE_NONE && value !== pc.ScreenComponent.SCALEMODE_BLEND) {
+     * @name pc.ScreenComponent#scaleMode
+     * @type String
+     * @description Setting this property to {@link ScreenComponent.SCALEMODE_BLEND} will make the screen scale its contents
+     * in accordance with scaleBlend value, trying to match height or width or a blend of the two. The screen will still take
+     * full viewport in screen-space and camera-space mode, but all elements will appear "up" or "down" scaled. This is useful
+     * to prevent the buttons and texts become too big or small for certain resolutions: when scaling is disabled the screen
+     * just uses target pixel resolution, and in this case having a button, of, say 100x50 pixels might look too small if it was
+     * designed for a lower pixel resolution initially.
+     */
+    Object.defineProperty( ScreenComponent.prototype, "scaleMode", {
+        set: function( value ) {
+            if ( value !== pc.ScreenComponent.SCALEMODE_NONE && value !== pc.ScreenComponent.SCALEMODE_BLEND ) {
                 value = pc.ScreenComponent.SCALEMODE_NONE;
             }
 
             // world space screens do not support scale modes
-            if (this._screenType == pc.SCREEN_TYPE_WORLD && value !== pc.ScreenComponent.SCALEMODE_NONE) {
+            if ( this._screenType == pc.SCREEN_TYPE_WORLD && value !== pc.ScreenComponent.SCALEMODE_NONE ) {
                 value = pc.ScreenComponent.SCALEMODE_NONE;
             }
 
             this._scaleMode = value;
             this.resolution = this._resolution; // force update
-            this.fire("set:scalemode", this._scaleMode);
+            this.fire( "set:scalemode", this._scaleMode );
         },
-        get: function () {
+        get: function() {
             return this._scaleMode;
         }
-    });
+    } );
 
     /**
-    * @name pc.ScreenComponent#scaleBlend
-    * @type Number
-    * @description When screen scaling is enabled, controls the resulting scale of the screen. This parameter exists as it's
-    * generally unsafe to scale UI elements in an unproportional manner, so the UI should be unfiromely scaled at all times.
-    * In order to decide for how much to scale the UI, when the target width, is, for instance, 5 times the design width and
-    * target height is 2 times the design one, scaleBlend parameter lerps between the two scales to produce the resulting
-    * scale to use.
-    */
-    Object.defineProperty(ScreenComponent.prototype, "scaleBlend", {
-        set: function (value) {
+     * @name pc.ScreenComponent#scaleBlend
+     * @type Number
+     * @description When screen scaling is enabled, controls the resulting scale of the screen. This parameter exists as it's
+     * generally unsafe to scale UI elements in an unproportional manner, so the UI should be unfiromely scaled at all times.
+     * In order to decide for how much to scale the UI, when the target width, is, for instance, 5 times the design width and
+     * target height is 2 times the design one, scaleBlend parameter lerps between the two scales to produce the resulting
+     * scale to use.
+     */
+    Object.defineProperty( ScreenComponent.prototype, "scaleBlend", {
+        set: function( value ) {
             this._scaleBlend = value;
             this._updateScale();
             this._calcProjectionMatrix();
-            this.fire("set:scaleblend", this._scaleBlend);
+            this.fire( "set:scaleblend", this._scaleBlend );
         },
-        get: function () {
+        get: function() {
             return this._scaleBlend;
         }
-    });
+    } );
 
     /**
-    * @name pc.ScreenComponent#camera
-    * @type pc.Camera
-    * @description The camera entity to use for positioning computations (has real effects to camera-space mode only).
-    * If no camera is set, will use the first camera found in the scene.
-    */
-    Object.defineProperty(ScreenComponent.prototype, "camera", {
-        set: function (value) {
+     * @name pc.ScreenComponent#camera
+     * @type pc.Camera
+     * @description The camera entity to use for positioning computations (has real effects to camera-space mode only).
+     * If no camera is set, will use the first camera found in the scene.
+     */
+    Object.defineProperty( ScreenComponent.prototype, "camera", {
+        set: function( value ) {
             if ( this._camera ) {
                 this._camera._detachScreen( this );
             }
@@ -413,14 +423,14 @@ pc.extend(pc, function () {
                 this._camera._attachScreen( this );
             }
 
-            if (value && value.renderTarget != null) {
+            if ( value && value.renderTarget != null ) {
                 // for the case of a camera rendering to a render target, we actually need to update the resolution
                 this._resolution.set( value.renderTarget.width, value.renderTarget.height );
             }
 
             this._calcProjectionMatrix();
         },
-        get: function () {
+        get: function() {
             if ( this._camera ) {
                 return this._camera;
             }
@@ -431,7 +441,7 @@ pc.extend(pc, function () {
                 return mainCamera.handle.camera;
             }
         }
-    });
+    } );
 
     return {
         ScreenComponent: ScreenComponent,
@@ -440,5 +450,5 @@ pc.extend(pc, function () {
         SCREEN_TYPE_CAMERA: "camera",
         SCREEN_TYPE_SCREEN: "screen"
     };
-}());
+}() );
 
