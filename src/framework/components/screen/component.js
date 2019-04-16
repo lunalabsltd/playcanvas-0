@@ -177,9 +177,18 @@ pc.extend( pc, function() {
                 // Using log of scale values
                 // This produces a nicer outcome where if you have a xscale = 2 and yscale = 0.5
                 // the combined scale is 1 for an even blend
+
+                /*
                 var lx = Math.log2( resolution.x / referenceResolution.x );
                 var ly = Math.log2( resolution.y / referenceResolution.y );
                 return Math.pow( 2, ( lx * ( 1 - this._scaleBlend ) + ly * this._scaleBlend ) );
+                */
+
+                var lx = ( resolution.x / referenceResolution.x );
+                var ly = ( resolution.y / referenceResolution.y );
+
+                var result =(1-this._scaleBlend )*lx+this._scaleBlend *ly;
+                return result;
             }
         },
 
@@ -265,7 +274,7 @@ pc.extend( pc, function() {
             }
 
             if ( this._scaleMode === pc.ScreenComponent.SCALEMODE_NONE ) {
-                this.referenceResolution = this._resolution;
+                this.referenceResolution.copy( this._resolution );
             }
 
             this._updateScale();
