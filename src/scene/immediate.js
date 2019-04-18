@@ -134,6 +134,7 @@ Object.assign(pc.Application.prototype, function () {
     }
 
     function _addLines(position, color, options) {
+        options = options || {};
         if (options.layer === undefined) options.layer = this.scene.layers.getLayerById(pc.LAYERID_IMMEDIATE);
         if (options.depthTest === undefined) options.depthTest = true;
 
