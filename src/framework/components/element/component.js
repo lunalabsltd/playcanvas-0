@@ -314,7 +314,7 @@ pc.extend(pc, function () {
             for (var i = 0; i < this._aspectRatioFitters.length; i++) {
                 var aspectRatioFitter = this._aspectRatioFitters[ i ];
                 if (aspectRatioFitter != null) {
-                    aspectRatioFitter.updateRect();
+                    aspectRatioFitter.UpdateRect();
                 }   
             }
 
