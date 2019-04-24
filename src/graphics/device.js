@@ -219,7 +219,7 @@ Object.assign(pc, function () {
         this.activeFramebuffer = null;
         this.textureUnit = 0;
         this.textureUnits = [];
-        this._maxPixelRatio = 1;
+        this._maxPixelRatio = 2;
         this.renderTarget = null;
         this.feedback = null;
 
