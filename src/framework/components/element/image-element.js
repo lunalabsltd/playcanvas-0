@@ -393,7 +393,7 @@ pc.extend(pc, function() {
         set: function(value) {
             this._masksChildren = value;
 
-            if (this._element.screen) {
+            if (this._element.screen && this._element.screen.screen) {
                 this._element.screen.screen._updateStencilParameters();
             }
         }
@@ -672,7 +672,7 @@ pc.extend(pc, function() {
 
         set: function(value) {
             this._showMaskGraphics = value;
-            var screenSpace = this._element.screen ? (this._element.screen.screen.screenType == pc.SCREEN_TYPE_SCREEN) : false;
+            var screenSpace = (this._element.screen && this._element.screen.screen) ? (this._element.screen.screen.screenType == pc.SCREEN_TYPE_SCREEN) : false;
             this._updateMaterial(screenSpace);
         }
     });
