@@ -67,6 +67,7 @@ pc.extend(pc, function () {
     ScreenComponent.SCALEMODE_NONE = "none";
     ScreenComponent.SCALEMODE_BLEND = "blend";
     ScreenComponent.SCALEMODE_EXPAND = "expand";
+    ScreenComponent.SCALEMODE_SHRINK = "shrink";
 
     var _transform = new pc.Mat4();
 
