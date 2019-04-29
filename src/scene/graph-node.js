@@ -143,6 +143,8 @@ Object.assign(pc, function () {
 
                 if (!this._parent || this._parent.enabled)
                     this._notifyHierarchyStateChanged(this, enabled);
+
+                this._app.systems.unitymanager.onEnable();
             }
         }
     });
