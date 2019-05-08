@@ -405,6 +405,14 @@ Object.assign(pc, function() {
         this.opacityMapId = scope.resolve('texture_opacityMap');
         this.cubeMapId = scope.resolve('texture_cubeMap');
 
+        this.unityIds = {
+            viewProjId: scope.resolve('unity_MatrixVP'),
+            modelMatrixId: scope.resolve('unity_ObjectToWorld'),
+
+            viewProjArrayId: scope.resolve('hlslcc_mtx4x4unity_MatrixVP[0]'),
+            modelMatrixArrayId: scope.resolve('hlslcc_mtx4x4unity_ObjectToWorld[0]')
+        };
+
         // allocate the array for SH uniforms
         this.lightProbeIds = new Array( lightProbeUniforms.length );
 
@@ -686,6 +694,8 @@ Object.assign(pc, function() {
                 // ViewProjection Matrix
                 viewProjMat.mul2(projMat, viewMat);
                 this.viewProjId.setValue(viewProjMat.data);
+                this.unityIds.viewProjId.setValue(viewProjMat.data);
+                this.unityIds.viewProjArrayId.setValue(viewProjMat.data);
 
                 // View Position (world space)
                 var cameraPos = camera._node.getPosition();
@@ -1300,6 +1310,8 @@ Object.assign(pc, function() {
         _drawInstance: function (device, meshInstance, mesh, style, normal) {
             modelMatrix = meshInstance.node.worldTransform;
             this.modelMatrixId.setValue(modelMatrix.data);
+            this.unityIds.modelMatrixId.setValue(modelMatrix.data);
+            this.unityIds.modelMatrixArrayId.setValue(modelMatrix.data);
 
             instancingData = meshInstance.instancingData;
             
