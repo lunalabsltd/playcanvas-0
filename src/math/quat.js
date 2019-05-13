@@ -297,6 +297,76 @@ Object.assign(pc, (function () {
             return eulers.set(x, y, z).scale(pc.math.RAD_TO_DEG);
         },
 
+        getUnityEulerAngles: function () {
+            var m = new pc.Mat4();
+            var r = new pc.Vec3();
+
+            var c1 = new pc.Vec3(1, 0, 0);
+            var c2 = new pc.Vec3(0, 1, 0);
+            var c3 = new pc.Vec3(0, 0, 1);
+
+            this.transformVector( c1, c1 );
+            this.transformVector( c2, c2 );
+            this.transformVector( c3, c3 );
+
+            m.data[0] = c1.x;
+            m.data[1] = c1.y;
+            m.data[2] = c1.z;
+
+            m.data[4] = c2.x;
+            m.data[5] = c2.y;
+            m.data[6] = c2.z;
+
+            m.data[8] = c3.x;
+            m.data[9] = c3.y;
+            m.data[10] = c3.z;
+
+            m.data[15] = 1;
+
+            var te = m.data;
+            var m11 = te[ 0 ], m12 = te[ 4 ], m13 = te[ 8 ];
+            var m21 = te[ 1 ], m22 = te[ 5 ], m23 = te[ 9 ];
+            var m31 = te[ 2 ], m32 = te[ 6 ], m33 = te[ 10 ];
+
+            // r.x = Math.asin( pc.math.clamp( m32, -1, 1 ) );
+            //
+            // if ( Math.abs( m32 ) < 0.99999 ) {
+            //     r.y = Math.atan2( -m31, m33 );
+            //     r.z = Math.atan2( -m12, m22 );
+            // } else {
+            //     r.y = 0;
+            //     r.z = Math.atan2( m21, m11 );
+            // }
+
+            // r.y = Math.asin( pc.math.clamp( m13, - 1, 1 ) );
+            //
+            // if ( Math.abs( m13 ) < 0.99999 ) {
+            //     r.x = Math.atan2( - m23, m33 );
+            //     r.z = Math.atan2( - m12, m11 );
+            // } else {
+            //     r.x = Math.atan2( m32, m22 );
+            //     r.z = 0;
+            // }
+
+            r.x = Math.asin( -pc.math.clamp( m23, - 1, 1 ) );
+
+            if ( Math.abs( m23 ) < 0.99999 ) {
+
+                r.y = Math.atan2( m13, m33 );
+                r.z = Math.atan2( m21, m22 );
+
+            } else {
+
+                r.y = Math.atan2( - m31, m11 );
+                r.z = 0;
+
+            }
+
+            r.scale( pc.math.RAD_TO_DEG );
+
+            return r;
+        },
+
         /**
          * @function
          * @name pc.Quat#invert

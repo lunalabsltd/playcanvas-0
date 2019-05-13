@@ -219,7 +219,7 @@ Object.assign(pc, function () {
         this.activeFramebuffer = null;
         this.textureUnit = 0;
         this.textureUnits = [];
-        this._maxPixelRatio = 1;
+        this._maxPixelRatio = 2;
         this.renderTarget = null;
         this.feedback = null;
 
@@ -1941,7 +1941,7 @@ Object.assign(pc, function () {
 
                         // check if the attribute has actually "leaked" from another draw call
                         // this might happen with single shader rendering different meshes (with diff formats)
-                        if ( !vertexBuffer.format.elementMap[ element.name ] ) {
+                        if ( vertexBuffer &&  !vertexBuffer.format.elementMap[ element.name ] ) {
                             element = null;
                         }
                     }
