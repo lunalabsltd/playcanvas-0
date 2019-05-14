@@ -2960,6 +2960,7 @@ Object.assign(pc, function() {
 
     return {
         ForwardRenderer: ForwardRenderer,
-        gaussWeights: gaussWeights
+        gaussWeights: gaussWeights,
+        lightProbeUniforms: lightProbeUniforms
     };
 }());
