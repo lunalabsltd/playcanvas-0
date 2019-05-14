@@ -140,7 +140,6 @@ Object.assign(pc, function () {
             globalSky128 = scene._skyboxPrefiltered[0];
         }
 
-        options.ambientSH = !!scene.ambientProbe;
         options.fog = stdMat.useFog ? scene.fog : "none";
         options.gamma = stdMat.useGammaTonemap ? scene.gammaCorrection : pc.GAMMA_NONE;
         options.toneMap = stdMat.useGammaTonemap ? scene.toneMapping : -1;
@@ -162,9 +161,11 @@ Object.assign(pc, function () {
         options.lightMapTransform = 0;
         options.lightMapWithoutAmbient = false;
         options.dirLightMap = false;
+        options.ambientSH = false;
 
         if (objDefs) {
             options.noShadow = (objDefs & pc.SHADERDEF_NOSHADOW) !== 0;
+            options.ambientSH = (objDefs & pc.SHADERDEF_LIGHTPROBES) !== 0;
 
             if ((objDefs & pc.SHADERDEF_LM) !== 0) {
                 options.lightMapFormat = (objDefs & pc.SHADERDEF_LM_DLDR) === 0 ? 1 : 2;
