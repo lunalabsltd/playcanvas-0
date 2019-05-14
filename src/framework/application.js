@@ -457,6 +457,7 @@ Object.assign(pc, function () {
             { class: pc.Physics2DSystem,                    args: [ this ] },
             { class: pc.Rigidbody2DSystem,                  args: [ this ] },
             { class: pc.Collider2DSystem,                   args: [ this ] },
+            { class: pc.Joint2DSystem,                      args: [ this ] },
             { class: pc.MonoBehaviourSystem,                args: [ this ] },
             { class: pc.ParticleSystemSystem,               args: [ this ] },
             { class: pc.ParticleSystemRendererSystem,       args: [ this ] },
