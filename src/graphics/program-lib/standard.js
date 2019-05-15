@@ -429,7 +429,7 @@ pc.programlib.standard = {
             options.fresnelModel = (options.fresnelModel === 0) ? pc.FRESNEL_SCHLICK : options.fresnelModel;
         }
 
-        var cubemapReflection = (options.cubeMap || (options.prefilteredCubemap && options.useSpecular)) && !options.sphereMap && !options.dpAtlas;
+        var cubemapReflection =  (options.reflectionProbes > 0) | (options.cubeMap || (options.prefilteredCubemap && options.useSpecular)) && !options.sphereMap && !options.dpAtlas;
         var reflections = options.sphereMap || cubemapReflection || options.dpAtlas;
         var useTexCubeLod = options.useTexCubeLod;
         if (options.cubeMap) options.sphereMap = null; // cubeMaps have higher priority
@@ -1041,24 +1041,10 @@ pc.programlib.standard = {
 
         var reflectionDecode = options.rgbmReflection ? "decodeRGBM" : (options.hdrReflection ? "" : "gammaCorrectInput");
 
-        if (options.sphereMap) {
-            var scode = device.fragmentUniformsCount > 16 ? chunks.reflectionSpherePS : chunks.reflectionSphereLowPS;
-            scode = scode.replace(/\$texture2DSAMPLE/g, options.rgbmReflection ? "texture2DRGBM" : (options.hdrReflection ? "texture2D" : "texture2DSRGB"));
-            code += scode;
-        } else if (cubemapReflection) {
-            if (options.prefilteredCubemap) {
-                if (useTexCubeLod) {
-                    code += chunks.reflectionPrefilteredCubeLodPS.replace(/\$DECODE/g, reflectionDecode);
-
-                } else {
-                    code += chunks.reflectionPrefilteredCubePS.replace(/\$DECODE/g, reflectionDecode);
-                }
-            } else {
-                code += chunks.reflectionCubePS.replace(/\$textureCubeSAMPLE/g,
-                                                        options.rgbmReflection ? "textureCubeRGBM" : (options.hdrReflection ? "textureCube" : "textureCubeSRGB"));
-            }
-        } else if (options.dpAtlas) {
-            code += chunks.reflectionDpAtlasPS.replace(/\$texture2DSAMPLE/g, options.rgbmReflection ? "texture2DRGBM" : (options.hdrReflection ? "texture2D" : "texture2DSRGB"));
+        // check if reflections are enabled for this shader
+        if ( options.reflectionProbes > 0 ) {
+            code += chunks.reflectionUtilsPS;
+            code += options.reflectionProbes == 1 ? chunks.reflectionCubePS : chunks.reflectionBlendedCubePS;
         }
 
         if ((cubemapReflection || options.sphereMap || options.dpAtlas) && options.refraction) {

@@ -86,7 +86,6 @@ Object.assign(pc, function () {
         options.diffuseTint = diffuseTint;
         options.specularTint = specularTint ? 3 : 0;
         options.metalnessTint = (stdMat.useMetalness && stdMat.metalness < 1) ? 1 : 0;
-        options.glossTint = 1;
         options.emissiveTint = emissiveTint;
         options.alphaToCoverage = stdMat.alphaToCoverage;
         options.needsNormalFloat = stdMat.normalizeNormalMap;
@@ -180,6 +179,12 @@ Object.assign(pc, function () {
                     options.dirLightMap = true;
                 }
             }
+        }
+
+        if ( stdMat.glossTint > 0 ) {
+            options.reflectionProbes = ( objDefs & pc.SHADERDEF_BLEND_REFLECTION_PROBES ) > 0 ? 2 : 1;
+        } else {
+            options.reflectionProbes =  0;
         }
 
         if (stdMat.useLighting) {

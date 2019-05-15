@@ -410,7 +410,9 @@ Object.assign(pc, function() {
             modelMatrixId: scope.resolve('unity_ObjectToWorld'),
 
             viewProjArrayId: scope.resolve('hlslcc_mtx4x4unity_MatrixVP[0]'),
-            modelMatrixArrayId: scope.resolve('hlslcc_mtx4x4unity_ObjectToWorld[0]')
+            modelMatrixArrayId: scope.resolve('hlslcc_mtx4x4unity_ObjectToWorld[0]'),
+
+            indirectSpecularId: scope.resolve('unity_IndirectSpecColor')
         };
 
         // allocate the array for SH uniforms
@@ -421,25 +423,6 @@ Object.assign(pc, function() {
         for ( var i = 0; i < lightProbeUniforms.length; i++ ) {
             this.lightProbeIds[ i ] = scope.resolve( lightProbeUniforms[i] );
         }
-
-        // pre-fetch uniforms for reflection probes
-        this.reflectionProbeIds = [
-            {
-                texture: scope.resolve( "unity_SpecCube0" ),
-                position: scope.resolve( "unity_SpecCube0_ProbePosition" ),
-                min: scope.resolve( "unity_SpecCube0_BoxMin" ),
-                max: scope.resolve( "unity_SpecCube0_BoxMax" ),
-                hdr: scope.resolve( "unity_SpecCube0_HDR" )
-            },
-
-            {
-                texture: scope.resolve( "unity_SpecCube1" ),
-                position: scope.resolve( "unity_SpecCube1_ProbePosition" ),
-                min: scope.resolve( "unity_SpecCube1_BoxMin" ),
-                max: scope.resolve( "unity_SpecCube1_BoxMax" ),
-                hdr: scope.resolve( "unity_SpecCube1_HDR" )
-            }
-        ];
 
         this.ambientId = scope.resolve("light_globalAmbient");
         this.exposureId = scope.resolve("exposure");
@@ -823,23 +806,9 @@ Object.assign(pc, function() {
             this.exposureId.setValue(scene.exposure);
 
             if (scene.skyboxModel) this.skyboxIntensityId.setValue(scene.skyboxIntensity);
-
-            // check if the scene has ambient probe configured
-            if (scene.ambientProbe) {
-                // ok it does: the default uniform value should be one of ambient light then
-                // please note mesh instances *might* work out their own probe values
-                var probe = scene.ambientProbe;
-
-                // simply set the values of the uniform
-                for ( var i = 0; i < lightProbeUniforms.length; i++ ) {
-                    var value = probe.uniforms[ i ];
-                    this.lightProbeIds[ i ].setValue( [ value.x, value.y, value.z, value.w ] );
-                }
-            }
-
-            if (scene.environmentProbe) {
-                scene.environmentProbe.updateUniforms( this.reflectionProbeIds[ 0 ] );
-                scene.environmentProbe.updateUniforms( this.reflectionProbeIds[ 1 ] );
+            if (scene.skyboxHelper) {
+                var color = scene.skyboxHelper.indirectSpecular;
+                this.unityIds.indirectSpecularId.setValue( color.data );
             }
         },
 

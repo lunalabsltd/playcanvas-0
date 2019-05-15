@@ -1642,7 +1642,7 @@ Object.assign(pc, function () {
                                     texData
                                 );
                             } else {
-                                this.setUnpackFlipY(false);
+                                this.setUnpackFlipY(texture._flipY);
                                 this.setUnpackPremultiplyAlpha(texture._premultiplyAlpha);
                                 gl.texImage2D(
                                     gl.TEXTURE_CUBE_MAP_POSITIVE_X + face,
