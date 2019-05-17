@@ -9,12 +9,15 @@ vec3 DecodeHDR( vec4 data, vec4 decodeInstructions ) {
 vec3 BoxProjectedCubemapDirection( vec3 worldRefl, vec3 worldPos, vec4 cubemapCenter, vec4 boxMin, vec4 boxMax ) {
     if ( cubemapCenter.w > 0.0 ) {
         vec3 nrdir = normalize( worldRefl );
-        float nrdirLength = length( nrdir );
 
         vec3 rbmax = ( boxMax.xyz - worldPos ) / nrdir;
         vec3 rbmin = ( boxMin.xyz - worldPos ) / nrdir;
 
-        vec3 rbminmax = ( nrdirLength > 0.0f ) ? rbmax : rbmin;
+        vec3 rbminmax = vec3(0);
+
+        rbminmax.x = nrdir.x > 0.0 ? rbmax.x : rbmin.x;
+        rbminmax.y = nrdir.y > 0.0 ? rbmax.y : rbmin.y;
+        rbminmax.z = nrdir.z > 0.0 ? rbmax.z : rbmin.z;
 
         float fa = min( min( rbminmax.x, rbminmax.y ), rbminmax.z );
 
@@ -25,7 +28,15 @@ vec3 BoxProjectedCubemapDirection( vec3 worldRefl, vec3 worldPos, vec4 cubemapCe
     return worldRefl;
 }
 
-vec3 SampleGlossyEnvironment( samplerCube tex, vec4 hdr, vec3 R ) {
-    vec4 rgbm = textureCube( tex, R );
+vec3 SampleGlossyEnvironment( samplerCube tex, vec4 texels, vec4 hdr, vec3 R ) {
+    float mipLevels = log2( texels.z );
+
+    float perceptualRoughness = ( 1.0 - dGlossiness );
+    perceptualRoughness = perceptualRoughness * ( 1.7 - 0.7 * perceptualRoughness );
+
+    float mip = perceptualRoughness * mipLevels;
+
+    vec4 rgbm = textureCubeLod( tex, R, mip );
+
     return DecodeHDR( rgbm, hdr );
 }

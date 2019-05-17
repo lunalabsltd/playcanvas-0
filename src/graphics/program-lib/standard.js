@@ -430,7 +430,7 @@ pc.programlib.standard = {
         }
 
         var cubemapReflection =  (options.reflectionProbes > 0) | (options.cubeMap || (options.prefilteredCubemap && options.useSpecular)) && !options.sphereMap && !options.dpAtlas;
-        var reflections = options.sphereMap || cubemapReflection || options.dpAtlas;
+        var reflections = options.sphereMap || cubemapReflection || options.dpAtlas || options.reflectionProbes > 0;
         var useTexCubeLod = options.useTexCubeLod;
         if (options.cubeMap) options.sphereMap = null; // cubeMaps have higher priority
         if (options.dpAtlas) options.prefilteredCubemap = null; // dp has even higher priority
@@ -710,6 +710,14 @@ pc.programlib.standard = {
         if (device.extStandardDerivatives && !device.webgl2) {
             code += "#extension GL_OES_standard_derivatives : enable\n\n";
         }
+
+        if (device.extTextureLod && !device.webgl2) {
+            code += "#extension GL_EXT_shader_texture_lod : enable\n\n";
+            code += "#define textureCubeLod(sampler, direction, mip) textureCubeLodEXT(sampler, direction, mip)\n";
+        } else {
+            code += "#define textureCubeLod(sampler, direction, mip) textureCube(sampler, direction)\n";
+        }        
+
         if (chunks.extensionPS) {
             code += chunks.extensionPS + "\n";
         }
@@ -993,6 +1001,17 @@ pc.programlib.standard = {
         }
         code += this._addMap("emissive", "emissivePS", options, chunks, options.emissiveFormat);
 
+        // set up the flag indicating which map should be the source for shininess multiplier
+        if (options.albedoSmoothness) {
+            code += "#define ALBEDO_ALPHA_SMOOTHNESS\n";
+        } else {
+            if (options.useMetalness) {
+                code += "#define METALLIC_ALPHA_SMOOTHNESS\n";
+            } else {
+                code += "#define SPECULARITY_ALPHA_SMOOTHNESS\n";
+            }
+        }
+
         if (options.useSpecular && (lighting || reflections)) {
             if (options.specularAntialias && options.normalMap) {
                 if (options.needsNormalFloat && needsNormal) {
@@ -1006,7 +1025,6 @@ pc.programlib.standard = {
 
             var specularPropName = options.useMetalness ? "metalness" : "specular";
             code += this._addMap(specularPropName, specularPropName + "PS", options, chunks);
-            code += this._addMap("gloss", "glossPS", options, chunks);
             if (options.fresnelModel > 0) {
                 if (options.fresnelModel === pc.FRESNEL_SIMPLE) {
                     code += chunks.fresnelSimplePS;
@@ -1122,6 +1140,8 @@ pc.programlib.standard = {
                     useOldAmbient = true;
                 }
             }
+
+            code += this._addMap("gloss", "glossPS", options, chunks);
         } else {
             code += chunks.combineDiffusePS;
         }

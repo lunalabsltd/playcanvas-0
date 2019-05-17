@@ -80,18 +80,21 @@ Object.assign(pc, function () {
             emissiveTint = emissiveTint ? 3 : (stdMat.emissiveIntensity !== 1 ? 1 : 0);
         }
 
+        options.name = stdMat.name;
         options.opacityTint = (stdMat.opacity !== 1 && stdMat.blendType !== pc.BLEND_NONE) ? 1 : 0;
         options.blendMapsWithColors = true;
         options.ambientTint = stdMat.ambientTint;
         options.diffuseTint = diffuseTint;
         options.specularTint = specularTint ? 3 : 0;
         options.metalnessTint = (stdMat.useMetalness && stdMat.metalness < 1) ? 1 : 0;
+        options.glossTint = stdMat.glossTint ? 1 : false;
         options.emissiveTint = emissiveTint;
         options.alphaToCoverage = stdMat.alphaToCoverage;
         options.needsNormalFloat = stdMat.normalizeNormalMap;
         options.sphereMap = !!stdMat.sphereMap;
         options.dpAtlas = !!stdMat.dpAtlas;
         options.useSpecular = useSpecular;
+        options.albedoSmoothness = stdMat.albedoSmoothness;
         options.emissiveFormat = stdMat.emissiveMap ? (stdMat.emissiveMap.rgbm ? 1 : (stdMat.emissiveMap.format === pc.PIXELFORMAT_RGBA32F ? 2 : 0)) : null;
         options.lightMapFormat = stdMat.lightMap ? (stdMat.lightMap.rgbm ? 1 : (stdMat.lightMap.format === pc.PIXELFORMAT_RGBA32F ? 2 : 0)) : null;
         options.specularAntialias = stdMat.specularAntialias;
@@ -181,7 +184,7 @@ Object.assign(pc, function () {
             }
         }
 
-        if ( stdMat.glossTint > 0 ) {
+        if ( stdMat.glossyReflections ) {
             options.reflectionProbes = ( objDefs & pc.SHADERDEF_BLEND_REFLECTION_PROBES ) > 0 ? 2 : 1;
         } else {
             options.reflectionProbes =  0;
