@@ -407,9 +407,13 @@ Object.assign(pc, function() {
 
         this.unityIds = {
             viewProjId: scope.resolve('unity_MatrixVP'),
+            viewId: scope.resolve('unity_MatrixV'),
             modelMatrixId: scope.resolve('unity_ObjectToWorld'),
+            worldSpaceCameraPos: scope.resolve('_WorldSpaceCameraPos'),
+            time: scope.resolve('_Time'),
 
             viewProjArrayId: scope.resolve('hlslcc_mtx4x4unity_MatrixVP[0]'),
+            viewArrayId: scope.resolve('hlslcc_mtx4x4unity_MatrixV[0]'),
             modelMatrixArrayId: scope.resolve('hlslcc_mtx4x4unity_ObjectToWorld[0]'),
 
             indirectSpecularId: scope.resolve('unity_IndirectSpecColor')
@@ -677,6 +681,8 @@ Object.assign(pc, function() {
                 // ViewProjection Matrix
                 viewProjMat.mul2(projMat, viewMat);
                 this.viewProjId.setValue(viewProjMat.data);
+                this.viewId.setValue(viewMat.data);
+                this.unityIds.viewId.setValue(viewMat.data);
                 this.unityIds.viewProjId.setValue(viewProjMat.data);
                 this.unityIds.viewProjArrayId.setValue(viewProjMat.data);
 
@@ -686,6 +692,8 @@ Object.assign(pc, function() {
                 this.viewPos[1] = cameraPos.y;
                 this.viewPos[2] = cameraPos.z;
                 this.viewPosId.setValue(this.viewPos);
+
+                this.unityIds.worldSpaceCameraPos.setValue(this.viewPos);
 
                 // Screen Parameters
                 screenParams[0] = (camera.renderTarget || this.device).width;
@@ -1661,7 +1669,7 @@ Object.assign(pc, function() {
                     mesh = drawCall.mesh;
                     material = drawCall.material;
                     objDefs = drawCall._shaderDefs;
-                    lightMask = drawCall.mask;
+                    lightMask = pc.MASK_DYNAMIC;
 
                     this.setSkinning(device, drawCall, material);
 
@@ -1736,7 +1744,7 @@ Object.assign(pc, function() {
                         }
                         device.setColorWrite(material.redWrite, material.greenWrite, material.blueWrite, material.alphaWrite);
                         if (camera._cullFaces) {
-                            if (camera._flipFaces) {
+                            if (camera._flipFaces || drawCall._flipFaces) {
                                 device.setCullMode(material.cull > 0 ?
                                     (material.cull === pc.CULLFACE_FRONT ? pc.CULLFACE_BACK : pc.CULLFACE_FRONT) : 0);
                             } else {
@@ -2637,6 +2645,9 @@ Object.assign(pc, function() {
             this._screenSize[2] = 1 / device.width;
             this._screenSize[3] = 1 / device.height;
             this.screenSizeId.setValue(this._screenSize);
+
+            var t = pc.now() / 1000.0;
+            this.unityIds.time.setValue( [ t / 20, t, t * 2, t * 3 ] );
         },
 
         renderComposition: function(comp) {
