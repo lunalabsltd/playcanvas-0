@@ -405,6 +405,22 @@ Object.assign(pc, function() {
         this.opacityMapId = scope.resolve('texture_opacityMap');
         this.cubeMapId = scope.resolve('texture_cubeMap');
 
+        this.unityIds = {
+            viewProjId: scope.resolve('unity_MatrixVP'),
+            viewId: scope.resolve('unity_MatrixV'),
+            modelMatrixId: scope.resolve('unity_ObjectToWorld'),
+            modelMatrixInvId: scope.resolve('unity_WorldToObject'),
+            worldSpaceCameraPos: scope.resolve('_WorldSpaceCameraPos'),
+            time: scope.resolve('_Time'),
+
+            viewProjArrayId: scope.resolve('hlslcc_mtx4x4unity_MatrixVP[0]'),
+            viewArrayId: scope.resolve('hlslcc_mtx4x4unity_MatrixV[0]'),
+            modelMatrixArrayId: scope.resolve('hlslcc_mtx4x4unity_ObjectToWorld[0]'),
+            modelMatrixInvArrayId: scope.resolve('hlslcc_mtx4x4unity_WorldToObject[0]'),
+
+            indirectSpecularId: scope.resolve('unity_IndirectSpecColor')
+        };
+
         // allocate the array for SH uniforms
         this.lightProbeIds = new Array( lightProbeUniforms.length );
 
@@ -413,25 +429,6 @@ Object.assign(pc, function() {
         for ( var i = 0; i < lightProbeUniforms.length; i++ ) {
             this.lightProbeIds[ i ] = scope.resolve( lightProbeUniforms[i] );
         }
-
-        // pre-fetch uniforms for reflection probes
-        this.reflectionProbeIds = [
-            {
-                texture: scope.resolve( "unity_SpecCube0" ),
-                position: scope.resolve( "unity_SpecCube0_ProbePosition" ),
-                min: scope.resolve( "unity_SpecCube0_BoxMin" ),
-                max: scope.resolve( "unity_SpecCube0_BoxMax" ),
-                hdr: scope.resolve( "unity_SpecCube0_HDR" )
-            },
-
-            {
-                texture: scope.resolve( "unity_SpecCube1" ),
-                position: scope.resolve( "unity_SpecCube1_ProbePosition" ),
-                min: scope.resolve( "unity_SpecCube1_BoxMin" ),
-                max: scope.resolve( "unity_SpecCube1_BoxMax" ),
-                hdr: scope.resolve( "unity_SpecCube1_HDR" )
-            }
-        ];
 
         this.ambientId = scope.resolve("light_globalAmbient");
         this.exposureId = scope.resolve("exposure");
@@ -686,6 +683,11 @@ Object.assign(pc, function() {
                 // ViewProjection Matrix
                 viewProjMat.mul2(projMat, viewMat);
                 this.viewProjId.setValue(viewProjMat.data);
+                this.viewId.setValue(viewMat.data);
+                this.unityIds.viewId.setValue(viewMat.data);
+                this.unityIds.viewArrayId.setValue(viewMat.data);
+                this.unityIds.viewProjId.setValue(viewProjMat.data);
+                this.unityIds.viewProjArrayId.setValue(viewProjMat.data);
 
                 // View Position (world space)
                 var cameraPos = camera._node.getPosition();
@@ -693,6 +695,8 @@ Object.assign(pc, function() {
                 this.viewPos[1] = cameraPos.y;
                 this.viewPos[2] = cameraPos.z;
                 this.viewPosId.setValue(this.viewPos);
+
+                this.unityIds.worldSpaceCameraPos.setValue(this.viewPos);
 
                 // Screen Parameters
                 screenParams[0] = (camera.renderTarget || this.device).width;
@@ -813,23 +817,9 @@ Object.assign(pc, function() {
             this.exposureId.setValue(scene.exposure);
 
             if (scene.skyboxModel) this.skyboxIntensityId.setValue(scene.skyboxIntensity);
-
-            // check if the scene has ambient probe configured
-            if (scene.ambientProbe) {
-                // ok it does: the default uniform value should be one of ambient light then
-                // please note mesh instances *might* work out their own probe values
-                var probe = scene.ambientProbe;
-
-                // simply set the values of the uniform
-                for ( var i = 0; i < lightProbeUniforms.length; i++ ) {
-                    var value = probe.uniforms[ i ];
-                    this.lightProbeIds[ i ].setValue( [ value.x, value.y, value.z, value.w ] );
-                }
-            }
-
-            if (scene.environmentProbe) {
-                scene.environmentProbe.updateUniforms( this.reflectionProbeIds[ 0 ] );
-                scene.environmentProbe.updateUniforms( this.reflectionProbeIds[ 1 ] );
+            if (scene.skyboxHelper) {
+                var color = scene.skyboxHelper.indirectSpecular;
+                this.unityIds.indirectSpecularId.setValue( color.data );
             }
         },
 
@@ -1298,8 +1288,14 @@ Object.assign(pc, function() {
         },
 
         _drawInstance: function (device, meshInstance, mesh, style, normal) {
-            modelMatrix = meshInstance.node.worldTransform;
+            var modelMatrix = meshInstance.node.worldTransform;
+            var inverseModelMatrix = meshInstance.node.worldTransformInverse;
+
             this.modelMatrixId.setValue(modelMatrix.data);
+            this.unityIds.modelMatrixId.setValue(modelMatrix.data);
+            this.unityIds.modelMatrixArrayId.setValue(modelMatrix.data);
+            this.unityIds.modelMatrixInvId.setValue(inverseModelMatrix.data);
+            this.unityIds.modelMatrixInvArrayId.setValue(inverseModelMatrix.data);
 
             instancingData = meshInstance.instancingData;
             
@@ -1680,7 +1676,7 @@ Object.assign(pc, function() {
                     mesh = drawCall.mesh;
                     material = drawCall.material;
                     objDefs = drawCall._shaderDefs;
-                    lightMask = drawCall.mask;
+                    lightMask = pc.MASK_DYNAMIC;
 
                     this.setSkinning(device, drawCall, material);
 
@@ -1836,6 +1832,10 @@ Object.assign(pc, function() {
                         drawCallback(drawCall, i);
                     }
 
+                    if (camera._cullFaces && drawCall._flipFaces) {
+                        device.setCullMode(material.cull > 0 ? (material.cull === pc.CULLFACE_FRONT ? pc.CULLFACE_BACK : pc.CULLFACE_FRONT) : 0);
+                    }
+
                     if (vrDisplay && vrDisplay.presenting) {
                         // Left
                         device.setViewport(0, 0, halfWidth, device.height);
@@ -1880,6 +1880,10 @@ Object.assign(pc, function() {
                                 parameter.scopeId.setValue(parameter.data);
                             }
                         }
+                    }
+
+                    if (camera._cullFaces && drawCall._flipFaces) {
+                        device.setCullMode(material.cull > 0 ? (material.cull !== pc.CULLFACE_FRONT ? pc.CULLFACE_BACK : pc.CULLFACE_FRONT) : 0);
                     }
 
                     prevMaterial = material;
@@ -2656,6 +2660,9 @@ Object.assign(pc, function() {
             this._screenSize[2] = 1 / device.width;
             this._screenSize[3] = 1 / device.height;
             this.screenSizeId.setValue(this._screenSize);
+
+            var t = pc.now() / 1000.0;
+            this.unityIds.time.setValue( [ t / 20, t, t * 2, t * 3 ] );
         },
 
         renderComposition: function(comp) {
@@ -2948,6 +2955,7 @@ Object.assign(pc, function() {
 
     return {
         ForwardRenderer: ForwardRenderer,
-        gaussWeights: gaussWeights
+        gaussWeights: gaussWeights,
+        lightProbeUniforms: lightProbeUniforms
     };
 }());
