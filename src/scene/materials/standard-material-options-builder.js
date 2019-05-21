@@ -115,6 +115,7 @@ Object.assign(pc, function () {
         options.pixelSnap = stdMat.pixelSnap;
         options.nineSlicedMode = stdMat.nineSlicedMode || 0;
         options.aoMapUv = stdMat.aoUvSet; // backwards componen
+        options.albedoTransparency = stdMat.albedoTransparency;
     };
 
     StandardMaterialOptionsBuilder.prototype._updateEnvOptions = function (options, stdMat, scene, prefilteredCubeMap128) {

@@ -14,6 +14,7 @@ void getAlbedo() {
 
     #ifdef MAPCOLOR
         dAlbedo *= material_diffuse.rgb;
+        dAlbedoMapColor.a *= dAlpha;
     #endif
 
     #ifdef MAPTEXTURE
@@ -26,6 +27,10 @@ void getAlbedo() {
     #ifdef MAPVERTEX
         dAlbedoMapColor *= vVertexColor;
         dAlbedo *= gammaCorrectInput(saturate(vVertexColor.$VC));
+    #endif
+
+    #ifdef ALBEDO_TRANSPARENCY
+        dAlbedoMapColor.a *= dAlpha;
     #endif
 }
 

@@ -711,6 +711,10 @@ pc.programlib.standard = {
             code += "#extension GL_OES_standard_derivatives : enable\n\n";
         }
 
+        if (options.albedoTransparency) {
+            code += "#define ALBEDO_TRANSPARENCY\n";
+        }
+
         if (device.extTextureLod && !device.webgl2) {
             code += "#extension GL_EXT_shader_texture_lod : enable\n\n";
             code += "#define textureCubeLod(sampler, direction, mip) textureCubeLodEXT(sampler, direction, mip)\n";
@@ -1001,18 +1005,18 @@ pc.programlib.standard = {
         }
         code += this._addMap("emissive", "emissivePS", options, chunks, options.emissiveFormat);
 
-        // set up the flag indicating which map should be the source for shininess multiplier
-        if (options.albedoSmoothness) {
-            code += "#define ALBEDO_ALPHA_SMOOTHNESS\n";
-        } else {
-            if (options.useMetalness) {
-                code += "#define METALLIC_ALPHA_SMOOTHNESS\n";
-            } else {
-                code += "#define SPECULARITY_ALPHA_SMOOTHNESS\n";
-            }
-        }
-
         if (options.useSpecular && (lighting || reflections)) {
+            // set up the flag indicating which map should be the source for shininess multiplier
+            if (options.albedoSmoothness) {
+                code += "#define ALBEDO_ALPHA_SMOOTHNESS\n";
+            } else {
+                if (options.useMetalness) {
+                    code += "#define METALLIC_ALPHA_SMOOTHNESS\n";
+                } else {
+                    code += "#define SPECULARITY_ALPHA_SMOOTHNESS\n";
+                }
+            }
+
             if (options.specularAntialias && options.normalMap) {
                 if (options.needsNormalFloat && needsNormal) {
                     code += chunks.specularAaToksvigFloatPS;
