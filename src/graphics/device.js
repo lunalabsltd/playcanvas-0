@@ -272,7 +272,7 @@ Object.assign(pc, function () {
         options = options || {};
         options.stencil = true;
         options.antialias = (window.devicePixelRatio < 2);
-        options.alpha = true;
+        options.alpha = false;
         for (i = 0; i < names.length; i++) {
             try {
                 gl = canvas.getContext(names[i], options);
@@ -480,7 +480,7 @@ Object.assign(pc, function () {
             scopeY = value[1];
             scopeZ = value[2];
             scopeW = value[3];
-            if (uniformValue[0] !== scopeX || uniformValue[1] !== scopeY || uniformValue[2] !== scopeZ || uniformValue[3] !== scopeW) {
+            if (value.length > 4 || uniformValue[0] !== scopeX || uniformValue[1] !== scopeY || uniformValue[2] !== scopeZ || uniformValue[3] !== scopeW) {
                 gl.uniform4fv(uniform.locationId, value);
                 uniformValue[0] = scopeX;
                 uniformValue[1] = scopeY;
