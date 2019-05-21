@@ -409,12 +409,14 @@ Object.assign(pc, function() {
             viewProjId: scope.resolve('unity_MatrixVP'),
             viewId: scope.resolve('unity_MatrixV'),
             modelMatrixId: scope.resolve('unity_ObjectToWorld'),
+            modelMatrixInvId: scope.resolve('unity_WorldToObject'),
             worldSpaceCameraPos: scope.resolve('_WorldSpaceCameraPos'),
             time: scope.resolve('_Time'),
 
             viewProjArrayId: scope.resolve('hlslcc_mtx4x4unity_MatrixVP[0]'),
             viewArrayId: scope.resolve('hlslcc_mtx4x4unity_MatrixV[0]'),
             modelMatrixArrayId: scope.resolve('hlslcc_mtx4x4unity_ObjectToWorld[0]'),
+            modelMatrixInvArrayId: scope.resolve('hlslcc_mtx4x4unity_WorldToObject[0]'),
 
             indirectSpecularId: scope.resolve('unity_IndirectSpecColor')
         };
@@ -683,6 +685,7 @@ Object.assign(pc, function() {
                 this.viewProjId.setValue(viewProjMat.data);
                 this.viewId.setValue(viewMat.data);
                 this.unityIds.viewId.setValue(viewMat.data);
+                this.unityIds.viewArrayId.setValue(viewMat.data);
                 this.unityIds.viewProjId.setValue(viewProjMat.data);
                 this.unityIds.viewProjArrayId.setValue(viewProjMat.data);
 
@@ -1285,10 +1288,14 @@ Object.assign(pc, function() {
         },
 
         _drawInstance: function (device, meshInstance, mesh, style, normal) {
-            modelMatrix = meshInstance.node.worldTransform;
+            var modelMatrix = meshInstance.node.worldTransform;
+            var inverseModelMatrix = meshInstance.node.worldTransformInverse;
+
             this.modelMatrixId.setValue(modelMatrix.data);
             this.unityIds.modelMatrixId.setValue(modelMatrix.data);
             this.unityIds.modelMatrixArrayId.setValue(modelMatrix.data);
+            this.unityIds.modelMatrixInvId.setValue(inverseModelMatrix.data);
+            this.unityIds.modelMatrixInvArrayId.setValue(inverseModelMatrix.data);
 
             instancingData = meshInstance.instancingData;
             
@@ -1744,7 +1751,7 @@ Object.assign(pc, function() {
                         }
                         device.setColorWrite(material.redWrite, material.greenWrite, material.blueWrite, material.alphaWrite);
                         if (camera._cullFaces) {
-                            if (camera._flipFaces || drawCall._flipFaces) {
+                            if (camera._flipFaces) {
                                 device.setCullMode(material.cull > 0 ?
                                     (material.cull === pc.CULLFACE_FRONT ? pc.CULLFACE_BACK : pc.CULLFACE_FRONT) : 0);
                             } else {
@@ -1825,6 +1832,10 @@ Object.assign(pc, function() {
                         drawCallback(drawCall, i);
                     }
 
+                    if (camera._cullFaces && drawCall._flipFaces) {
+                        device.setCullMode(material.cull > 0 ? (material.cull === pc.CULLFACE_FRONT ? pc.CULLFACE_BACK : pc.CULLFACE_FRONT) : 0);
+                    }
+
                     if (vrDisplay && vrDisplay.presenting) {
                         // Left
                         device.setViewport(0, 0, halfWidth, device.height);
@@ -1869,6 +1880,10 @@ Object.assign(pc, function() {
                                 parameter.scopeId.setValue(parameter.data);
                             }
                         }
+                    }
+
+                    if (camera._cullFaces && drawCall._flipFaces) {
+                        device.setCullMode(material.cull > 0 ? (material.cull !== pc.CULLFACE_FRONT ? pc.CULLFACE_BACK : pc.CULLFACE_FRONT) : 0);
                     }
 
                     prevMaterial = material;
