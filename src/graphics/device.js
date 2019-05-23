@@ -272,7 +272,7 @@ Object.assign(pc, function () {
         options = options || {};
         options.stencil = true;
         options.antialias = (window.devicePixelRatio < 2);
-        options.alpha = true;
+        options.alpha = false;
         for (i = 0; i < names.length; i++) {
             try {
                 gl = canvas.getContext(names[i], options);
