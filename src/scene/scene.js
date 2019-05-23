@@ -240,6 +240,10 @@
         SHADERDEF_LM_DLDR: 2048,
         // notifies the shader the ambient IS baked into lightmaps
         SHADERDEF_LM_BAKED_AMBIENT: 4096,
+        // notifies the shader it should use light probes for ambient lighting
+        SHADERDEF_LIGHTPROBES: 8192,
+        // notifies the shader it should blend reflection probes (between the two)
+        SHADERDEF_BLEND_REFLECTION_PROBES: 16384,
 
         LINEBATCH_WORLD: 0,
         LINEBATCH_OVERLAY: 1,
