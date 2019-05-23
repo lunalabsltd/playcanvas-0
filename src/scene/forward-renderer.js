@@ -406,6 +406,10 @@ Object.assign(pc, function() {
         this.cubeMapId = scope.resolve('texture_cubeMap');
 
         this.unityIds = {
+            fogStart: scope.resolve('unity_FogStart'),
+            fogEnd: scope.resolve('unity_FogEnd'),
+            fogColor: scope.resolve('unity_FogColor'),
+
             viewProjId: scope.resolve('unity_MatrixVP'),
             viewId: scope.resolve('unity_MatrixV'),
             modelMatrixId: scope.resolve('unity_ObjectToWorld'),
@@ -472,7 +476,7 @@ Object.assign(pc, function() {
         this.polygonOffsetId = scope.resolve("polygonOffset");
         this.polygonOffset = new Float32Array(2);
 
-        this.fogColor = new Float32Array(3);
+        this.fogColor = new Float32Array(4);
         this.fogParams = new Float32Array(4);
         this.ambientColor = new Float32Array(3);
 
@@ -1102,7 +1106,7 @@ Object.assign(pc, function() {
                     drawCall = drawCalls[i];
                     if (!drawCall.visible && !drawCall.command) continue;
 
-                    var mask = drawCall.node.cullingLayer || 0xFFFFFFFF;
+                    var mask = null;
 
                     if (!drawCall.node.cullingLayer && drawCall.node._parent && (drawCall.node._parent.cullingLayer || drawCall.node._parent.constructor == pc.Entity)) {
                         mask = drawCall.node._parent.cullingLayer;
@@ -1112,8 +1116,20 @@ Object.assign(pc, function() {
                         }
                     }
 
+                    if ( mask ) {
+                        mask = ( 1 << mask );
+                    }
+
                     // if the object's mask AND the camera's cullingMask is zero then the game object will be invisible from the camera
                     if (mask && (mask & cullingMask) === 0) continue;
+
+                    if (drawCall.preRender && drawCall.preRender._element && drawCall.preRender._element.screen) {
+                        var screen = drawCall.preRender._element.screen.screen;
+
+                        if ( !((screen._camera == camera) || screen.screenType === 'screen') ) {
+                            continue;
+                        }
+                    }
 
                     visibleList[visibleLength] = drawCall;
                     visibleLength++;
@@ -2638,6 +2654,7 @@ Object.assign(pc, function() {
                 this.fogColor[0] = scene.fogColor.r;
                 this.fogColor[1] = scene.fogColor.g;
                 this.fogColor[2] = scene.fogColor.b;
+                this.fogColor[3] = 1.0;
 
                 if (scene.gammaCorrection) {
                     for (i = 0; i < 3; i++) {
@@ -2652,6 +2669,10 @@ Object.assign(pc, function() {
 
                 this.fogColorId.setValue(this.fogColor);
                 this.fogParamsId.setValue(this.fogParams);
+
+                this.unityIds.fogStart.setValue( [ scene.fogStart, 0, 0, 0 ] );
+                this.unityIds.fogEnd.setValue( [ scene.fogEnd, 0, 0, 0 ] );
+                this.unityIds.fogColor.setValue( this.fogColor ); 
             }
 
             // Set up screen size // should be RT size?
