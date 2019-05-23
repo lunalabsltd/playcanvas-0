@@ -80,19 +80,21 @@ Object.assign(pc, function () {
             emissiveTint = emissiveTint ? 3 : (stdMat.emissiveIntensity !== 1 ? 1 : 0);
         }
 
+        options.name = stdMat.name;
         options.opacityTint = (stdMat.opacity !== 1 && stdMat.blendType !== pc.BLEND_NONE) ? 1 : 0;
         options.blendMapsWithColors = true;
         options.ambientTint = stdMat.ambientTint;
         options.diffuseTint = diffuseTint;
         options.specularTint = specularTint ? 3 : 0;
         options.metalnessTint = (stdMat.useMetalness && stdMat.metalness < 1) ? 1 : 0;
-        options.glossTint = 1;
+        options.glossTint = stdMat.glossTint ? 1 : false;
         options.emissiveTint = emissiveTint;
         options.alphaToCoverage = stdMat.alphaToCoverage;
         options.needsNormalFloat = stdMat.normalizeNormalMap;
         options.sphereMap = !!stdMat.sphereMap;
         options.dpAtlas = !!stdMat.dpAtlas;
         options.useSpecular = useSpecular;
+        options.albedoSmoothness = stdMat.albedoSmoothness;
         options.emissiveFormat = stdMat.emissiveMap ? (stdMat.emissiveMap.rgbm ? 1 : (stdMat.emissiveMap.format === pc.PIXELFORMAT_RGBA32F ? 2 : 0)) : null;
         options.lightMapFormat = stdMat.lightMap ? (stdMat.lightMap.rgbm ? 1 : (stdMat.lightMap.format === pc.PIXELFORMAT_RGBA32F ? 2 : 0)) : null;
         options.specularAntialias = stdMat.specularAntialias;
@@ -113,6 +115,7 @@ Object.assign(pc, function () {
         options.pixelSnap = stdMat.pixelSnap;
         options.nineSlicedMode = stdMat.nineSlicedMode || 0;
         options.aoMapUv = stdMat.aoUvSet; // backwards componen
+        options.albedoTransparency = stdMat.albedoTransparency;
     };
 
     StandardMaterialOptionsBuilder.prototype._updateEnvOptions = function (options, stdMat, scene, prefilteredCubeMap128) {
@@ -140,7 +143,6 @@ Object.assign(pc, function () {
             globalSky128 = scene._skyboxPrefiltered[0];
         }
 
-        options.ambientSH = !!scene.ambientProbe;
         options.fog = stdMat.useFog ? scene.fog : "none";
         options.gamma = stdMat.useGammaTonemap ? scene.gammaCorrection : pc.GAMMA_NONE;
         options.toneMap = stdMat.useGammaTonemap ? scene.toneMapping : -1;
@@ -162,9 +164,11 @@ Object.assign(pc, function () {
         options.lightMapTransform = 0;
         options.lightMapWithoutAmbient = false;
         options.dirLightMap = false;
+        options.ambientSH = false;
 
         if (objDefs) {
             options.noShadow = (objDefs & pc.SHADERDEF_NOSHADOW) !== 0;
+            options.ambientSH = (objDefs & pc.SHADERDEF_LIGHTPROBES) !== 0;
 
             if ((objDefs & pc.SHADERDEF_LM) !== 0) {
                 options.lightMapFormat = (objDefs & pc.SHADERDEF_LM_DLDR) === 0 ? 1 : 2;
@@ -179,6 +183,12 @@ Object.assign(pc, function () {
                     options.dirLightMap = true;
                 }
             }
+        }
+
+        if ( stdMat.glossyReflections ) {
+            options.reflectionProbes = ( objDefs & pc.SHADERDEF_BLEND_REFLECTION_PROBES ) > 0 ? 2 : 1;
+        } else {
+            options.reflectionProbes =  0;
         }
 
         if (stdMat.useLighting) {

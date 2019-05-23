@@ -1,31 +1,50 @@
-uniform sampler2D texture_lightMap;
-uniform sampler2D texture_dirLightMap;
+#ifdef MAPTEXTURE
+uniform sampler2D unity_Lightmap;
+uniform sampler2D unity_LightmapInd;
+uniform highp vec4 unity_Lightmap_HDR;
+uniform highp vec4 unity_LightmapST;
+#endif
+
+vec3 decodeLightmapRGBM( vec4 data, vec4 decodeInstructions ) {
+    return ( decodeInstructions.x * data.a ) * data.rgb;
+}
+
+vec3 decodeLightmapLDR( vec4 data, vec4 decodeInstructions ) {
+    return decodeInstructions.x * data.rgb;
+}
+
+vec3 decodeLightmap( vec4 color, vec4 decodeInstructions ) {
+#ifdef LIGHT_MAP_SAMPLER_FORMAT_2
+    return decodeLightmapLDR( color, decodeInstructions );
+#else
+    return decodeLightmapRGBM( color, decodeInstructions );
+#endif
+}
+
+vec3 decodeDirectionalLightmap( vec3 color, vec4 dirTex, vec3 normalWorld ) {
+    float halfLambert = dot( normalWorld, dirTex.xyz - 0.5 ) + 0.5;
+    return color * halfLambert / max( 1e-4, dirTex.w );
+}
 
 void addLightMap() {
+    vec3 bakedColor = vec3( 0 );
+    vec4 dir = vec4( 0 );
 
-    vec3 color = $texture2DSAMPLE(texture_lightMap, $UV).$CH;
-    vec4 dir = texture2D(texture_dirLightMap, $UV);
+    #ifdef MAPTEXTURE
+        vec2 uv = ( $UV.xy * unity_LightmapST.xy ) + unity_LightmapST.zw;
+        vec4 bakedColorTex = texture2D( unity_Lightmap, uv );
+        
+        bakedColor = decodeLightmap( bakedColorTex, unity_Lightmap_HDR );
+        dir = texture2D( unity_LightmapInd, uv );
+    #endif
 
-    if (dot(dir.xyz,vec3(1.0)) < 0.00001) {
-        dDiffuseLight += color;
+    if ( dot( dir.xyz, vec3(1.0) ) < 0.00001 ) {
+        dDiffuseLight += bakedColor;
         return;
     }
 
-    dLightDirNormW = normalize(dir.xyz * 2.0 - vec3(1.0));
-
-    float vlight = saturate(dot(dLightDirNormW, -dVertexNormalW));
-    float flight = saturate(dot(dLightDirNormW, -dNormalW));
-    float nlight = (flight / max(vlight,0.01)) * 0.5;
-
-    dDiffuseLight += color * nlight * 2.0;
+    dDiffuseLight += decodeDirectionalLightmap( bakedColor, dir, dNormalW );
 }
 
 void addDirLightMap() {
-    vec4 dir = texture2D(texture_dirLightMap, $UV);
-    if (dot(dir.xyz,vec3(1.0)) < 0.00001) return;
-    vec3 color = $texture2DSAMPLE(texture_lightMap, $UV).$CH;
-
-    dLightDirNormW = normalize(dir.xyz * 2.0 - vec3(1.0));
-    dSpecularLight += vec3(getLightSpecular()) * color;
 }
-
