@@ -71,7 +71,7 @@ Object.assign(pc, function () {
         this._canvasElements = [];
         this._canvasGroups = [];
         this._meshModifiers = [];
-
+        
         pc.events.attach(this);
 
     };

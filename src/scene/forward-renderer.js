@@ -505,6 +505,10 @@ Object.assign(pc, function() {
             var materialA = drawCallA._material;
             var materialB = drawCallB._material;
 
+            if (drawCallA.screenSpace !== drawCallB.screenSpace) {
+                return drawCallA.screenSpace ? 1 : -1;
+            }
+
             // FIXME EN-62 should remove the below
             if (materialA.renderQueue != materialB.renderQueue) {
                 return materialA.renderQueue - materialB.renderQueue;
@@ -1091,68 +1095,72 @@ Object.assign(pc, function() {
             // #endif
 
             var visibleLength = 0;
-            var i, drawCall, visible;
+            var maskedLength = 0;
             var drawCallsCount = drawCalls.length;
 
             var cullingMask = camera.cullingMask || 0xFFFFFFFF; // if missing assume camera's default value
+            var maskedCalls = [];
 
-            if (!camera.frustumCulling) {
-                for (i = 0; i < drawCallsCount; i++) {
-                    // need to copy array anyway because sorting will happen and it'll break original draw call order assumption
-                    drawCall = drawCalls[i];
-                    if (!drawCall.visible && !drawCall.command) continue;
+            // phase I: filter the call using culling mask
+            for ( var i = 0; i < drawCallsCount; i++ ) {
+                // need to copy array anyway because sorting will happen and it'll break original draw call order assumption
+                var drawCall = drawCalls[i];
 
-                    var mask = drawCall.node.cullingLayer || 0xFFFFFFFF;
+                if ( drawCall._nearestScreen ) {
+                    var targetCamera = drawCall._nearestScreen._camera;
+                    var renderOnce = drawCall._nearestScreen._screenType !== pc.SCREEN_TYPE_WORLD;
 
-                    if (!drawCall.node.cullingLayer && drawCall.node._parent && (drawCall.node._parent.cullingLayer || drawCall.node._parent.constructor == pc.Entity)) {
-                        mask = drawCall.node._parent.cullingLayer;
-                    } else {
-                        if (!drawCall.node.cullingLayer && drawCall.node._parent && drawCall.node._parent._parent) {
-                            mask = drawCall.node._parent._parent.cullingLayer;
-                        }
+                    if ( ( targetCamera && targetCamera !== camera ) || ( drawCall.visibleThisFrame && renderOnce ) ) {
+                        continue;
                     }
-
-                    // if the object's mask AND the camera's cullingMask is zero then the game object will be invisible from the camera
-                    if (mask && (mask & cullingMask) === 0) continue;
-
-                    visibleList[visibleLength] = drawCall;
-                    visibleLength++;
-                    drawCall.visibleThisFrame = true;
                 }
-                return visibleLength;
+
+                if ( drawCall.command ) {
+                    // always let commands through
+                    maskedCalls[ maskedLength++ ] = drawCall;
+                    drawCall.visibleThisFrame = true;
+
+                    continue;
+                }
+
+                // check if the drawCall is hidden explicitely
+                if ( !drawCall.visible ) {
+                    continue;
+                }
+
+                // get the layer from draw call (default assumed to be 0)
+                var cullingLayer = drawCall.node.cullingLayer || 0;
+                var mask = ( 1 << cullingLayer );
+
+                // if the object's mask AND the camera's cullingMask is zero then the game object will be invisible from the camera
+                if ( ( mask & cullingMask ) === 0 ) {
+                    continue;
+                }
+
+                maskedCalls[ maskedLength++ ] = drawCall;
+                drawCall.visibleThisFrame = true;
             }
 
-            for (i = 0; i < drawCallsCount; i++) {
-                drawCall = drawCalls[i];
-                if (!drawCall.command) {
-                    if (!drawCall.visible) continue; // use visible property to quickly hide/show meshInstances
-                    visible = true;
+            // check if frustum culling is disabled. if so - simply return the calls that
+            // passed masking check
+            if ( !camera.frustumCulling ) {
+                Array.prototype.push.apply( visibleList, maskedCalls );
+                return maskedLength;
+            }
 
-                    // if the object's mask AND the camera's cullingMask is zero then the game object will be invisible from the camera
-                    if (drawCall.mask && (drawCall.mask & cullingMask) === 0) continue;
+            // phase II: frustum culling
+            for ( var i = 0; i < maskedCalls.length; i++ ) {
+                var drawCall = maskedCalls[ i ];
+                var visible = true;
 
-                    // if the object belongs to a screen-space canvas, only cull it based on camera (in)equality
-                    if (drawCall.preRender && drawCall.preRender._element && drawCall.preRender._element.screen) {
-                        var screen = drawCall.preRender._element.screen.screen;
-                        visible = (screen._camera == camera) || screen.screenType === 'screen';
-                    } else if (drawCall.layer > pc.LAYER_FX) {
-                        if (drawCall.cull) {
-                            visible = this._isVisible(camera, drawCall);
-                            // #ifdef PROFILER
-                            numDrawCallsCulled++;
-                            // #endif
-                        }
-                    }
+                if ( drawCall.cull ) {
+                    visible = this._isVisible(camera, drawCall);
+                    numDrawCallsCulled++;
+                }
 
-                    if (visible) {
-                        visibleList[visibleLength] = drawCall;
-                        visibleLength++;
-                        drawCall.visibleThisFrame = true;
-                    }
-                } else {
-                    visibleList[visibleLength] = drawCall;
-                    visibleLength++;
-                    drawCall.visibleThisFrame = true;
+                if ( visible ) {
+                   visibleList[ visibleLength++ ] = drawCall;
+                   drawCall.visibleThisFrame = true;
                 }
             }
 
@@ -1649,17 +1657,31 @@ Object.assign(pc, function() {
             var stencilFront, stencilBack;
 
             var halfWidth = device.width * 0.5;
+            var skyboxRendered = false;
 
             // Render the scene
             for (i = 0; i < drawCallsCount; i++) {
-
                 drawCall = drawCalls[i];
-                if (cullingMask && drawCall.mask && !(cullingMask & drawCall.mask)) continue; // apply visibility override
+
+                // apply visibility override
+                if ( cullingMask && drawCall.node ) {
+                    var mask = ( 1 << drawCall.node.cullingLayer );
+
+                    if ( ( mask & cullingMask ) === 0 ) {
+                        continue;
+                    }
+                }
 
                 if (drawCall.command) {
                     // We have a command
                     drawCall.command();
                 } else {
+                    // squeeze skybox in if it's time
+                    if ( !skyboxRendered && ( ( camera.clearFlags & pc.CLEARFLAG_USE_SKYBOX ) !== 0 ) && ( ( i === (drawCallsCount - 1) ) || ( drawCall.renderQueue >= 3000 ) ) ) {
+                        skyboxRendered = true;
+                        drawCall = this.scene.skyboxHelper.getSkyDrawCall( camera );
+                        i--;
+                    }
 
                     // #ifdef PROFILER
                     if (camera === pc.skipRenderCamera) {

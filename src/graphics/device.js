@@ -2222,6 +2222,8 @@ Object.assign(pc, function () {
          */
         clear: function (options) {
             var defaultOptions = this.defaultClearOptions;
+            var CLEARFLAG_MASK = pc.CLEARFLAG_COLOR | pc.CLEARFLAG_STENCIL | pc.CLEARFLAG_DEPTH;
+
             options = options || defaultOptions;
 
             var flags = (options.flags == undefined) ? defaultOptions.flags : options.flags;
@@ -2250,7 +2252,7 @@ Object.assign(pc, function () {
                 }
 
                 // Clear the frame buffer
-                gl.clear(this.glClearFlag[flags]);
+                gl.clear( this.glClearFlag[ flags & CLEARFLAG_MASK ] );
 
                 if (flags & pc.CLEARFLAG_DEPTH) {
                     if (!this.depthWrite) {
