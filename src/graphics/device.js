@@ -2090,10 +2090,10 @@ Object.assign(pc, function () {
                     // explanation of the values used
                     if (!texture.rgbm) {
                         // non-HDR textures have the below settings
-                        sampler.meta.hdr.setValue( [ 1, 1, 0, 0 ] );
+                        sampler.meta.hdr.setValue( [ 1 * texture.intensity, 1, 0, 0 ] );
                     } else {
                         // we use Unity's RGBM-encoded textures which require this particular set of constants
-                        sampler.meta.hdr.setValue( [ 5, 1, 0, 1 ] );
+                        sampler.meta.hdr.setValue( [ 5 * texture.intensity, 1, 0, 1 ] );
                     }
                     sampler.meta.texels.setValue( [ 1.0 / texture.width, 1.0 / texture.height, texture.width, texture.height ] );
 
@@ -2222,6 +2222,8 @@ Object.assign(pc, function () {
          */
         clear: function (options) {
             var defaultOptions = this.defaultClearOptions;
+            var CLEARFLAG_MASK = pc.CLEARFLAG_COLOR | pc.CLEARFLAG_STENCIL | pc.CLEARFLAG_DEPTH;
+
             options = options || defaultOptions;
 
             var flags = (options.flags == undefined) ? defaultOptions.flags : options.flags;
@@ -2250,7 +2252,7 @@ Object.assign(pc, function () {
                 }
 
                 // Clear the frame buffer
-                gl.clear(this.glClearFlag[flags]);
+                gl.clear( this.glClearFlag[ flags & CLEARFLAG_MASK ] );
 
                 if (flags & pc.CLEARFLAG_DEPTH) {
                     if (!this.depthWrite) {

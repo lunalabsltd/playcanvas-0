@@ -275,10 +275,7 @@ pc.extend(pc, function() {
                 this._meshInstance.sortingLayerIndex = this._element._nearestScreen.sortingLayerIndex;
                 this._meshInstance.sortingOrder = this._element._nearestScreen.sortingOrder;
                 this._meshInstance._nearestScreen = this._element._nearestScreen;
-
-                // if (this._element.screen.screenType != pc.SCREEN_TYPE_WORLD) {
-                //     this._meshInstance.sortingLayerIndex += 100;
-                // }
+                this._meshInstance._element = this._element;
             }
 
             this._meshInstance.drawOrder = this._drawOrder;

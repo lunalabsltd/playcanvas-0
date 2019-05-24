@@ -19,6 +19,11 @@ void getAlbedo() {
 
     #ifdef MAPTEXTURE
         vec4 mapColor = texture2DSRGB(texture_diffuseMap, $UV);
+
+        #ifdef ALBEDO_TRANSPARENCY
+            dAlpha *= mapColor.a;
+            dAlbedoMapColor.a = dAlpha;
+        #endif
         
         dAlbedoMapColor *= mapColor;
         dAlbedo *= mapColor.$CH;
@@ -27,10 +32,6 @@ void getAlbedo() {
     #ifdef MAPVERTEX
         dAlbedoMapColor *= vVertexColor;
         dAlbedo *= gammaCorrectInput(saturate(vVertexColor.$VC));
-    #endif
-
-    #ifdef ALBEDO_TRANSPARENCY
-        dAlbedoMapColor.a *= dAlpha;
     #endif
 }
 

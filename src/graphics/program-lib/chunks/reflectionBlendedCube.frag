@@ -31,4 +31,6 @@ void addReflection() {
     } else {
         dReflection.xyz = env0;
     }
+
+    dReflection.a = 1.0;
 }
