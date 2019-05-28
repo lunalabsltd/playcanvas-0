@@ -455,9 +455,10 @@ Object.assign(pc, function () {
             scopeX = value[0];
             scopeY = value[1];
             if (uniformValue[0] !== scopeX || uniformValue[1] !== scopeY) {
-                gl.uniform2fv(uniform.locationId, value);
                 uniformValue[0] = scopeX;
                 uniformValue[1] = scopeY;
+
+                gl.uniform2fv(uniform.locationId, uniformValue);
             }
         };
         this.commitFunction[pc.UNIFORMTYPE_VEC3]  = function (uniform, value) {
@@ -466,12 +467,11 @@ Object.assign(pc, function () {
             scopeY = value[1];
             scopeZ = value[2];
             if (uniformValue[0] !== scopeX || uniformValue[1] !== scopeY || uniformValue[2] !== scopeZ) {
-                // A shader can declare color as float3, thus direct setting of all components will fail - 
-                // let's keep it safe and set only 3 float array
-                gl.uniform3fv(uniform.locationId, [ scopeX, scopeY, scopeZ ]);
                 uniformValue[0] = scopeX;
                 uniformValue[1] = scopeY;
                 uniformValue[2] = scopeZ;
+                
+                gl.uniform3fv(uniform.locationId, uniformValue);
             }
         };
         this.commitFunction[pc.UNIFORMTYPE_VEC4]  = function (uniform, value) {

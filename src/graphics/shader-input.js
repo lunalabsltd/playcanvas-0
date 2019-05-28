@@ -17,7 +17,13 @@ Object.assign(pc, function () {
         }
         this.dataType = type;
 
-        this.value = [null, null, null, null];
+        if ( this.dataType === pc.UNIFORMTYPE_VEC2 ) {
+            this.value = [ null, null ];
+        } else if ( this.dataType === pc.UNIFORMTYPE_VEC3 ) {
+            this.value = [ null, null, null ];
+        } else {
+            this.value = [ null, null, null, null ];
+        }
 
         // Array to hold texture unit ids
         this.array = [];
