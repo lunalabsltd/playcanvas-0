@@ -415,6 +415,7 @@ Object.assign(pc, function() {
             modelMatrixId: scope.resolve('unity_ObjectToWorld'),
             modelMatrixInvId: scope.resolve('unity_WorldToObject'),
             worldSpaceCameraPos: scope.resolve('_WorldSpaceCameraPos'),
+            worldSpaceLightPos: scope.resolve('_WorldSpaceLightPos0'),
             time: scope.resolve('_Time'),
 
             viewProjArrayId: scope.resolve('hlslcc_mtx4x4unity_MatrixVP[0]'),
@@ -883,6 +884,8 @@ Object.assign(pc, function() {
                 this.lightDir[cnt][1] = directional._direction.y;
                 this.lightDir[cnt][2] = directional._direction.z;
                 this.lightDirId[cnt].setValue(this.lightDir[cnt]);
+
+                this.unityIds.worldSpaceLightPos.setValue( [ -directional._direction.x, -directional._direction.y, -directional._direction.z, 1 ] );
 
                 if (directional.castShadows) {
                     var shadowMap = directional._isPcf && this.device.webgl2 ?
@@ -2679,6 +2682,10 @@ Object.assign(pc, function() {
                 this.unityIds.fogStart.setValue( [ scene.fogStart, 0, 0, 0 ] );
                 this.unityIds.fogEnd.setValue( [ scene.fogEnd, 0, 0, 0 ] );
                 this.unityIds.fogColor.setValue( this.fogColor );
+            } else {
+                this.unityIds.fogStart.setValue( [ 1e4, 1e4, 1e4, 1e4 ] );
+                this.unityIds.fogEnd.setValue( [ 2e4, 2e4, 2e4, 2e4 ] );
+                this.unityIds.fogColor.setValue( [ 0.5, 0.5, 0.5, 1 ] );
             }
 
             // Set up screen size // should be RT size?
