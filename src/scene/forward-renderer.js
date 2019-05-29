@@ -1144,6 +1144,7 @@ Object.assign(pc, function() {
             // check if frustum culling is disabled. if so - simply return the calls that
             // passed masking check
             if ( !camera.frustumCulling ) {
+                visibleList.length = 0;
                 Array.prototype.push.apply( visibleList, maskedCalls );
                 return maskedLength;
             }
