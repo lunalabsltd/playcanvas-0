@@ -33,6 +33,9 @@ Object.assign(pc, function () {
         this.defaultMaterial = app.scene.defaultMaterial;
 
         this.on('beforeremove', this.onRemove, this);
+        this.on('update', this.onUpdate, this);
+
+        pc.ComponentSystem.on('update', this.onUpdate, this);
     };
     ModelComponentSystem.prototype = Object.create(pc.ComponentSystem.prototype);
     ModelComponentSystem.prototype.constructor = ModelComponentSystem;
@@ -138,7 +141,21 @@ Object.assign(pc, function () {
 
         onRemove: function (entity, component) {
             component.onRemove();
+        },
+
+        onUpdate: function (dt) {
+            var components = this.store;
+
+            for (var id in components) {
+                if ( components.hasOwnProperty( id ) ) {
+                    var component = components[ id ].entity.model;
+                    if ( component[ "__UnityEngine.TrailRenderer" ] ) {
+                        component[ "__UnityEngine.TrailRenderer" ].Update();
+                    }
+                }
+            }
         }
+
     });
 
     return {
