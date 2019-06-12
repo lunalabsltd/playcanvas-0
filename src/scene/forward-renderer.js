@@ -415,7 +415,6 @@ Object.assign(pc, function() {
             modelMatrixId: scope.resolve('unity_ObjectToWorld'),
             modelMatrixInvId: scope.resolve('unity_WorldToObject'),
             worldSpaceCameraPos: scope.resolve('_WorldSpaceCameraPos'),
-            worldSpaceLightPos: scope.resolve('_WorldSpaceLightPos0'),
             time: scope.resolve('_Time'),
 
             viewProjArrayId: scope.resolve('hlslcc_mtx4x4unity_MatrixVP[0]'),
@@ -423,7 +422,11 @@ Object.assign(pc, function() {
             modelMatrixArrayId: scope.resolve('hlslcc_mtx4x4unity_ObjectToWorld[0]'),
             modelMatrixInvArrayId: scope.resolve('hlslcc_mtx4x4unity_WorldToObject[0]'),
 
-            indirectSpecularId: scope.resolve('unity_IndirectSpecColor')
+            indirectSpecularId: scope.resolve('unity_IndirectSpecColor'),
+
+            lightColor: scope.resolve('_LightColor0'),
+            glstateLightModelAmbient: scope.resolve(' glstate_lightmodel_ambient'),
+            worldSpaceLightPos: scope.resolve( '_WorldSpaceLightPos0' )
         };
 
         // allocate the array for SH uniforms
@@ -479,7 +482,7 @@ Object.assign(pc, function() {
 
         this.fogColor = new Float32Array(3);
         this.fogParams = new Float32Array(4);
-        this.ambientColor = new Float32Array(3);
+        this.ambientColor = new Float32Array(4);
 
         this.removeShadows = false;
     }
@@ -825,6 +828,8 @@ Object.assign(pc, function() {
             this.ambientId.setValue(this.ambientColor);
             this.exposureId.setValue(scene.exposure);
 
+            this.unityIds.glstateLightModelAmbient.setValue( this.ambientColor );
+
             if (scene.skyboxModel) this.skyboxIntensityId.setValue(scene.skyboxIntensity);
             if (scene.skyboxHelper) {
                 var color = scene.skyboxHelper.indirectSpecular;
@@ -886,6 +891,7 @@ Object.assign(pc, function() {
                 this.lightDirId[cnt].setValue(this.lightDir[cnt]);
 
                 this.unityIds.worldSpaceLightPos.setValue( [ -directional._direction.x, -directional._direction.y, -directional._direction.z, 1 ] );
+                this.unityIds.lightColor.setValue( [ directional._finalColor[ 0 ], directional._finalColor[ 1 ], directional._finalColor[ 2 ], 0 ] );
 
                 if (directional.castShadows) {
                     var shadowMap = directional._isPcf && this.device.webgl2 ?
