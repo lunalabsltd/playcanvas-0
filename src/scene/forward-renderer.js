@@ -1686,6 +1686,10 @@ Object.assign(pc, function() {
                         skyboxRendered = true;
                         drawCall = this.scene.skyboxHelper.getSkyDrawCall( camera );
                         i--;
+
+                        if ( !drawCall.visible ) {
+                            continue;
+                        }
                     }
 
                     // #ifdef PROFILER
