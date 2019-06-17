@@ -219,6 +219,9 @@ Object.assign(pc, (function () {
          * r.lerp(a, b, 1);   // r is equal to b
          */
         lerp: function (lhs, rhs, alpha) {
+
+            alpha = pc.math.clamp(alpha, 0, 1);
+
             this.x = lhs.x + alpha * (rhs.x - lhs.x);
             this.y = lhs.y + alpha * (rhs.y - lhs.y);
             this.z = lhs.z + alpha * (rhs.z - lhs.z);
