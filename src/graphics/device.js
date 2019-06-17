@@ -1946,6 +1946,14 @@ Object.assign(pc, function () {
                         }
                     }
 
+                    if (attribute.scopeId.name == "TEXCOORD0") {
+                        locationId = attribute.locationId;
+                        this.enabledAttributes[locationId] = false;
+
+                        gl.disableVertexAttribArray(locationId);
+                        gl.vertexAttrib4fv(locationId, whiteColor);
+                    }
+
                     // Check the vertex element is valid
                     if (element !== null) {
                         if (element.const) {
