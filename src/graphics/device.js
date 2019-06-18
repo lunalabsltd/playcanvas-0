@@ -271,8 +271,9 @@ Object.assign(pc, function () {
         var gl = null;
         options = options || {};
         options.stencil = true;
+        preferWebGl2 = false;
         options.antialias = (window.devicePixelRatio < 2);
-        options.alpha = true;
+        options.alpha = false;
         for (i = 0; i < names.length; i++) {
             try {
                 gl = canvas.getContext(names[i], options);
