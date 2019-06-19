@@ -480,7 +480,7 @@ Object.assign(pc, function() {
         this.polygonOffsetId = scope.resolve("polygonOffset");
         this.polygonOffset = new Float32Array(2);
 
-        this.fogColor = new Float32Array(3);
+        this.fogColor = new Float32Array(4);
         this.fogParams = new Float32Array(4);
         this.ambientColor = new Float32Array(4);
 
@@ -1128,7 +1128,7 @@ Object.assign(pc, function() {
                     }
                 }
 
-                if ( drawCall.command ) {
+                if ( drawCall.command || !drawCall.cull ) {
                     // always let commands through
                     maskedCalls[ maskedLength++ ] = drawCall;
                     drawCall.visibleThisFrame = true;
