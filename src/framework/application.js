@@ -457,7 +457,8 @@ Object.assign(pc, function () {
             { class: pc.MonoBehaviourSystem,                args: [ this ] },
             { class: pc.ParticleSystemSystem,               args: [ this ] },
             { class: pc.ParticleSystemRendererSystem,       args: [ this ] },
-            { class: pc.AnimatorSystem,                     args: [ this ] }
+            { class: pc.AnimatorSystem,                     args: [ this ] },
+            { class: pc.ReflectionProbeSystem,              args: [ this ] }
         ];
 
         for ( var i = 0; i < systemClasses.length; i++ ) {

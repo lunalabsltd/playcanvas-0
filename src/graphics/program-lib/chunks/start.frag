@@ -1,3 +1,4 @@
+uniform lowp vec4 unity_IndirectSpecColor;
 
 void main(void) {
     dDiffuseLight = vec3(0);

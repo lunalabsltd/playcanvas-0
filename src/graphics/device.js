@@ -456,9 +456,10 @@ Object.assign(pc, function () {
             scopeX = value[0];
             scopeY = value[1];
             if (uniformValue[0] !== scopeX || uniformValue[1] !== scopeY) {
-                gl.uniform2fv(uniform.locationId, value);
                 uniformValue[0] = scopeX;
                 uniformValue[1] = scopeY;
+
+                gl.uniform2fv(uniform.locationId, uniformValue);
             }
         };
         this.commitFunction[pc.UNIFORMTYPE_VEC3]  = function (uniform, value) {
@@ -467,10 +468,11 @@ Object.assign(pc, function () {
             scopeY = value[1];
             scopeZ = value[2];
             if (uniformValue[0] !== scopeX || uniformValue[1] !== scopeY || uniformValue[2] !== scopeZ) {
-                gl.uniform3fv(uniform.locationId, value);
                 uniformValue[0] = scopeX;
                 uniformValue[1] = scopeY;
                 uniformValue[2] = scopeZ;
+                
+                gl.uniform3fv(uniform.locationId, uniformValue);
             }
         };
         this.commitFunction[pc.UNIFORMTYPE_VEC4]  = function (uniform, value) {
@@ -479,7 +481,7 @@ Object.assign(pc, function () {
             scopeY = value[1];
             scopeZ = value[2];
             scopeW = value[3];
-            if (uniformValue[0] !== scopeX || uniformValue[1] !== scopeY || uniformValue[2] !== scopeZ || uniformValue[3] !== scopeW) {
+            if (value.length > 4 || uniformValue[0] !== scopeX || uniformValue[1] !== scopeY || uniformValue[2] !== scopeZ || uniformValue[3] !== scopeW) {
                 gl.uniform4fv(uniform.locationId, value);
                 uniformValue[0] = scopeX;
                 uniformValue[1] = scopeY;
@@ -1641,7 +1643,7 @@ Object.assign(pc, function () {
                                     texData
                                 );
                             } else {
-                                this.setUnpackFlipY(false);
+                                this.setUnpackFlipY(texture._flipY);
                                 this.setUnpackPremultiplyAlpha(texture._premultiplyAlpha);
                                 gl.texImage2D(
                                     gl.TEXTURE_CUBE_MAP_POSITIVE_X + face,
@@ -2042,7 +2044,7 @@ Object.assign(pc, function () {
         draw: function (primitive, numInstances) {
             var gl = this.gl;
 
-            var i, j, len; // Loop counting
+            var i, j, len, samplerName; // Loop counting
             var sampler, samplerValue, texture, numTextures; // Samplers
             var uniform, scopeId, uniformVersion, programVersion; // Uniforms
             var shader = this.shader;
@@ -2066,13 +2068,35 @@ Object.assign(pc, function () {
             for (i = 0, len = samplers.length; i < len; i++) {
                 sampler = samplers[i];
                 samplerValue = sampler.scopeId.value;
+                samplerName = sampler.scopeId.name;
                 if (!samplerValue) {
                     continue; // Because unset constants shouldn't raise random errors
+                }
+
+                if (!sampler.meta) {
+                    // cache meta uniforms if not already cached for texture samplers
+                    sampler.meta = {
+                        // HDR parameters uniform to help shaders decode textures
+                        hdr: this.scope.resolve( samplerName + '_HDR' ),
+                        // Texture dimensions uniform
+                        texels: this.scope.resolve( samplerName + '_TexelSize' )
+                    };
                 }
 
                 if (samplerValue instanceof pc.Texture) {
                     texture = samplerValue;
                     this.setTexture(texture, textureUnit);
+
+                    // please refer to https://docs.unity3d.com/Manual/SL-PropertiesInPrograms.html for
+                    // explanation of the values used
+                    if (!texture.rgbm) {
+                        // non-HDR textures have the below settings
+                        sampler.meta.hdr.setValue( [ 1 * texture.intensity, 1, 0, 0 ] );
+                    } else {
+                        // we use Unity's RGBM-encoded textures which require this particular set of constants
+                        sampler.meta.hdr.setValue( [ 5 * texture.intensity, 1, 0, 1 ] );
+                    }
+                    sampler.meta.texels.setValue( [ 1.0 / texture.width, 1.0 / texture.height, texture.width, texture.height ] );
 
                     // #ifdef DEBUG
                     if (this.renderTarget) {
@@ -2199,6 +2223,8 @@ Object.assign(pc, function () {
          */
         clear: function (options) {
             var defaultOptions = this.defaultClearOptions;
+            var CLEARFLAG_MASK = pc.CLEARFLAG_COLOR | pc.CLEARFLAG_STENCIL | pc.CLEARFLAG_DEPTH;
+
             options = options || defaultOptions;
 
             var flags = (options.flags == undefined) ? defaultOptions.flags : options.flags;
@@ -2227,7 +2253,7 @@ Object.assign(pc, function () {
                 }
 
                 // Clear the frame buffer
-                gl.clear(this.glClearFlag[flags]);
+                gl.clear( this.glClearFlag[ flags & CLEARFLAG_MASK ] );
 
                 if (flags & pc.CLEARFLAG_DEPTH) {
                     if (!this.depthWrite) {

@@ -58,7 +58,7 @@ Object.assign(pc, function () {
             color: [0.5, 0.5, 0.5, 1.0],
             depth: 1.0,
             stencil: 0,
-            flags: pc.CLEARFLAG_COLOR | pc.CLEARFLAG_DEPTH | pc.CLEARFLAG_STENCIL
+            flags: pc.CLEARFLAG_COLOR | pc.CLEARFLAG_DEPTH | pc.CLEARFLAG_STENCIL | pc.CLEARFLAG_USE_SKYBOX
         };
 
         this._node = null;
@@ -438,6 +438,21 @@ Object.assign(pc, function () {
         },
         set: function (v) {
             this._clearOptions.depth = v;
+        }
+    });
+
+    /**
+     * @private
+     * @type Number
+     * @name pc.Camera#clearDepth
+     * @description Camera's clear depth value.
+     */
+    Object.defineProperty(Camera.prototype, 'clearSkybox', {
+        get: function () {
+            return this._clearOptions.skybox;
+        },
+        set: function (v) {
+            this._clearOptions.skybox = v;
         }
     });
 

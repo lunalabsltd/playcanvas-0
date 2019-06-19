@@ -429,8 +429,8 @@ pc.programlib.standard = {
             options.fresnelModel = (options.fresnelModel === 0) ? pc.FRESNEL_SCHLICK : options.fresnelModel;
         }
 
-        var cubemapReflection = (options.cubeMap || (options.prefilteredCubemap && options.useSpecular)) && !options.sphereMap && !options.dpAtlas;
-        var reflections = options.sphereMap || cubemapReflection || options.dpAtlas;
+        var cubemapReflection =  (options.reflectionProbes > 0) | (options.cubeMap || (options.prefilteredCubemap && options.useSpecular)) && !options.sphereMap && !options.dpAtlas;
+        var reflections = options.sphereMap || cubemapReflection || options.dpAtlas || options.reflectionProbes > 0;
         var useTexCubeLod = options.useTexCubeLod;
         if (options.cubeMap) options.sphereMap = null; // cubeMaps have higher priority
         if (options.dpAtlas) options.prefilteredCubemap = null; // dp has even higher priority
@@ -710,6 +710,18 @@ pc.programlib.standard = {
         if (device.extStandardDerivatives && !device.webgl2) {
             code += "#extension GL_OES_standard_derivatives : enable\n\n";
         }
+
+        if (options.albedoTransparency) {
+            code += "#define ALBEDO_TRANSPARENCY\n";
+        }
+
+        if (device.extTextureLod && !device.webgl2) {
+            code += "#extension GL_EXT_shader_texture_lod : enable\n\n";
+            code += "#define textureCubeLod(sampler, direction, mip) textureCubeLodEXT(sampler, direction, mip)\n";
+        } else {
+            code += "#define textureCubeLod(sampler, direction, mip) textureCube(sampler, direction)\n";
+        }        
+
         if (chunks.extensionPS) {
             code += chunks.extensionPS + "\n";
         }
@@ -994,6 +1006,17 @@ pc.programlib.standard = {
         code += this._addMap("emissive", "emissivePS", options, chunks, options.emissiveFormat);
 
         if (options.useSpecular && (lighting || reflections)) {
+            // set up the flag indicating which map should be the source for shininess multiplier
+            if (options.albedoSmoothness) {
+                code += "#define ALBEDO_ALPHA_SMOOTHNESS\n";
+            } else {
+                if (options.useMetalness) {
+                    code += "#define METALLIC_ALPHA_SMOOTHNESS\n";
+                } else {
+                    code += "#define SPECULARITY_ALPHA_SMOOTHNESS\n";
+                }
+            }
+
             if (options.specularAntialias && options.normalMap) {
                 if (options.needsNormalFloat && needsNormal) {
                     code += chunks.specularAaToksvigFloatPS;
@@ -1006,7 +1029,6 @@ pc.programlib.standard = {
 
             var specularPropName = options.useMetalness ? "metalness" : "specular";
             code += this._addMap(specularPropName, specularPropName + "PS", options, chunks);
-            code += this._addMap("gloss", "glossPS", options, chunks);
             if (options.fresnelModel > 0) {
                 if (options.fresnelModel === pc.FRESNEL_SIMPLE) {
                     code += chunks.fresnelSimplePS;
@@ -1041,24 +1063,10 @@ pc.programlib.standard = {
 
         var reflectionDecode = options.rgbmReflection ? "decodeRGBM" : (options.hdrReflection ? "" : "gammaCorrectInput");
 
-        if (options.sphereMap) {
-            var scode = device.fragmentUniformsCount > 16 ? chunks.reflectionSpherePS : chunks.reflectionSphereLowPS;
-            scode = scode.replace(/\$texture2DSAMPLE/g, options.rgbmReflection ? "texture2DRGBM" : (options.hdrReflection ? "texture2D" : "texture2DSRGB"));
-            code += scode;
-        } else if (cubemapReflection) {
-            if (options.prefilteredCubemap) {
-                if (useTexCubeLod) {
-                    code += chunks.reflectionPrefilteredCubeLodPS.replace(/\$DECODE/g, reflectionDecode);
-
-                } else {
-                    code += chunks.reflectionPrefilteredCubePS.replace(/\$DECODE/g, reflectionDecode);
-                }
-            } else {
-                code += chunks.reflectionCubePS.replace(/\$textureCubeSAMPLE/g,
-                                                        options.rgbmReflection ? "textureCubeRGBM" : (options.hdrReflection ? "textureCube" : "textureCubeSRGB"));
-            }
-        } else if (options.dpAtlas) {
-            code += chunks.reflectionDpAtlasPS.replace(/\$texture2DSAMPLE/g, options.rgbmReflection ? "texture2DRGBM" : (options.hdrReflection ? "texture2D" : "texture2DSRGB"));
+        // check if reflections are enabled for this shader
+        if ( options.reflectionProbes > 0 ) {
+            code += chunks.reflectionUtilsPS;
+            code += options.reflectionProbes == 1 ? chunks.reflectionCubePS : chunks.reflectionBlendedCubePS;
         }
 
         if ((cubemapReflection || options.sphereMap || options.dpAtlas) && options.refraction) {
@@ -1136,6 +1144,8 @@ pc.programlib.standard = {
                     useOldAmbient = true;
                 }
             }
+
+            code += this._addMap("gloss", "glossPS", options, chunks);
         } else {
             code += chunks.combineDiffusePS;
         }
