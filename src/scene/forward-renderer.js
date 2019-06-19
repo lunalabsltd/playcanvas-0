@@ -1118,10 +1118,13 @@ Object.assign(pc, function() {
             for ( var i = 0; i < drawCallsCount; i++ ) {
                 // need to copy array anyway because sorting will happen and it'll break original draw call order assumption
                 var drawCall = drawCalls[i];
+                var isMaskable = true;
 
                 if ( drawCall._nearestScreen ) {
                     var targetCamera = drawCall._nearestScreen._camera;
-                    var renderOnce = drawCall._nearestScreen._screenType !== pc.SCREEN_TYPE_WORLD;
+                    var screenType = drawCall._nearestScreen._screenType;
+                    var renderOnce = screenType !== pc.SCREEN_TYPE_WORLD;
+                    isMaskable = screenType !== pc.SCREEN_TYPE_SCREEN;
 
                     if ( ( targetCamera && targetCamera !== camera ) || ( drawCall.visibleThisFrame && renderOnce ) ) {
                         continue;
@@ -1141,13 +1144,15 @@ Object.assign(pc, function() {
                     continue;
                 }
 
-                // get the layer from draw call (default assumed to be 0)
-                var cullingLayer = drawCall.node.cullingLayer || 0;
-                var mask = ( 1 << cullingLayer );
+                if ( isMaskable ) {
+                    // get the layer from draw call (default assumed to be 0)
+                    var cullingLayer = drawCall.node.cullingLayer || 0;
+                    var mask = ( 1 << cullingLayer );
 
-                // if the object's mask AND the camera's cullingMask is zero then the game object will be invisible from the camera
-                if ( ( mask & cullingMask ) === 0 ) {
-                    continue;
+                    // if the object's mask AND the camera's cullingMask is zero then the game object will be invisible from the camera
+                    if ( ( mask & cullingMask ) === 0 ) {
+                        continue;
+                    }
                 }
 
                 maskedCalls[ maskedLength++ ] = drawCall;
