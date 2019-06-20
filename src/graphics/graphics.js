@@ -169,6 +169,12 @@
          * @description Clear the stencil buffer.
          */
         CLEARFLAG_STENCIL: 4,
+        /**
+         * @enum pc.CLEARFLAG
+         * @name pc.CLEARFLAG_USE_SKYBOX
+         * @description Clear the viewport using skybox mesh.
+         */
+        CLEARFLAG_USE_SKYBOX: 8,
 
         /**
          * @enum pc.CUBEFACE

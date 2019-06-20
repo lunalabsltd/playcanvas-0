@@ -406,6 +406,10 @@ Object.assign(pc, function() {
         this.cubeMapId = scope.resolve('texture_cubeMap');
 
         this.unityIds = {
+            fogStart: scope.resolve('unity_FogStart'),
+            fogEnd: scope.resolve('unity_FogEnd'),
+            fogColor: scope.resolve('unity_FogColor'),
+
             viewProjId: scope.resolve('unity_MatrixVP'),
             viewId: scope.resolve('unity_MatrixV'),
             modelMatrixId: scope.resolve('unity_ObjectToWorld'),
@@ -504,6 +508,10 @@ Object.assign(pc, function() {
         sortCompareMesh: function(drawCallA, drawCallB) {
             var materialA = drawCallA._material;
             var materialB = drawCallB._material;
+
+            if (drawCallA.screenSpace !== drawCallB.screenSpace) {
+                return drawCallA.screenSpace ? 1 : -1;
+            }
 
             // FIXME EN-62 should remove the below
             if (materialA.renderQueue != materialB.renderQueue) {
@@ -1091,68 +1099,73 @@ Object.assign(pc, function() {
             // #endif
 
             var visibleLength = 0;
-            var i, drawCall, visible;
+            var maskedLength = 0;
             var drawCallsCount = drawCalls.length;
 
             var cullingMask = camera.cullingMask || 0xFFFFFFFF; // if missing assume camera's default value
+            var maskedCalls = [];
 
-            if (!camera.frustumCulling) {
-                for (i = 0; i < drawCallsCount; i++) {
-                    // need to copy array anyway because sorting will happen and it'll break original draw call order assumption
-                    drawCall = drawCalls[i];
-                    if (!drawCall.visible && !drawCall.command) continue;
+            // phase I: filter the call using culling mask
+            for ( var i = 0; i < drawCallsCount; i++ ) {
+                // need to copy array anyway because sorting will happen and it'll break original draw call order assumption
+                var drawCall = drawCalls[i];
 
-                    var mask = drawCall.node.cullingLayer || 0xFFFFFFFF;
+                if ( drawCall._nearestScreen ) {
+                    var targetCamera = drawCall._nearestScreen._camera;
+                    var renderOnce = drawCall._nearestScreen._screenType !== pc.SCREEN_TYPE_WORLD;
 
-                    if (!drawCall.node.cullingLayer && drawCall.node._parent && (drawCall.node._parent.cullingLayer || drawCall.node._parent.constructor == pc.Entity)) {
-                        mask = drawCall.node._parent.cullingLayer;
-                    } else {
-                        if (!drawCall.node.cullingLayer && drawCall.node._parent && drawCall.node._parent._parent) {
-                            mask = drawCall.node._parent._parent.cullingLayer;
-                        }
+                    if ( ( targetCamera && targetCamera !== camera ) || ( drawCall.visibleThisFrame && renderOnce ) ) {
+                        continue;
                     }
-
-                    // if the object's mask AND the camera's cullingMask is zero then the game object will be invisible from the camera
-                    if (mask && (mask & cullingMask) === 0) continue;
-
-                    visibleList[visibleLength] = drawCall;
-                    visibleLength++;
-                    drawCall.visibleThisFrame = true;
                 }
-                return visibleLength;
+
+                if ( drawCall.command ) {
+                    // always let commands through
+                    maskedCalls[ maskedLength++ ] = drawCall;
+                    drawCall.visibleThisFrame = true;
+
+                    continue;
+                }
+
+                // check if the drawCall is hidden explicitely
+                if ( !drawCall.visible ) {
+                    continue;
+                }
+
+                // get the layer from draw call (default assumed to be 0)
+                var cullingLayer = drawCall.node.cullingLayer || 0;
+                var mask = ( 1 << cullingLayer );
+
+                // if the object's mask AND the camera's cullingMask is zero then the game object will be invisible from the camera
+                if ( ( mask & cullingMask ) === 0 ) {
+                    continue;
+                }
+
+                maskedCalls[ maskedLength++ ] = drawCall;
+                drawCall.visibleThisFrame = true;
             }
 
-            for (i = 0; i < drawCallsCount; i++) {
-                drawCall = drawCalls[i];
-                if (!drawCall.command) {
-                    if (!drawCall.visible) continue; // use visible property to quickly hide/show meshInstances
-                    visible = true;
+            // check if frustum culling is disabled. if so - simply return the calls that
+            // passed masking check
+            if ( !camera.frustumCulling ) {
+                visibleList.length = 0;
+                Array.prototype.push.apply( visibleList, maskedCalls );
+                return maskedLength;
+            }
 
-                    // if the object's mask AND the camera's cullingMask is zero then the game object will be invisible from the camera
-                    if (drawCall.mask && (drawCall.mask & cullingMask) === 0) continue;
+            // phase II: frustum culling
+            for ( var i = 0; i < maskedCalls.length; i++ ) {
+                var drawCall = maskedCalls[ i ];
+                var visible = true;
 
-                    // if the object belongs to a screen-space canvas, only cull it based on camera (in)equality
-                    if (drawCall.preRender && drawCall.preRender._element && drawCall.preRender._element.screen) {
-                        var screen = drawCall.preRender._element.screen.screen;
-                        visible = (screen._camera == camera) || screen.screenType === 'screen';
-                    } else if (drawCall.layer > pc.LAYER_FX) {
-                        if (drawCall.cull) {
-                            visible = this._isVisible(camera, drawCall);
-                            // #ifdef PROFILER
-                            numDrawCallsCulled++;
-                            // #endif
-                        }
-                    }
+                if ( drawCall.cull ) {
+                    visible = this._isVisible(camera, drawCall);
+                    numDrawCallsCulled++;
+                }
 
-                    if (visible) {
-                        visibleList[visibleLength] = drawCall;
-                        visibleLength++;
-                        drawCall.visibleThisFrame = true;
-                    }
-                } else {
-                    visibleList[visibleLength] = drawCall;
-                    visibleLength++;
-                    drawCall.visibleThisFrame = true;
+                if ( visible ) {
+                   visibleList[ visibleLength++ ] = drawCall;
+                   drawCall.visibleThisFrame = true;
                 }
             }
 
@@ -1649,17 +1662,35 @@ Object.assign(pc, function() {
             var stencilFront, stencilBack;
 
             var halfWidth = device.width * 0.5;
+            var skyboxRendered = false;
 
             // Render the scene
             for (i = 0; i < drawCallsCount; i++) {
-
                 drawCall = drawCalls[i];
-                if (cullingMask && drawCall.mask && !(cullingMask & drawCall.mask)) continue; // apply visibility override
+
+                // apply visibility override
+                if ( cullingMask && drawCall.node ) {
+                    var mask = ( 1 << drawCall.node.cullingLayer );
+
+                    if ( ( mask & cullingMask ) === 0 ) {
+                        continue;
+                    }
+                }
 
                 if (drawCall.command) {
                     // We have a command
                     drawCall.command();
                 } else {
+                    // squeeze skybox in if it's time
+                    if ( !skyboxRendered && ( ( camera.clearFlags & pc.CLEARFLAG_USE_SKYBOX ) !== 0 ) && ( ( i === (drawCallsCount - 1) ) || ( drawCall.renderQueue >= 3000 ) ) ) {
+                        skyboxRendered = true;
+                        drawCall = this.scene.skyboxHelper.getSkyDrawCall( camera );
+                        i--;
+
+                        if ( !drawCall.visible ) {
+                            continue;
+                        }
+                    }
 
                     // #ifdef PROFILER
                     if (camera === pc.skipRenderCamera) {
@@ -1819,7 +1850,7 @@ Object.assign(pc, function() {
                             if (!parameter.scopeId) {
                                 parameter.scopeId = device.scope.resolve(paramName);
                             }
-                            parameter.scopeId.setValue(parameter.data);
+                            parameter.scopeId.pushValue(parameter.data);
                         }
                     }
 
@@ -1870,15 +1901,10 @@ Object.assign(pc, function() {
                     }
 
                     // Unset meshInstance overrides back to material values if next draw call will use the same material
-                    if (i < drawCallsCount - 1 && drawCalls[i + 1].material === material) {
-                        for (paramName in parameters) {
-                            parameter = material.parameters[paramName];
-                            if (parameter) {
-                                if (!parameter.scopeId) {
-                                    parameter.scopeId = device.scope.resolve(paramName);
-                                }
-                                parameter.scopeId.setValue(parameter.data);
-                            }
+                    for (paramName in parameters) {
+                        parameter = parameters[paramName];
+                        if (parameter.passFlags & passFlag) {
+                            parameter.scopeId.popValue();
                         }
                     }
 
@@ -2638,6 +2664,7 @@ Object.assign(pc, function() {
                 this.fogColor[0] = scene.fogColor.r;
                 this.fogColor[1] = scene.fogColor.g;
                 this.fogColor[2] = scene.fogColor.b;
+                this.fogColor[3] = 1.0;
 
                 if (scene.gammaCorrection) {
                     for (i = 0; i < 3; i++) {
@@ -2652,6 +2679,10 @@ Object.assign(pc, function() {
 
                 this.fogColorId.setValue(this.fogColor);
                 this.fogParamsId.setValue(this.fogParams);
+
+                this.unityIds.fogStart.setValue( [ scene.fogStart, 0, 0, 0 ] );
+                this.unityIds.fogEnd.setValue( [ scene.fogEnd, 0, 0, 0 ] );
+                this.unityIds.fogColor.setValue( this.fogColor );
             }
 
             // Set up screen size // should be RT size?

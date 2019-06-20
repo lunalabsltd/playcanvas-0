@@ -90,7 +90,6 @@ pc.extend(pc, function() {
         destroy: function() {
             if (this._model) {
                 this._system.app.scene.removeModel(this._model);
-                this._model.destroy();
                 this._model = null;
             }
 
@@ -164,10 +163,7 @@ pc.extend(pc, function() {
                 this._meshInstance.sortingLayerIndex = this._element._nearestScreen.sortingLayerIndex;
                 this._meshInstance.sortingOrder = this._element._nearestScreen.sortingOrder;
                 this._meshInstance._nearestScreen = this._element._nearestScreen;
-
-                // if (this._element.screen.screenType != pc.SCREEN_TYPE_WORLD) {
-                //     this._meshInstance.sortingLayerIndex += 100;
-                // }
+                this._meshInstance._element = this._element;
             }
 
             this._meshInstance.drawOrder = this._drawOrder;
@@ -389,7 +385,7 @@ pc.extend(pc, function() {
         set: function(value) {
             this._masksChildren = value;
 
-            if (this._element.screen) {
+            if (this._element.screen && this._element.screen.screen) {
                 this._element.screen.screen._updateStencilParameters();
             }
         }
@@ -668,7 +664,7 @@ pc.extend(pc, function() {
 
         set: function(value) {
             this._showMaskGraphics = value;
-            var screenSpace = this._element.screen ? (this._element.screen.screen.screenType == pc.SCREEN_TYPE_SCREEN) : false;
+            var screenSpace = (this._element.screen && this._element.screen.screen) ? (this._element.screen.screen.screenType == pc.SCREEN_TYPE_SCREEN) : false;
             this._updateMaterial(screenSpace);
         }
     });

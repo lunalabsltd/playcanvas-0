@@ -12,6 +12,7 @@ Object.assign(pc, function () {
         this.clearColorBuffer = true;
         this.clearDepthBuffer = true;
         this.clearStencilBuffer = true;
+        this.clearSkybox = true;
         this.nearClip = 0.1;
         this.farClip = 1000;
         this.fov = 45;

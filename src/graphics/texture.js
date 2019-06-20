@@ -98,6 +98,7 @@ Object.assign(pc, function () {
 
         this._format = pc.PIXELFORMAT_R8_G8_B8_A8;
         this.rgbm = false;
+        this.intensity = 1.0;
 
         this._cubemap = false;
         this._volume = false;
