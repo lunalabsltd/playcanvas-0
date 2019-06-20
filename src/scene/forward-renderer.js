@@ -1682,15 +1682,15 @@ Object.assign(pc, function() {
                     drawCall.command();
                 } else {
                     // squeeze skybox in if it's time
-                    if ( !skyboxRendered && ( ( camera.clearFlags & pc.CLEARFLAG_USE_SKYBOX ) !== 0 ) && ( ( i === (drawCallsCount - 1) ) || ( drawCall.renderQueue >= 3000 ) ) ) {
-                        skyboxRendered = true;
-                        drawCall = this.scene.skyboxHelper.getSkyDrawCall( camera );
-                        i--;
-
-                        if ( !drawCall.visible ) {
-                            continue;
-                        }
-                    }
+                    // if ( !skyboxRendered && ( ( camera.clearFlags & pc.CLEARFLAG_USE_SKYBOX ) !== 0 ) && ( ( i === (drawCallsCount - 1) ) || ( drawCall.renderQueue >= 3000 ) ) ) {
+                    //     skyboxRendered = true;
+                    //     drawCall = this.scene.skyboxHelper.getSkyDrawCall( camera );
+                    //     i--;
+                    //
+                    //     if ( !drawCall.visible ) {
+                    //         continue;
+                    //     }
+                    // }
 
                     // #ifdef PROFILER
                     if (camera === pc.skipRenderCamera) {
