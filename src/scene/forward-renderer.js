@@ -422,7 +422,11 @@ Object.assign(pc, function() {
             modelMatrixArrayId: scope.resolve('hlslcc_mtx4x4unity_ObjectToWorld[0]'),
             modelMatrixInvArrayId: scope.resolve('hlslcc_mtx4x4unity_WorldToObject[0]'),
 
-            indirectSpecularId: scope.resolve('unity_IndirectSpecColor')
+            indirectSpecularId: scope.resolve('unity_IndirectSpecColor'),
+
+            lightColor: scope.resolve('_LightColor0'),
+            glstateLightModelAmbient: scope.resolve(' glstate_lightmodel_ambient'),
+            worldSpaceLightPos: scope.resolve( '_WorldSpaceLightPos0' )
         };
 
         // allocate the array for SH uniforms
@@ -476,9 +480,9 @@ Object.assign(pc, function() {
         this.polygonOffsetId = scope.resolve("polygonOffset");
         this.polygonOffset = new Float32Array(2);
 
-        this.fogColor = new Float32Array(3);
+        this.fogColor = new Float32Array(4);
         this.fogParams = new Float32Array(4);
-        this.ambientColor = new Float32Array(3);
+        this.ambientColor = new Float32Array(4);
 
         this.removeShadows = false;
     }
@@ -824,6 +828,8 @@ Object.assign(pc, function() {
             this.ambientId.setValue(this.ambientColor);
             this.exposureId.setValue(scene.exposure);
 
+            this.unityIds.glstateLightModelAmbient.setValue( this.ambientColor );
+
             if (scene.skyboxModel) this.skyboxIntensityId.setValue(scene.skyboxIntensity);
             if (scene.skyboxHelper) {
                 var color = scene.skyboxHelper.indirectSpecular;
@@ -883,6 +889,9 @@ Object.assign(pc, function() {
                 this.lightDir[cnt][1] = directional._direction.y;
                 this.lightDir[cnt][2] = directional._direction.z;
                 this.lightDirId[cnt].setValue(this.lightDir[cnt]);
+
+                this.unityIds.worldSpaceLightPos.setValue( [ -directional._direction.x, -directional._direction.y, -directional._direction.z, 1 ] );
+                this.unityIds.lightColor.setValue( [ directional._finalColor[ 0 ], directional._finalColor[ 1 ], directional._finalColor[ 2 ], 0 ] );
 
                 if (directional.castShadows) {
                     var shadowMap = directional._isPcf && this.device.webgl2 ?
@@ -1109,17 +1118,20 @@ Object.assign(pc, function() {
             for ( var i = 0; i < drawCallsCount; i++ ) {
                 // need to copy array anyway because sorting will happen and it'll break original draw call order assumption
                 var drawCall = drawCalls[i];
+                var isMaskable = true;
 
                 if ( drawCall._nearestScreen ) {
                     var targetCamera = drawCall._nearestScreen._camera;
-                    var renderOnce = drawCall._nearestScreen._screenType !== pc.SCREEN_TYPE_WORLD;
+                    var screenType = drawCall._nearestScreen._screenType;
+                    var renderOnce = screenType !== pc.SCREEN_TYPE_WORLD;
+                    isMaskable = screenType !== pc.SCREEN_TYPE_SCREEN;
 
                     if ( ( targetCamera && targetCamera !== camera ) || ( drawCall.visibleThisFrame && renderOnce ) ) {
                         continue;
                     }
                 }
 
-                if ( drawCall.command ) {
+                if ( drawCall.command || !drawCall.cull ) {
                     // always let commands through
                     maskedCalls[ maskedLength++ ] = drawCall;
                     drawCall.visibleThisFrame = true;
@@ -1132,13 +1144,15 @@ Object.assign(pc, function() {
                     continue;
                 }
 
-                // get the layer from draw call (default assumed to be 0)
-                var cullingLayer = drawCall.node.cullingLayer || 0;
-                var mask = ( 1 << cullingLayer );
+                if ( isMaskable ) {
+                    // get the layer from draw call (default assumed to be 0)
+                    var cullingLayer = drawCall.node.cullingLayer || 0;
+                    var mask = ( 1 << cullingLayer );
 
-                // if the object's mask AND the camera's cullingMask is zero then the game object will be invisible from the camera
-                if ( ( mask & cullingMask ) === 0 ) {
-                    continue;
+                    // if the object's mask AND the camera's cullingMask is zero then the game object will be invisible from the camera
+                    if ( ( mask & cullingMask ) === 0 ) {
+                        continue;
+                    }
                 }
 
                 maskedCalls[ maskedLength++ ] = drawCall;
@@ -2683,6 +2697,10 @@ Object.assign(pc, function() {
                 this.unityIds.fogStart.setValue( [ scene.fogStart, 0, 0, 0 ] );
                 this.unityIds.fogEnd.setValue( [ scene.fogEnd, 0, 0, 0 ] );
                 this.unityIds.fogColor.setValue( this.fogColor );
+            } else {
+                this.unityIds.fogStart.setValue( [ 1e4, 1e4, 1e4, 1e4 ] );
+                this.unityIds.fogEnd.setValue( [ 2e4, 2e4, 2e4, 2e4 ] );
+                this.unityIds.fogColor.setValue( [ 0.5, 0.5, 0.5, 1 ] );
             }
 
             // Set up screen size // should be RT size?
