@@ -520,6 +520,10 @@ Object.assign(pc, function() {
                 return drawCallA.screenSpace ? 1 : -1;
             }
 
+            if (!(materialA && materialB)) {
+                return 0;
+            }
+
             // FIXME EN-62 should remove the below
             if (materialA.renderQueue != materialB.renderQueue) {
                 return materialA.renderQueue - materialB.renderQueue;
@@ -1734,12 +1738,15 @@ Object.assign(pc, function() {
                     // We have a mesh instance
                     mesh = drawCall.mesh;
                     material = drawCall.material;
+                    if (!material) {
+                        continue;
+                    }
                     objDefs = drawCall._shaderDefs;
                     lightMask = pc.MASK_DYNAMIC;
 
                     this.setSkinning(device, drawCall, material);
 
-                    if (material && material === prevMaterial && objDefs !== prevObjDefs) {
+                    if (material === prevMaterial && objDefs !== prevObjDefs) {
                         prevMaterial = null; // force change shader if the object uses a different variant of the same material
                     }
 
