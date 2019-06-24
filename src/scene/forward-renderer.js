@@ -60,6 +60,9 @@ Object.assign(pc, function() {
     var viewProjMatL = new pc.Mat4();
     var viewProjMatR = new pc.Mat4();
 
+    var localToWorldMatrix = new pc.Mat4();
+    var worldToLocalMatrix = new pc.Mat4();
+
     var frustumDiagonal = new pc.Vec3();
     var tempSphere = { center: null, radius: 0 };
     var meshPos;
@@ -405,6 +408,22 @@ Object.assign(pc, function() {
         this.opacityMapId = scope.resolve('texture_opacityMap');
         this.cubeMapId = scope.resolve('texture_cubeMap');
 
+        this.unityIds = {
+            viewProjId: scope.resolve('unity_MatrixVP'),
+            viewId: scope.resolve('unity_MatrixV'),
+            modelMatrixId: scope.resolve('unity_ObjectToWorld'),
+            modelMatrixInvId: scope.resolve('unity_WorldToObject'),
+            worldSpaceCameraPos: scope.resolve('_WorldSpaceCameraPos'),
+            time: scope.resolve('_Time'),
+
+            viewProjArrayId: scope.resolve('hlslcc_mtx4x4unity_MatrixVP[0]'),
+            viewArrayId: scope.resolve('hlslcc_mtx4x4unity_MatrixV[0]'),
+            modelMatrixArrayId: scope.resolve('hlslcc_mtx4x4unity_ObjectToWorld[0]'),
+            modelMatrixInvArrayId: scope.resolve('hlslcc_mtx4x4unity_WorldToObject[0]'),
+
+            indirectSpecularId: scope.resolve('unity_IndirectSpecColor')
+        };
+
         // allocate the array for SH uniforms
         this.lightProbeIds = new Array( lightProbeUniforms.length );
 
@@ -413,25 +432,6 @@ Object.assign(pc, function() {
         for ( var i = 0; i < lightProbeUniforms.length; i++ ) {
             this.lightProbeIds[ i ] = scope.resolve( lightProbeUniforms[i] );
         }
-
-        // pre-fetch uniforms for reflection probes
-        this.reflectionProbeIds = [
-            {
-                texture: scope.resolve( "unity_SpecCube0" ),
-                position: scope.resolve( "unity_SpecCube0_ProbePosition" ),
-                min: scope.resolve( "unity_SpecCube0_BoxMin" ),
-                max: scope.resolve( "unity_SpecCube0_BoxMax" ),
-                hdr: scope.resolve( "unity_SpecCube0_HDR" )
-            },
-
-            {
-                texture: scope.resolve( "unity_SpecCube1" ),
-                position: scope.resolve( "unity_SpecCube1_ProbePosition" ),
-                min: scope.resolve( "unity_SpecCube1_BoxMin" ),
-                max: scope.resolve( "unity_SpecCube1_BoxMax" ),
-                hdr: scope.resolve( "unity_SpecCube1_HDR" )
-            }
-        ];
 
         this.ambientId = scope.resolve("light_globalAmbient");
         this.exposureId = scope.resolve("exposure");
@@ -507,6 +507,10 @@ Object.assign(pc, function() {
         sortCompareMesh: function(drawCallA, drawCallB) {
             var materialA = drawCallA._material;
             var materialB = drawCallB._material;
+
+            if (drawCallA.screenSpace !== drawCallB.screenSpace) {
+                return drawCallA.screenSpace ? 1 : -1;
+            }
 
             // FIXME EN-62 should remove the below
             if (materialA.renderQueue != materialB.renderQueue) {
@@ -686,6 +690,11 @@ Object.assign(pc, function() {
                 // ViewProjection Matrix
                 viewProjMat.mul2(projMat, viewMat);
                 this.viewProjId.setValue(viewProjMat.data);
+                this.viewId.setValue(viewMat.data);
+                this.unityIds.viewId.setValue(viewMat.data);
+                this.unityIds.viewArrayId.setValue(viewMat.data);
+                this.unityIds.viewProjId.setValue(viewProjMat.data);
+                this.unityIds.viewProjArrayId.setValue(viewProjMat.data);
 
                 // View Position (world space)
                 var cameraPos = camera._node.getPosition();
@@ -693,6 +702,8 @@ Object.assign(pc, function() {
                 this.viewPos[1] = cameraPos.y;
                 this.viewPos[2] = cameraPos.z;
                 this.viewPosId.setValue(this.viewPos);
+
+                this.unityIds.worldSpaceCameraPos.setValue(this.viewPos);
 
                 // Screen Parameters
                 screenParams[0] = (camera.renderTarget || this.device).width;
@@ -813,23 +824,9 @@ Object.assign(pc, function() {
             this.exposureId.setValue(scene.exposure);
 
             if (scene.skyboxModel) this.skyboxIntensityId.setValue(scene.skyboxIntensity);
-
-            // check if the scene has ambient probe configured
-            if (scene.ambientProbe) {
-                // ok it does: the default uniform value should be one of ambient light then
-                // please note mesh instances *might* work out their own probe values
-                var probe = scene.ambientProbe;
-
-                // simply set the values of the uniform
-                for ( var i = 0; i < lightProbeUniforms.length; i++ ) {
-                    var value = probe.uniforms[ i ];
-                    this.lightProbeIds[ i ].setValue( [ value.x, value.y, value.z, value.w ] );
-                }
-            }
-
-            if (scene.environmentProbe) {
-                scene.environmentProbe.updateUniforms( this.reflectionProbeIds[ 0 ] );
-                scene.environmentProbe.updateUniforms( this.reflectionProbeIds[ 1 ] );
+            if (scene.skyboxHelper) {
+                var color = scene.skyboxHelper.indirectSpecular;
+                this.unityIds.indirectSpecularId.setValue( color.data );
             }
         },
 
@@ -1101,68 +1098,73 @@ Object.assign(pc, function() {
             // #endif
 
             var visibleLength = 0;
-            var i, drawCall, visible;
+            var maskedLength = 0;
             var drawCallsCount = drawCalls.length;
 
             var cullingMask = camera.cullingMask || 0xFFFFFFFF; // if missing assume camera's default value
+            var maskedCalls = [];
 
-            if (!camera.frustumCulling) {
-                for (i = 0; i < drawCallsCount; i++) {
-                    // need to copy array anyway because sorting will happen and it'll break original draw call order assumption
-                    drawCall = drawCalls[i];
-                    if (!drawCall.visible && !drawCall.command) continue;
+            // phase I: filter the call using culling mask
+            for ( var i = 0; i < drawCallsCount; i++ ) {
+                // need to copy array anyway because sorting will happen and it'll break original draw call order assumption
+                var drawCall = drawCalls[i];
 
-                    var mask = drawCall.node.cullingLayer || 0xFFFFFFFF;
+                if ( drawCall._nearestScreen ) {
+                    var targetCamera = drawCall._nearestScreen._camera;
+                    var renderOnce = drawCall._nearestScreen._screenType !== pc.SCREEN_TYPE_WORLD;
 
-                    if (!drawCall.node.cullingLayer && drawCall.node._parent && (drawCall.node._parent.cullingLayer || drawCall.node._parent.constructor == pc.Entity)) {
-                        mask = drawCall.node._parent.cullingLayer;
-                    } else {
-                        if (!drawCall.node.cullingLayer && drawCall.node._parent && drawCall.node._parent._parent) {
-                            mask = drawCall.node._parent._parent.cullingLayer;
-                        }
+                    if ( ( targetCamera && targetCamera !== camera ) || ( drawCall.visibleThisFrame && renderOnce ) ) {
+                        continue;
                     }
-
-                    // if the object's mask AND the camera's cullingMask is zero then the game object will be invisible from the camera
-                    if (mask && (mask & cullingMask) === 0) continue;
-
-                    visibleList[visibleLength] = drawCall;
-                    visibleLength++;
-                    drawCall.visibleThisFrame = true;
                 }
-                return visibleLength;
+
+                if ( drawCall.command ) {
+                    // always let commands through
+                    maskedCalls[ maskedLength++ ] = drawCall;
+                    drawCall.visibleThisFrame = true;
+
+                    continue;
+                }
+
+                // check if the drawCall is hidden explicitely
+                if ( !drawCall.visible ) {
+                    continue;
+                }
+
+                // get the layer from draw call (default assumed to be 0)
+                var cullingLayer = drawCall.node.cullingLayer || 0;
+                var mask = ( 1 << cullingLayer );
+
+                // if the object's mask AND the camera's cullingMask is zero then the game object will be invisible from the camera
+                if ( ( mask & cullingMask ) === 0 ) {
+                    continue;
+                }
+
+                maskedCalls[ maskedLength++ ] = drawCall;
+                drawCall.visibleThisFrame = true;
             }
 
-            for (i = 0; i < drawCallsCount; i++) {
-                drawCall = drawCalls[i];
-                if (!drawCall.command) {
-                    if (!drawCall.visible) continue; // use visible property to quickly hide/show meshInstances
-                    visible = true;
+            // check if frustum culling is disabled. if so - simply return the calls that
+            // passed masking check
+            if ( !camera.frustumCulling ) {
+                visibleList.length = 0;
+                Array.prototype.push.apply( visibleList, maskedCalls );
+                return maskedLength;
+            }
 
-                    // if the object's mask AND the camera's cullingMask is zero then the game object will be invisible from the camera
-                    if (drawCall.mask && (drawCall.mask & cullingMask) === 0) continue;
+            // phase II: frustum culling
+            for ( var i = 0; i < maskedCalls.length; i++ ) {
+                var drawCall = maskedCalls[ i ];
+                var visible = true;
 
-                    // if the object belongs to a screen-space canvas, only cull it based on camera (in)equality
-                    if (drawCall.preRender && drawCall.preRender._element && drawCall.preRender._element.screen) {
-                        var screen = drawCall.preRender._element.screen.screen;
-                        visible = (screen._camera == camera) || screen.screenType === 'screen';
-                    } else if (drawCall.layer > pc.LAYER_FX) {
-                        if (drawCall.cull) {
-                            visible = this._isVisible(camera, drawCall);
-                            // #ifdef PROFILER
-                            numDrawCallsCulled++;
-                            // #endif
-                        }
-                    }
+                if ( drawCall.cull ) {
+                    visible = this._isVisible(camera, drawCall);
+                    numDrawCallsCulled++;
+                }
 
-                    if (visible) {
-                        visibleList[visibleLength] = drawCall;
-                        visibleLength++;
-                        drawCall.visibleThisFrame = true;
-                    }
-                } else {
-                    visibleList[visibleLength] = drawCall;
-                    visibleLength++;
-                    drawCall.visibleThisFrame = true;
+                if ( visible ) {
+                   visibleList[ visibleLength++ ] = drawCall;
+                   drawCall.visibleThisFrame = true;
                 }
             }
 
@@ -1298,8 +1300,25 @@ Object.assign(pc, function() {
         },
 
         _drawInstance: function (device, meshInstance, mesh, style, normal) {
-            modelMatrix = meshInstance.node.worldTransform;
+            var modelMatrix = meshInstance.node.worldTransform;
+            var inverseModelMatrix = meshInstance.node.worldTransformInverse;
+
+            // apply per-renderer model matrix override
+            if ( meshInstance.parameters.localToWorldMatrix ) {
+                modelMatrix = localToWorldMatrix.set( meshInstance.parameters.localToWorldMatrix.data );
+                
+                if ( meshInstance.parameters.worldToLocalMatrix ) {
+                    inverseModelMatrix = worldToLocalMatrix.set( meshInstance.parameters.worldToLocalMatrix.data );
+                } else {
+                    inverseModelMatrix = worldToLocalMatrix.copy( modelMatrix ).invert(); 
+                }
+            }
+
             this.modelMatrixId.setValue(modelMatrix.data);
+            this.unityIds.modelMatrixId.setValue(modelMatrix.data);
+            this.unityIds.modelMatrixArrayId.setValue(modelMatrix.data);
+            this.unityIds.modelMatrixInvId.setValue(inverseModelMatrix.data);
+            this.unityIds.modelMatrixInvArrayId.setValue(inverseModelMatrix.data);
 
             instancingData = meshInstance.instancingData;
             
@@ -1653,17 +1672,31 @@ Object.assign(pc, function() {
             var stencilFront, stencilBack;
 
             var halfWidth = device.width * 0.5;
+            var skyboxRendered = false;
 
             // Render the scene
             for (i = 0; i < drawCallsCount; i++) {
-
                 drawCall = drawCalls[i];
-                if (cullingMask && drawCall.mask && !(cullingMask & drawCall.mask)) continue; // apply visibility override
+
+                // apply visibility override
+                if ( cullingMask && drawCall.node ) {
+                    var mask = ( 1 << drawCall.node.cullingLayer );
+
+                    if ( ( mask & cullingMask ) === 0 ) {
+                        continue;
+                    }
+                }
 
                 if (drawCall.command) {
                     // We have a command
                     drawCall.command();
                 } else {
+                    // squeeze skybox in if it's time
+                    if ( !skyboxRendered && ( ( camera.clearFlags & pc.CLEARFLAG_USE_SKYBOX ) !== 0 ) && ( ( i === (drawCallsCount - 1) ) || ( drawCall.renderQueue >= 3000 ) ) ) {
+                        skyboxRendered = true;
+                        drawCall = this.scene.skyboxHelper.getSkyDrawCall( camera );
+                        i--;
+                    }
 
                     // #ifdef PROFILER
                     if (camera === pc.skipRenderCamera) {
@@ -1680,7 +1713,7 @@ Object.assign(pc, function() {
                     mesh = drawCall.mesh;
                     material = drawCall.material;
                     objDefs = drawCall._shaderDefs;
-                    lightMask = drawCall.mask;
+                    lightMask = pc.MASK_DYNAMIC;
 
                     this.setSkinning(device, drawCall, material);
 
@@ -1823,7 +1856,7 @@ Object.assign(pc, function() {
                             if (!parameter.scopeId) {
                                 parameter.scopeId = device.scope.resolve(paramName);
                             }
-                            parameter.scopeId.setValue(parameter.data);
+                            parameter.scopeId.pushValue(parameter.data);
                         }
                     }
 
@@ -1834,6 +1867,10 @@ Object.assign(pc, function() {
 
                     if (drawCallback) {
                         drawCallback(drawCall, i);
+                    }
+
+                    if (camera._cullFaces && drawCall._flipFaces) {
+                        device.setCullMode(material.cull > 0 ? (material.cull === pc.CULLFACE_FRONT ? pc.CULLFACE_BACK : pc.CULLFACE_FRONT) : 0);
                     }
 
                     if (vrDisplay && vrDisplay.presenting) {
@@ -1870,16 +1907,15 @@ Object.assign(pc, function() {
                     }
 
                     // Unset meshInstance overrides back to material values if next draw call will use the same material
-                    if (i < drawCallsCount - 1 && drawCalls[i + 1].material === material) {
-                        for (paramName in parameters) {
-                            parameter = material.parameters[paramName];
-                            if (parameter) {
-                                if (!parameter.scopeId) {
-                                    parameter.scopeId = device.scope.resolve(paramName);
-                                }
-                                parameter.scopeId.setValue(parameter.data);
-                            }
+                    for (paramName in parameters) {
+                        parameter = parameters[paramName];
+                        if (parameter.passFlags & passFlag) {
+                            parameter.scopeId.popValue();
                         }
+                    }
+
+                    if (camera._cullFaces && drawCall._flipFaces) {
+                        device.setCullMode(material.cull > 0 ? (material.cull !== pc.CULLFACE_FRONT ? pc.CULLFACE_BACK : pc.CULLFACE_FRONT) : 0);
                     }
 
                     prevMaterial = material;
@@ -2656,6 +2692,9 @@ Object.assign(pc, function() {
             this._screenSize[2] = 1 / device.width;
             this._screenSize[3] = 1 / device.height;
             this.screenSizeId.setValue(this._screenSize);
+
+            var t = pc.now() / 1000.0;
+            this.unityIds.time.setValue( [ t / 20, t, t * 2, t * 3 ] );
         },
 
         renderComposition: function(comp) {
@@ -2948,6 +2987,7 @@ Object.assign(pc, function() {
 
     return {
         ForwardRenderer: ForwardRenderer,
-        gaussWeights: gaussWeights
+        gaussWeights: gaussWeights,
+        lightProbeUniforms: lightProbeUniforms
     };
 }());

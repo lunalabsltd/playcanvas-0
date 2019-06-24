@@ -8,6 +8,9 @@ Object.assign(pc, function () {
         // Set the default value
         this.value = null;
 
+        // keeps the reference to the previous value
+        this.previous_value = null;
+
         // Create the version object
         this.versionObject = new pc.VersionedObject();
     };
@@ -19,6 +22,20 @@ Object.assign(pc, function () {
 
             // Increment the revision
             this.versionObject.increment();
+        },
+
+        pushValue: function (value) {
+            if ( this.previous_value ) {
+                throw new Error( "pushValue is limited to storing 1 previous value" );
+            }
+
+            this.previous_value = this.value;
+            this.setValue( value );
+        },
+
+        popValue: function () {
+            this.setValue( this.previous_value );
+            this.previous_value = null;
         },
 
         getValue: function (value) {

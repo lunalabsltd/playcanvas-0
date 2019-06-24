@@ -38,6 +38,7 @@ Object.assign(pc, function () {
         this._aabbVer = 0;
 
         this.worldTransform = new pc.Mat4();
+        this.worldTransformInverse = new pc.Mat4();
         this._dirtyWorld = false;
 
         this.normalMatrix = new pc.Mat3();

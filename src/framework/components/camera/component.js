@@ -81,6 +81,7 @@ Object.assign(pc, function () {
         this.on("set_clearColorBuffer", this.updateClearFlags, this);
         this.on("set_clearDepthBuffer", this.updateClearFlags, this);
         this.on("set_clearStencilBuffer", this.updateClearFlags, this);
+        this.on("set_clearSkybox", this.updateClearFlags, this);
         this.on("set_renderTarget", this.onSetRenderTarget, this);
         this.on("set_rect", this.onSetRect, this);
         this.on("set_scissorRect", this.onSetScissorRect, this);
@@ -366,6 +367,9 @@ Object.assign(pc, function () {
 
             if (this.clearStencilBuffer)
                 flags |= pc.CLEARFLAG_STENCIL;
+
+            if (this.clearSkybox)
+                flags |= pc.CLEARFLAG_USE_SKYBOX;
 
             this.data.camera.clearFlags = flags;
         },
