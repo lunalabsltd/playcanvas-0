@@ -409,6 +409,10 @@ Object.assign(pc, function() {
         this.cubeMapId = scope.resolve('texture_cubeMap');
 
         this.unityIds = {
+            fogStart: scope.resolve('unity_FogStart'),
+            fogEnd: scope.resolve('unity_FogEnd'),
+            fogColor: scope.resolve('unity_FogColor'),
+
             viewProjId: scope.resolve('unity_MatrixVP'),
             viewId: scope.resolve('unity_MatrixV'),
             modelMatrixId: scope.resolve('unity_ObjectToWorld'),
@@ -1692,11 +1696,15 @@ Object.assign(pc, function() {
                     drawCall.command();
                 } else {
                     // squeeze skybox in if it's time
-                    if ( !skyboxRendered && ( ( camera.clearFlags & pc.CLEARFLAG_USE_SKYBOX ) !== 0 ) && ( ( i === (drawCallsCount - 1) ) || ( drawCall.renderQueue >= 3000 ) ) ) {
-                        skyboxRendered = true;
-                        drawCall = this.scene.skyboxHelper.getSkyDrawCall( camera );
-                        i--;
-                    }
+                    // if ( !skyboxRendered && ( ( camera.clearFlags & pc.CLEARFLAG_USE_SKYBOX ) !== 0 ) && ( ( i === (drawCallsCount - 1) ) || ( drawCall.renderQueue >= 3000 ) ) ) {
+                    //     skyboxRendered = true;
+                    //     drawCall = this.scene.skyboxHelper.getSkyDrawCall( camera );
+                    //     i--;
+                    //
+                    //     if ( !drawCall.visible ) {
+                    //         continue;
+                    //     }
+                    // }
 
                     // #ifdef PROFILER
                     if (camera === pc.skipRenderCamera) {
@@ -2670,6 +2678,7 @@ Object.assign(pc, function() {
                 this.fogColor[0] = scene.fogColor.r;
                 this.fogColor[1] = scene.fogColor.g;
                 this.fogColor[2] = scene.fogColor.b;
+                this.fogColor[3] = 1.0;
 
                 if (scene.gammaCorrection) {
                     for (i = 0; i < 3; i++) {
@@ -2684,6 +2693,10 @@ Object.assign(pc, function() {
 
                 this.fogColorId.setValue(this.fogColor);
                 this.fogParamsId.setValue(this.fogParams);
+
+                this.unityIds.fogStart.setValue( [ scene.fogStart, 0, 0, 0 ] );
+                this.unityIds.fogEnd.setValue( [ scene.fogEnd, 0, 0, 0 ] );
+                this.unityIds.fogColor.setValue( this.fogColor );
             }
 
             // Set up screen size // should be RT size?

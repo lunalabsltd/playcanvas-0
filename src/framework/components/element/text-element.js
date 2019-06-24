@@ -96,7 +96,6 @@ pc.extend(pc, function() {
         destroy: function() {
             if (this._model) {
                 this._system.app.scene.removeModel(this._model);
-                this._model.destroy();
                 this._model = null;
             }
 
