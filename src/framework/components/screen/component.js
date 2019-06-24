@@ -375,7 +375,7 @@ pc.extend( pc, function() {
      */
     Object.defineProperty( ScreenComponent.prototype, "scaleMode", {
         set: function( value ) {
-            if ( value !== pc.ScreenComponent.SCALEMODE_NONE && value !== pc.ScreenComponent.SCALEMODE_BLEND ) {
+            if ( value !== pc.ScreenComponent.SCALEMODE_NONE && value !== pc.ScreenComponent.SCALEMODE_BLEND && value !== pc.ScreenComponent.SCALEMODE_EXPAND && value !== pc.ScreenComponent.SCALEMODE_SHRINK ) {
                 value = pc.ScreenComponent.SCALEMODE_NONE;
             }
 

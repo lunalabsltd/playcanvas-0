@@ -1936,7 +1936,7 @@ Object.assign(pc, function () {
                     //     attribute.scopeId.value = null;
                     // }
 
-                    if (element !== null) {
+                    if (element !== null && !element.const) {
                         // Retrieve the vertex buffer that contains this element
                         vertexBuffer = this.vertexBuffers[element.stream];
                         vbOffset = this.vbOffsets[element.stream] || 0;

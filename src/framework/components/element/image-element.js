@@ -56,14 +56,10 @@ pc.extend(pc, function() {
 
         this._mesh = this._createMesh();
 
-        this._node = new pc.GraphNode();
-        this._node.localTransform = element._fromPivotTransform;
-        this._node.forcedLocalTransform = element._fromPivotTransform;
-
         this._model = new pc.Model();
-        this._model.graph = this._node;
-
-        this._meshInstance = new pc.MeshInstance(this._node, this._mesh, this._material);
+        this._model.graph = new pc.GraphNode();
+        
+        this._meshInstance = new pc.MeshInstance(this._entity, this._mesh, this._material);
         this._meshInstance.preRender = this;
         this._onStencilLayerChange();
 
@@ -390,7 +386,7 @@ pc.extend(pc, function() {
         set: function(value) {
             this._masksChildren = value;
 
-            if (this._element.screen) {
+            if (this._element.screen && this._element.screen.screen) {
                 this._element.screen.screen._updateStencilParameters();
             }
         }
@@ -669,7 +665,7 @@ pc.extend(pc, function() {
 
         set: function(value) {
             this._showMaskGraphics = value;
-            var screenSpace = this._element.screen ? (this._element.screen.screen.screenType == pc.SCREEN_TYPE_SCREEN) : false;
+            var screenSpace = (this._element.screen && this._element.screen.screen) ? (this._element.screen.screen.screenType == pc.SCREEN_TYPE_SCREEN) : false;
             this._updateMaterial(screenSpace);
         }
     });
