@@ -1124,30 +1124,34 @@ pc.programlib.standard = {
 
         if (lighting) code += chunks.lightDiffuseLambertPS;
         var useOldAmbient = false;
-        if (options.useSpecular) {
-            if (lighting) code += options.shadingModel === pc.SPECULAR_PHONG ? chunks.lightSpecularPhongPS : chunks.lightSpecularBlinnPS;
-            if (options.sphereMap || cubemapReflection || options.dpAtlas || (options.fresnelModel > 0)) {
-                if (options.fresnelModel > 0) {
-                    if (options.conserveEnergy) {
-                        code += chunks.combineDiffuseSpecularPS; // this one is correct, others are old stuff
+        if ( options.unlit ) {
+            code += chunks.combineDiffuseUnlitPS;
+        } else {
+            if (options.useSpecular) {
+                if (lighting) code += options.shadingModel === pc.SPECULAR_PHONG ? chunks.lightSpecularPhongPS : chunks.lightSpecularBlinnPS;
+                if (options.sphereMap || cubemapReflection || options.dpAtlas || (options.fresnelModel > 0)) {
+                    if (options.fresnelModel > 0) {
+                        if (options.conserveEnergy) {
+                            code += chunks.combineDiffuseSpecularPS; // this one is correct, others are old stuff
+                        } else {
+                            code += chunks.combineDiffuseSpecularNoConservePS; // if you don't use environment cubemaps, you may consider this
+                        }
                     } else {
-                        code += chunks.combineDiffuseSpecularNoConservePS; // if you don't use environment cubemaps, you may consider this
+                        code += chunks.combineDiffuseSpecularOldPS;
                     }
                 } else {
-                    code += chunks.combineDiffuseSpecularOldPS;
+                    if (options.diffuseMap) {
+                        code += chunks.combineDiffuseSpecularNoReflPS;
+                    } else {
+                        code += chunks.combineDiffuseSpecularNoReflSeparateAmbientPS;
+                        useOldAmbient = true;
+                    }
                 }
-            } else {
-                if (options.diffuseMap) {
-                    code += chunks.combineDiffuseSpecularNoReflPS;
-                } else {
-                    code += chunks.combineDiffuseSpecularNoReflSeparateAmbientPS;
-                    useOldAmbient = true;
-                }
-            }
 
-            code += this._addMap("gloss", "glossPS", options, chunks);
-        } else {
-            code += chunks.combineDiffusePS;
+                code += this._addMap("gloss", "glossPS", options, chunks);
+            } else {
+                code += chunks.combineDiffusePS;
+            }
         }
 
         // by default the ambient light is always on (worst case - it's gonna be black)
