@@ -2006,11 +2006,15 @@ Object.assign(pc, function () {
 
                         if (element.stream === 1 && numInstances > 0) {
                             if (!this.instancedAttribs[locationId]) {
-                                gl.vertexAttribDivisor(locationId, 1);
+                                if (gl.vertexAttribDivisor) {
+                                    gl.vertexAttribDivisor(locationId, 1);
+                                }
                                 this.instancedAttribs[locationId] = true;
                             }
                         } else if (this.instancedAttribs[locationId]) {
-                            gl.vertexAttribDivisor(locationId, 0);
+                            if (gl.vertexAttribDivisor) {
+                                gl.vertexAttribDivisor(locationId, 0);
+                            }
                             this.instancedAttribs[locationId] = false;
                         }
                     } else {
@@ -2180,7 +2184,9 @@ Object.assign(pc, function () {
                 var offset = primitive.base * indexBuffer.bytesPerIndex;
 
                 if (numInstances > 0) {
-                    gl.drawElementsInstanced(mode, count, format, offset, numInstances);
+                    if (gl.drawElementsInstanced) {
+                        gl.drawElementsInstanced(mode, count, format, offset, numInstances);
+                    }
                 } else {
                     gl.drawElements(mode, count, format, offset);
                 }
@@ -2188,7 +2194,9 @@ Object.assign(pc, function () {
                 var first = primitive.base;
 
                 if (numInstances > 0) {
-                    gl.drawArraysInstanced(mode, first, count, numInstances);
+                    if (gl.drawElementsInstanced) {
+                        gl.drawArraysInstanced(mode, first, count, numInstances);
+                    }
                 } else {
                     gl.drawArrays(mode, first, count);
                 }
