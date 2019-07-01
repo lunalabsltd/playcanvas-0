@@ -50,6 +50,7 @@ Object.assign(pc, function () {
         this.defaultImageMaterial.blendType = pc.BLEND_PREMULTIPLIED;
         this.defaultImageMaterial.depthWrite = false;
         this.defaultImageMaterial.renderQueue = 3000;
+        this.defaultImageMaterial.useLighting = false;
         this.defaultImageMaterial.updateShader(pc.Application.getApplication().graphicsDevice, pc.Application.getApplication().scene, 1 << 16);
         this.defaultImageMaterial.update();
 

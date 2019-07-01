@@ -60,6 +60,9 @@ Object.assign(pc, function() {
     var viewProjMatL = new pc.Mat4();
     var viewProjMatR = new pc.Mat4();
 
+    var localToWorldMatrix = new pc.Mat4();
+    var worldToLocalMatrix = new pc.Mat4();
+
     var frustumDiagonal = new pc.Vec3();
     var tempSphere = { center: null, radius: 0 };
     var meshPos;
@@ -1322,6 +1325,17 @@ Object.assign(pc, function() {
             var modelMatrix = meshInstance.node.worldTransform;
             var inverseModelMatrix = meshInstance.node.worldTransformInverse;
 
+            // apply per-renderer model matrix override
+            if ( meshInstance.parameters.localToWorldMatrix ) {
+                modelMatrix = localToWorldMatrix.set( meshInstance.parameters.localToWorldMatrix.data );
+
+                if ( meshInstance.parameters.worldToLocalMatrix ) {
+                    inverseModelMatrix = worldToLocalMatrix.set( meshInstance.parameters.worldToLocalMatrix.data );
+                } else {
+                    inverseModelMatrix = worldToLocalMatrix.copy( modelMatrix ).invert();
+                }
+            }
+
             this.modelMatrixId.setValue(modelMatrix.data);
             this.unityIds.modelMatrixId.setValue(modelMatrix.data);
             this.unityIds.modelMatrixArrayId.setValue(modelMatrix.data);
@@ -1704,6 +1718,10 @@ Object.assign(pc, function() {
                         skyboxRendered = true;
                         drawCall = this.scene.skyboxHelper.getSkyDrawCall( camera );
                         i--;
+
+                        if ( !drawCall.visible ) {
+                            continue;
+                        }
                     }
 
                     // #ifdef PROFILER

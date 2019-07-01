@@ -204,6 +204,8 @@ Object.assign(pc, function () {
             options.lights = [];
         }
 
+        options.unlit = !stdMat.useLighting;
+
         if (options.lights.length === 0) {
             options.noShadow = true;
         }

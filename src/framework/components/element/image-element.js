@@ -352,9 +352,7 @@ pc.extend(pc, function() {
         },
 
         set: function(value) {
-            this._color.data[0] = value.data[0];
-            this._color.data[1] = value.data[1];
-            this._color.data[2] = value.data[2];
+            this._color.copy( value );
 
             if (this._meshInstance) {
                 this._meshInstance.setParameter('material_emissive', this._color.data3);

@@ -131,7 +131,7 @@ Object.assign(pc, (function () {
          * console.log("The two vectors are " + (a.equals(b) ? "equal" : "different"));
          */
         equals: function (rhs) {
-            return rhs && this.x === rhs.x && this.y === rhs.y;
+            return this.x === rhs.x && this.y === rhs.y;
         },
 
         /**

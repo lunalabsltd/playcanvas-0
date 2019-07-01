@@ -800,6 +800,9 @@ Object.assign(pc, (function () {
          * result = new pc.Quat().slerp(q1, q2, 1);   // Return q2
          */
         slerp: function (lhs, rhs, alpha) {
+
+            alpha = pc.math.clamp(alpha, 0, 1);
+
             // Algorithm sourced from:
             // http://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/slerp/
             var lx, ly, lz, lw, rx, ry, rz, rw;
