@@ -197,7 +197,7 @@ pc.extend(pc, function () {
             for (var i = 0; i < this._canvasElements.length; i++) {
                 var canvasElement = this._canvasElements[ i ];
                 if (canvasElement != null) {
-                    canvasElement.rebuild(0);
+                    canvasElement.Rebuild(0);
                 }
             }
         },
@@ -307,7 +307,7 @@ pc.extend(pc, function () {
             for (var i = 0; i < this._canvasElements.length; i++) {
                 var canvasElement = this._canvasElements[ i ];
                 if (canvasElement != null) {
-                    canvasElement.rebuild(2);
+                    canvasElement.Rebuild(2);
                 }
             }
 
