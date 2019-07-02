@@ -51,6 +51,7 @@ pc.extend( pc, function() {
         this._scaleMode = pc.ScreenComponent.SCALEMODE_NONE;
         this.scale = 1;
         this._scaleBlend = 0.5;
+        this._scaleFactor = 1;
 
         this._screenType = pc.SCREEN_TYPE_CAMERA;
         this._screenDistance = 1.0;
@@ -112,9 +113,11 @@ pc.extend( pc, function() {
                 // no camera leaves us with the only choice: fall back to screen-space canvas
                 screenType = pc.SCREEN_TYPE_SCREEN;
             }
-
             // do we follow the camera?
             if ( screenType == pc.SCREEN_TYPE_CAMERA ) {
+                w /= window.devicePixelRatio;
+                h /= window.devicePixelRatio;
+
                 if ( camera.projection == pc.PROJECTION_PERSPECTIVE ) {
                     this._planeHeight = Math.tan( camera.fov / 2.0 * Math.PI / 180.0 ) * Math.abs( 2 * this._screenDistance );
                 } else {
@@ -168,7 +171,7 @@ pc.extend( pc, function() {
 
         _calcScale: function( resolution, referenceResolution ) {
             if ( this._scaleMode === ScreenComponent.SCALEMODE_NONE ) {
-                return 1.0;
+                return this.scaleFactor;
             } else if ( this._scaleMode === ScreenComponent.SCALEMODE_EXPAND ) {
                 return Math.min( resolution.x / referenceResolution.x, resolution.y / referenceResolution.y );
             } else if ( this._scaleMode === ScreenComponent.SCALEMODE_SHRINK ) {
@@ -267,10 +270,11 @@ pc.extend( pc, function() {
             }
 
             if ( this._screenType != pc.SCREEN_TYPE_SCREEN ) {
+                if( value.x != 0 && value.y != 0 )
                 this._resolution.set( value.x, value.y );
             } else if ( !camera || !camera.renderTarget ) {
                 // ignore input when using screenspace.
-                this._resolution.set( this.system.app.graphicsDevice.width, this.system.app.graphicsDevice.height );
+                this._resolution.set( this.system.app.graphicsDevice.width / window.devicePixelRatio, this.system.app.graphicsDevice.height / window.devicePixelRatio );
             }
 
             if ( this._scaleMode === pc.ScreenComponent.SCALEMODE_NONE ) {
