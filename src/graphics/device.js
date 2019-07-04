@@ -455,7 +455,7 @@ Object.assign(pc, function () {
             scopeX = value[0];
             scopeY = value[1];
             if (uniformValue[0] !== scopeX || uniformValue[1] !== scopeY) {
-                gl.uniform2fv(uniform.locationId, value);
+                gl.uniform2fv(uniform.locationId, [ scopeX, scopeY ]);
                 uniformValue[0] = scopeX;
                 uniformValue[1] = scopeY;
             }
