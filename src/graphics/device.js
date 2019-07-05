@@ -471,7 +471,7 @@ Object.assign(pc, function () {
                 uniformValue[0] = scopeX;
                 uniformValue[1] = scopeY;
                 uniformValue[2] = scopeZ;
-                
+
                 gl.uniform3fv(uniform.locationId, uniformValue);
             }
         };
