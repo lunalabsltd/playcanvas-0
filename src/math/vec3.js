@@ -166,6 +166,8 @@ Object.assign(pc, (function () {
          * console.log("The two vectors are " + (a.equals(b) ? "equal" : "different"));
          */
         equals: function (rhs) {
+            if(rhs === null)
+                return false;
             return this.x === rhs.x && this.y === rhs.y && this.z === rhs.z;
         },
 
