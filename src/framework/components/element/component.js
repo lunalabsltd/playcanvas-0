@@ -341,7 +341,7 @@ pc.extend(pc, function () {
                     }
 
                     // make sure pivot point is still correct
-                    element._pivotPoint.set( element._width * element.pivot.x, element._height * element.pivot.y, 0 );
+                    element._pivotPoint.set( element._width * 0.5, element._height * 0.5, 0 );
 
                     // reset rect (it's driven by screen and scale)
                     rect.x = rect.y = 0;

@@ -1937,6 +1937,29 @@ Object.assign(pc, function () {
                     //     attribute.scopeId.value = null;
                     // }
 
+                    // initialize mesh default attributes, may be override further
+                    if (attribute.scopeId.name == 'POSITION') {
+                        locationId = attribute.locationId;
+                        this.enabledAttributes[locationId] = false;
+
+                        gl.disableVertexAttribArray(locationId);
+                        gl.vertexAttrib4fv(locationId, whiteColor);
+                    }
+                    if (attribute.scopeId.name == 'COLOR') {
+                        locationId = attribute.locationId;
+                        this.enabledAttributes[locationId] = false;
+
+                        gl.disableVertexAttribArray(locationId);
+                        gl.vertexAttrib4fv(locationId, whiteColor);
+                    }
+                    if (attribute.scopeId.name == 'TEXCOORD0') {
+                        locationId = attribute.locationId;
+                        this.enabledAttributes[locationId] = false;
+
+                        gl.disableVertexAttribArray(locationId);
+                        gl.vertexAttrib4fv(locationId, whiteColor);
+                    }
+
                     if (element !== null && !element.const) {
                         // Retrieve the vertex buffer that contains this element
                         vertexBuffer = this.vertexBuffers[element.stream];
@@ -1944,7 +1967,9 @@ Object.assign(pc, function () {
 
                         // check if the attribute has actually "leaked" from another draw call
                         // this might happen with single shader rendering different meshes (with diff formats)
-                        if ( vertexBuffer && !vertexBuffer.format.elementMap[ element.name ] ) {
+                        if ( vertexBuffer &&  !vertexBuffer.format.elementMap[ element.name ] ) {
+                            gl.disableVertexAttribArray( attribute.locationId );
+                            this.enabledAttributes[ attribute.locationId ] = false;
                             element = null;
                         }
                     }
@@ -1990,14 +2015,6 @@ Object.assign(pc, function () {
                         } else if (this.instancedAttribs[locationId]) {
                             gl.vertexAttribDivisor(locationId, 0);
                             this.instancedAttribs[locationId] = false;
-                        }
-                    } else {
-                        if (attribute.scopeId.name == 'COLOR' && !attribute.scopeId.value) {
-                            locationId = attribute.locationId;
-                            this.enabledAttributes[locationId] = false;
-
-                            gl.disableVertexAttribArray(locationId);
-                            gl.vertexAttrib4fv(locationId, whiteColor);
                         }
                     }
                 }

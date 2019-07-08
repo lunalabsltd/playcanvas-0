@@ -1,5 +1,6 @@
 // http://www.thetenthplanet.de/archives/1180
 void getTBN() {
+#ifdef GL_OES_standard_derivatives    
     vec2 uv = $UV;
 
     // get edge vectors of the pixel triangle
@@ -17,5 +18,9 @@ void getTBN() {
     // construct a scale-invariant frame
     float invmax = 1.0 / sqrt( max( dot(T,T), dot(B,B) ) );
     dTBN = mat3( T * invmax, B * invmax, dVertexNormalW );
+#else
+    // well... we will need tangents
+    dTBN = mat3( 0.0 );
+#endif
 }
 
