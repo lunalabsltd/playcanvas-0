@@ -1138,6 +1138,10 @@ Object.assign(pc, function() {
                     }
                 }
 
+                if ( drawCall._mesh && drawCall._mesh._refCount === -Infinity ) {
+                    continue;
+                }
+
                 if ( drawCall.command || !drawCall.cull ) {
                     // always let commands through
                     maskedCalls[ maskedLength++ ] = drawCall;
