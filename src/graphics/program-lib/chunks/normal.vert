@@ -6,6 +6,11 @@ vec3 getNormal() {
     #else
         dNormalMatrix = matrix_normal;
     #endif
+
+    if ( dot(vertex_normal, vertex_normal) < 0.001 ) {
+    	return normalize( dNormalMatrix[2] );
+    }
+
     return normalize(dNormalMatrix * vertex_normal);
 }
 
