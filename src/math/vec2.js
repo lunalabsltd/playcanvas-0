@@ -163,6 +163,13 @@ Object.assign(pc, (function () {
         lengthSq: function () {
             return this.x * this.x + this.y * this.y;
         },
+        
+        lengthClamp: function (vector, maxLength) {
+            if ( vector.lengthSq > maxLength * maxLength ) { 
+                return vector.normalize * maxLength;
+            }
+            return vector;
+        },
 
         /**
          * @function
