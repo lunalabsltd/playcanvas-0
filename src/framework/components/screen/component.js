@@ -336,7 +336,7 @@ pc.extend( pc, function() {
         set: function( value ) {
             this._screenType = value;
 
-            if ( this._screenType == pc.SCREEN_TYPE_SCREEN ) {
+            if ( this._screenType == pc.SCREEN_TYPE_SCREEN || this._screenType == pc.SCREEN_TYPE_CAMERA ) {
                 this._resolution.set( this.system.app.graphicsDevice.width, this.system.app.graphicsDevice.height );
             }
 
