@@ -1340,6 +1340,10 @@ Object.assign(pc, function() {
                 }
             }
 
+            if ( window.spector ) {
+                window.spector.setMarker( meshInstance.node.name );
+            }
+
             this.modelMatrixId.setValue(modelMatrix.data);
             this.unityIds.modelMatrixId.setValue(modelMatrix.data);
             this.unityIds.modelMatrixArrayId.setValue(modelMatrix.data);
