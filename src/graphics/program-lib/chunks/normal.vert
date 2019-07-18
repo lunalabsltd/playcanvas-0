@@ -7,10 +7,8 @@ vec3 getNormal() {
         dNormalMatrix = matrix_normal;
     #endif
 
-    if ( dot(vertex_normal, vertex_normal) < 0.001 ) {
-    	return normalize( dNormalMatrix[2] );
-    }
+    vec3 normal = mix( vec3( 0.0, 1.0, 0.0 ), vertex_normal, step( 1e-5, dot(vertex_normal, vertex_normal) ) );
 
-    return normalize(dNormalMatrix * vertex_normal);
+    return normalize( dNormalMatrix * normal );
 }
 
