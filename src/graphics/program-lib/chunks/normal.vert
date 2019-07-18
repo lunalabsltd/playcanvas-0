@@ -6,6 +6,9 @@ vec3 getNormal() {
     #else
         dNormalMatrix = matrix_normal;
     #endif
-    return normalize(dNormalMatrix * vertex_normal);
+
+    vec3 normal = mix( vec3( 0.0, 1.0, 0.0 ), vertex_normal, step( 1e-5, dot(vertex_normal, vertex_normal) ) );
+
+    return normalize( dNormalMatrix * normal );
 }
 
