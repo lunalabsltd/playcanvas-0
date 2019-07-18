@@ -274,7 +274,7 @@ pc.extend( pc, function() {
                 this._resolution.set( value.x, value.y );
             } else if ( !camera || !camera.renderTarget ) {
                 // ignore input when using screenspace.
-                this._resolution.set( this.system.app.graphicsDevice.clientRect.width, this.system.app.graphicsDevice.clientRect.height );
+                this._resolution.set( this.system.app.graphicsDevice.width / window.devicePixelRatio, this.system.app.graphicsDevice.height / window.devicePixelRatio );
             }
 
             if ( this._scaleMode === pc.ScreenComponent.SCALEMODE_NONE ) {
