@@ -1961,11 +1961,12 @@ Object.assign(pc, function () {
                         }
 
                         // Set the active vertex buffer object
+                        if(vertexBuffer!=null){
                         bufferId = vertexBuffer.bufferId;
                         if (this.boundBuffer !== bufferId) {
                             gl.bindBuffer(gl.ARRAY_BUFFER, bufferId);
                             this.boundBuffer = bufferId;
-                        }
+                        }}
 
                         // Hook the vertex buffer to the shader program
                         locationId = attribute.locationId;
