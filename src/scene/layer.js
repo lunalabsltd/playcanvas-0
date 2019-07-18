@@ -1,9 +1,9 @@
 Object.assign(pc, function () {
     var keyA, keyB, sortPos, sortDir;
 
-    var sortManual = pc.ForwardRenderer.prototype.sortCompare;
-    var sortMaterialMesh = pc.ForwardRenderer.prototype.sortCompareMesh;
-    var sortBackToFront = pc.ForwardRenderer.prototype.sortCompareMesh;
+    var sortManual = pc.ForwardRenderer.prototype.sortBackToFront;
+    var sortMaterialMesh = pc.ForwardRenderer.prototype.sortFrontToBack;
+    var sortBackToFront = pc.ForwardRenderer.prototype.sortBackToFront;
 
     function sortFrontToBack(drawCallA, drawCallB) {
         return drawCallA.zdist - drawCallB.zdist;
@@ -649,7 +649,7 @@ Object.assign(pc, function () {
         for (i = 0; i < drawCallsCount; i++) {
             drawCall = drawCalls[i];
             if (drawCall.command) continue;
-            if (drawCall.material.renderQueue < 3000) continue; // Only alpha sort mesh instances in the main world (backwards comp)
+            //if (drawCall.material.renderQueue < 3000) continue; // Only alpha sort mesh instances in the main world (backwards comp)
             meshPos = drawCall.aabb.center;
             tempx = meshPos.x - camPos.x;
             tempy = meshPos.y - camPos.y;

@@ -512,7 +512,46 @@ Object.assign(pc, function() {
 
     Object.assign(ForwardRenderer.prototype, {
 
-        sortCompareMesh: function(drawCallA, drawCallB) {
+        sortBackToFront: function(drawCallA, drawCallB) {
+            var materialA = drawCallA._material;
+            var materialB = drawCallB._material;
+
+            if (drawCallA.screenSpace !== drawCallB.screenSpace) {
+                return drawCallA.screenSpace ? 1 : -1;
+            }
+
+            if (!(materialA && materialB)) {
+                return 0;
+            }
+
+            if (materialA.renderQueue != materialB.renderQueue) {
+                return materialA.renderQueue - materialB.renderQueue;
+            }
+
+            if (drawCallA.sortingLayerIndex != drawCallB.sortingLayerIndex) {
+                return drawCallA.sortingLayerIndex - drawCallB.sortingLayerIndex;
+            }
+
+            if (drawCallA.sortingOrder != drawCallB.sortingOrder) {
+                return drawCallA.sortingOrder - drawCallB.sortingOrder;
+            }
+
+            if (drawCallA.drawOrder != drawCallB.drawOrder) {
+                return drawCallA.drawOrder - drawCallB.drawOrder;
+            }
+
+            if (materialA.enableAutoInstancing !== materialB.enableAutoInstancing) {
+                return materialA.enableAutoInstancing ? -1 : 1;
+            }
+
+            if (drawCallA.zdist && drawCallB.zdist && drawCallA.zdist != drawCallB.zdist) {
+                return drawCallA.zdist - drawCallB.zdist;
+            }
+
+            return materialA.id - materialB.id;
+        },
+
+        sortFrontToBack: function(drawCallA, drawCallB) {
             var materialA = drawCallA._material;
             var materialB = drawCallB._material;
 
@@ -546,34 +585,6 @@ Object.assign(pc, function() {
             }
 
             return materialA.id - materialB.id;
-        },
-
-        sortCompare: function(drawCallA, drawCallB) {
-            var materialA = drawCallA._material;
-            var materialB = drawCallB._material;
-
-            // FIXME EN-62 should remove the below
-            if (materialA.renderQueue != materialB.renderQueue) {
-                return materialA.renderQueue - materialB.renderQueue;
-            }
-
-            if (drawCallA.sortingLayerIndex != drawCallB.sortingLayerIndex) {
-                return drawCallA.sortingLayerIndex - drawCallB.sortingLayerIndex;
-            }
-
-            if (drawCallA.sortingOrder != drawCallB.sortingOrder) {
-                return drawCallA.sortingOrder - drawCallB.sortingOrder;
-            }
-
-            if (drawCallA.drawOrder != drawCallB.drawOrder) {
-                return drawCallA.drawOrder - drawCallB.drawOrder;
-            }
-
-            if (drawCallA.zdist && drawCallB.zdist && drawCallA.zdist != drawCallB.zdist) {
-                return drawCallB.zdist - drawCallA.zdist;
-            }
-
-            return drawCallA.mesh.id - drawCallB.mesh.id;
         },
 
         _switchMaterialPass: function(device, material, shader) {
@@ -1700,6 +1711,53 @@ Object.assign(pc, function() {
             var halfWidth = device.width * 0.5;
             var skyboxRendered = false;
 
+            if ( !pc._autoInstanceBuffer ) {
+                this.setupInstancing( device );
+            }
+
+            for (i = 0; i < drawCallsCount; i++) {
+                var currentDrawCall = drawCalls[i];
+                var currentMaterial = currentDrawCall.material;
+                var instancedDrawCalls = [ currentDrawCall ];
+
+                if ( currentMaterial && !currentMaterial.enableAutoInstancing ) {
+                    continue;
+                }
+
+                for (i = i + 1; i < drawCallsCount; i++) {
+                    var nextDrawCall = drawCalls[i];
+                    var nextMaterial = nextDrawCall.material;
+
+                    if ( nextMaterial && nextMaterial.enableAutoInstancing ) {
+                        instancedDrawCalls.push( nextDrawCall );
+                    } else {
+                        i--;
+                        break;
+                    }
+                }
+
+                if ( instancedDrawCalls.length > 1 ) {
+                    var offset = 0;
+
+                    for ( var j = 0; j < instancedDrawCalls.length; j++ ) {
+                        var data = instancedDrawCalls[ j ].node.worldTransform.data;
+
+                        for ( var k = 0; k < 16; k++ ) {
+                            pc._autoInstanceBufferData[ offset++ ] = data[ k ];
+                        }
+                    }
+
+                    currentDrawCall._shaderDefs |= pc.SHADERDEF_INSTANCING;
+                    currentDrawCall.instancingData = {
+                        count: instancedDrawCalls.length,
+                        offset: 0,
+                        _buffer: pc._autoInstanceBuffer
+                    };
+                }
+            }
+
+            pc._autoInstanceBuffer.unlock();
+
             // Render the scene
             for (i = 0; i < drawCallsCount; i++) {
                 drawCall = drawCalls[i];
@@ -1974,11 +2032,9 @@ Object.assign(pc, function() {
                 ];
                 pc._instanceVertexFormat = new pc.VertexFormat(device, formatDesc);
             }
-            if (device.enableAutoInstancing) {
-                if (!pc._autoInstanceBuffer) {
-                    pc._autoInstanceBuffer = new pc.VertexBuffer(device, pc._instanceVertexFormat, device.autoInstancingMaxObjects, pc.BUFFER_DYNAMIC);
-                    pc._autoInstanceBufferData = new Float32Array(pc._autoInstanceBuffer.lock());
-                }
+            if (!pc._autoInstanceBuffer) {
+                pc._autoInstanceBuffer = new pc.VertexBuffer(device, pc._instanceVertexFormat, device.autoInstancingMaxObjects, pc.BUFFER_DYNAMIC);
+                pc._autoInstanceBufferData = new Float32Array(pc._autoInstanceBuffer.lock());
             }
         },
 
