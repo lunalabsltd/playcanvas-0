@@ -99,6 +99,7 @@ Object.assign(pc, function () {
         this._dirtyBlend = false;
 
         this.dirty = true;
+        this.enableAutoInstancing = false;
     };
 
     Object.defineProperty(Material.prototype, 'shader', {
