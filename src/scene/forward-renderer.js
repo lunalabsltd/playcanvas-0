@@ -611,6 +611,10 @@ Object.assign(pc, function() {
 
             var zDistMultiplier = materialA.renderQueue > ALPHA_TEST_RENDER_QUEUE ? -1 : 1;
 
+            if ( materialA.renderQueue <= ALPHA_TEST_RENDER_QUEUE && ( materialA.enableAutoInstancing !== materialB.enableAutoInstancing ) ) {
+                return materialA.enableAutoInstancing ? -1 : 1;
+            }
+
             // let's check if instancing is enabled; if it is, we should ignore z distance to batch stuff together
             if ( materialA.renderQueue <= ALPHA_TEST_RENDER_QUEUE && materialA.enableAutoInstancing && materialB.enableAutoInstancing ) {
                 zDistMultiplier = 0;
@@ -1756,6 +1760,8 @@ Object.assign(pc, function() {
 
             // create offset variable
             var offset = 0;
+            // inner variable
+            var j = 0;
             // cache instancing buffer array
             var buffer = pc._autoInstanceBufferData;
 
@@ -1778,50 +1784,54 @@ Object.assign(pc, function() {
                 }
 
                 // walk forward
-                for ( i++; i < drawCallsCount; i++ ) {
+                for ( endIndex = i + 1; endIndex < drawCallsCount; endIndex++ ) {
                     // cache values to local variables
-                    var secondDrawCall = drawCalls[ i ];
+                    var secondDrawCall = drawCalls[ endIndex ];
                     var secondMaterial = secondDrawCall.material;
                     var secondMesh     = secondDrawCall.mesh;
 
                     // we should bail out as soon as the next draw call doesn't match the mesh or material
-                    if ( secondMaterial !== firstMaterial || secondMesh !== firstMesh ) {
-                        i--;
+                    if ( ( secondMaterial !== firstMaterial ) || ( secondMesh !== firstMesh ) ) {
                         break;
                     }
 
                     // FIXME EN-231 we should also compare mesh instance parameters
                 }
 
-                // make sure we don't overflow the draw call list
-                i = i < drawCallsCount ? i : drawCallsCount - 1;
-
+                // calculate total count of instanced meshes
+                var count = endIndex - startIndex;
+                
                 // check if we have advanced by at least 1 draw call
-                if ( startIndex !== i ) {
-                    for ( var j = startIndex; j <= i; j++ ) {
+                if ( count > 1 ) {
+                    // fill instancing data in
+                    firstDrawCall.instancingData = {
+                        count: endIndex - startIndex,
+                        offset: offset * 4,
+                        _buffer: pc._autoInstanceBuffer
+                    };
+
+                    // enable instancing for the draw call
+                    firstDrawCall._shaderDefs |= pc.SHADERDEF_INSTANCING;
+
+                    for ( j = startIndex; j < endIndex; j++ ) {
                         // cache draw call
                         var drawCall = drawCalls[ j ];
-                        // enable instancing for the draw call
-                        drawCall._shaderDefs |= pc.SHADERDEF_INSTANCING;
                         // extract world transform matrix data
                         var modelMatrixData = drawCall.node.getWorldTransform().data;
-
-                        // copy matrix over
+                        // copy matrix data over
                         buffer.set( modelMatrixData, offset );
-
                         // advance the offset
                         offset += 16;
-
-                        // fill instancing data in
-                        drawCall.instancingData = {
-                            count: ( i - startIndex + 1),
-                            offset: offset * 4,
-                            _buffer: pc._autoInstanceBuffer
-                        };
                     }
+
+                    // reset cycle counter
+                    i = endIndex - 1;
                 } else {
+                    // reset cycle counter
+                    i = startIndex;
                     // disable instancing on the draw call, just in case it bled from previous frame
-                    firstDrawCall._shaderDefs &= ~pc.SHADERDEF_INSTANCING;
+                    firstDrawCall._shaderDefs &= ~( pc.SHADERDEF_INSTANCING );
+                    firstDrawCall.instancingData = null;
                 }
             }
 
