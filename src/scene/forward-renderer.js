@@ -17,6 +17,9 @@ Object.assign(pc, function() {
         new pc.Quat().setFromEulerAngles(0, 0, 180)
     ];
 
+    // Constants
+    var ALPHA_TEST_RENDER_QUEUE = 2500;
+
     // An array of Spherical Harmonics uniforms in the order
     // Unity uses them. Each uniform is assumed to be
     // vec4 and the values can be obtained from pc.SphericalHarmonicsL2
@@ -512,65 +515,113 @@ Object.assign(pc, function() {
 
     Object.assign(ForwardRenderer.prototype, {
 
-        sortCompareMesh: function(drawCallA, drawCallB) {
+        /**
+         * Compares draw calls to determine which one should render before which one.
+         *
+         * The following rules are applied to comparisons to detect the order.
+         * These are:
+         * - Screen-space draw calls always render after anything else
+         * - Draw calls with render queue <= 2500 are considered opaque and sorted front-to-back, others are sorted back-to-front.
+         * - Draw calls with lower render queue get rendered earlier
+         * - Draw calls with lower sorting layer index get rendered earlier.
+         * - Draw calls with lower sorting order get rendered earlier.
+         * - Draw calls with lower z-dist get rendered earlier.
+         *
+         * In case all the above holds the same for both draw calls, they are sorted by materials' ids, then by
+         * meshes' ids (an attempt to minimize material switches which are generally more expensive rather then mesh switches).
+         *
+         * @param    {pc.MeshInstance|Function}    drawCallA        First draw call.    
+         * @param    {pc.MeshInstance|Function}    drawCallB        Second draw call.
+         */
+        genericSort: function( drawCallA, drawCallB, zDistMultiplier ) {
             var materialA = drawCallA._material;
             var materialB = drawCallB._material;
 
-            if (drawCallA.screenSpace !== drawCallB.screenSpace) {
+            if ( drawCallA.screenSpace !== drawCallB.screenSpace ) {
                 return drawCallA.screenSpace ? 1 : -1;
             }
 
-            if (!(materialA && materialB)) {
+            if ( !( materialA && materialB ) ) {
                 return 0;
             }
 
-            // FIXME EN-62 should remove the below
-            if (materialA.renderQueue != materialB.renderQueue) {
+            if ( materialA.renderQueue !== materialB.renderQueue ) {
                 return materialA.renderQueue - materialB.renderQueue;
             }
 
-            if (drawCallA.sortingLayerIndex != drawCallB.sortingLayerIndex) {
+            if ( drawCallA.sortingLayerIndex !== drawCallB.sortingLayerIndex ) {
                 return drawCallA.sortingLayerIndex - drawCallB.sortingLayerIndex;
             }
 
-            if (drawCallA.sortingOrder != drawCallB.sortingOrder) {
+            if ( drawCallA.sortingOrder !== drawCallB.sortingOrder ) {
                 return drawCallA.sortingOrder - drawCallB.sortingOrder;
             }
 
-            if (drawCallA.drawOrder != drawCallB.drawOrder) {
+            if ( drawCallA.drawOrder !== drawCallB.drawOrder ) {
                 return drawCallA.drawOrder - drawCallB.drawOrder;
             }
 
-            if (drawCallA.zdist && drawCallB.zdist && drawCallA.zdist != drawCallB.zdist) {
-                return drawCallB.zdist - drawCallA.zdist;
+            var zDistMultiplier = materialA.renderQueue > ALPHA_TEST_RENDER_QUEUE ? -1 : 1;
+
+            if ( drawCallA.zdist && drawCallB.zdist && drawCallA.zdist !== drawCallB.zdist ) {
+                return ( drawCallA.zdist - drawCallB.zdist ) * zDistMultiplier;
             }
 
-            return materialA.id - materialB.id;
+            if ( materialA.id !== materialB.id ) {
+                return materialA.id - materialB.id;
+            }
+
+            return drawCallA.mesh.id - drawCallB.mesh.id;
         },
 
-        sortCompare: function(drawCallA, drawCallB) {
+        /**
+         * The same as genericSort routine, but z-distance sorting is avoided in favour of material and mesh
+         * comparisons to help instancing batch opaque geometry better.
+         *
+         * @param    {pc.MeshInstance|Function}    drawCallA        First draw call.    
+         * @param    {pc.MeshInstance|Function}    drawCallB        Second draw call.
+         */
+        autoInstancingSort: function ( drawCallA, drawCallB ) {
             var materialA = drawCallA._material;
             var materialB = drawCallB._material;
 
-            // FIXME EN-62 should remove the below
-            if (materialA.renderQueue != materialB.renderQueue) {
+            if ( drawCallA.screenSpace !== drawCallB.screenSpace ) {
+                return drawCallA.screenSpace ? 1 : -1;
+            }
+
+            if ( !( materialA && materialB ) ) {
+                return 0;
+            }
+
+            if ( materialA.renderQueue !== materialB.renderQueue ) {
                 return materialA.renderQueue - materialB.renderQueue;
             }
 
-            if (drawCallA.sortingLayerIndex != drawCallB.sortingLayerIndex) {
+            if ( drawCallA.sortingLayerIndex !== drawCallB.sortingLayerIndex ) {
                 return drawCallA.sortingLayerIndex - drawCallB.sortingLayerIndex;
             }
 
-            if (drawCallA.sortingOrder != drawCallB.sortingOrder) {
+            if ( drawCallA.sortingOrder !== drawCallB.sortingOrder ) {
                 return drawCallA.sortingOrder - drawCallB.sortingOrder;
             }
 
-            if (drawCallA.drawOrder != drawCallB.drawOrder) {
+            if ( drawCallA.drawOrder !== drawCallB.drawOrder ) {
                 return drawCallA.drawOrder - drawCallB.drawOrder;
             }
 
-            if (drawCallA.zdist && drawCallB.zdist && drawCallA.zdist != drawCallB.zdist) {
-                return drawCallB.zdist - drawCallA.zdist;
+            var zDistMultiplier = materialA.renderQueue > ALPHA_TEST_RENDER_QUEUE ? -1 : 1;
+
+            // let's check if instancing is enabled; if it is, we should ignore z distance to batch stuff together
+            if ( materialA.renderQueue <= ALPHA_TEST_RENDER_QUEUE && materialA.enableAutoInstancing && materialB.enableAutoInstancing ) {
+                zDistMultiplier = 0;
+            }
+
+            if ( zDistMultiplier !== 0 && drawCallA.zdist && drawCallB.zdist && drawCallA.zdist !== drawCallB.zdist ) {
+                return ( drawCallA.zdist - drawCallB.zdist ) * zDistMultiplier;
+            }
+
+            if ( materialA.id !== materialB.id ) {
+                return materialA.id - materialB.id;
             }
 
             return drawCallA.mesh.id - drawCallB.mesh.id;
@@ -1683,6 +1734,104 @@ Object.assign(pc, function() {
             meshInstance._shader[pass] = meshInstance.material.shader;
         },
 
+        /**
+         * Prepares instancing data finding "bactheable" draw calls. 
+         *
+         * The criteria for 2 draw calls to be instanced together is as follows:
+         * - Both calls should have the same material
+         * - Both calls should have the same mesh
+         * - Both calls should have the same parameters
+         * - Both calls' render queue should be 
+         *
+         * @param    {Array}    drawCalls        Draw calls to compute instancing data for.
+         * @param    {Number}   drawCallsCount   Number of draw calls to process.
+         */
+        prepareAutoInstancing: function ( drawCalls, drawCallsCount ) {
+            var instancingStartTimestamp = pc.time.now();
+
+            // make sure vertex buffer for instancing is set up
+            if ( !pc._autoInstanceBuffer ) {
+                this.setupInstancing( this.device );
+            }
+
+            // create offset variable
+            var offset = 0;
+            // cache instancing buffer array
+            var buffer = pc._autoInstanceBufferData;
+
+            // iterate over all draw calls
+            for ( var i = 0; i < drawCallsCount; i++ ) {
+                // cache values to local variables
+                var startIndex    = i;
+                var firstDrawCall = drawCalls[ i ];
+                var firstMaterial = firstDrawCall.material;
+                var firstMesh     = firstDrawCall.mesh;
+
+                // we only instance material-based mesh-enabled draw calls together
+                if ( !firstMaterial || !firstMesh || !firstMaterial.enableAutoInstancing ) {
+                    continue;
+                }
+
+                // check if the mesh instance already has instancing enabled
+                if ( firstDrawCall.instancingData !== null ) {
+                    continue;
+                }
+
+                // walk forward
+                for ( i++; i < drawCallsCount; i++ ) {
+                    // cache values to local variables
+                    var secondDrawCall = drawCalls[ i ];
+                    var secondMaterial = secondDrawCall.material;
+                    var secondMesh     = secondDrawCall.mesh;
+
+                    // we should bail out as soon as the next draw call doesn't match the mesh or material
+                    if ( secondMaterial !== firstMaterial || secondMesh !== firstMesh ) {
+                        i--;
+                        break;
+                    }
+
+                    // FIXME EN-231 we should also compare mesh instance parameters
+                }
+
+                // make sure we don't overflow the draw call list
+                i = i < drawCallsCount ? i : drawCallsCount - 1;
+
+                // check if we have advanced by at least 1 draw call
+                if ( startIndex !== i ) {
+                    for ( var j = startIndex; j <= i; j++ ) {
+                        // cache draw call
+                        var drawCall = drawCalls[ j ];
+                        // enable instancing for the draw call
+                        drawCall._shaderDefs |= pc.SHADERDEF_INSTANCING;
+                        // extract world transform matrix data
+                        var modelMatrixData = drawCall.node.getWorldTransform().data;
+
+                        // copy matrix over
+                        buffer.set( modelMatrixData, offset );
+
+                        // advance the offset
+                        offset += 16;
+
+                        // fill instancing data in
+                        drawCall.instancingData = {
+                            count: ( i - startIndex + 1),
+                            offset: offset * 4,
+                            _buffer: pc._autoInstanceBuffer
+                        };
+                    }
+                } else {
+                    // disable instancing on the draw call, just in case it bled from previous frame
+                    firstDrawCall._shaderDefs &= ~pc.SHADERDEF_INSTANCING;
+                }
+            }
+
+            // save stats
+            this._instancingTime += ( pc.time.now() - instancingStartTimestamp ) / 1000.0;
+
+            // upload instancing buffer to the GPU
+            pc._autoInstanceBuffer.unlock();
+        },
+
         renderForward: function(camera, drawCalls, drawCallsCount, sortedLights, pass, cullingMask, drawCallback, layer) {
             var device = this.device;
             var scene = this.scene;
@@ -1704,6 +1853,10 @@ Object.assign(pc, function() {
             var halfWidth = device.width * 0.5;
             var skyboxRendered = false;
 
+            if ( device._enableAutoInstancing ) {
+                this.prepareAutoInstancing( drawCalls, drawCallsCount );
+            }
+
             // Render the scene
             for (i = 0; i < drawCallsCount; i++) {
                 drawCall = drawCalls[i];
@@ -1721,14 +1874,26 @@ Object.assign(pc, function() {
                     // We have a command
                     drawCall.command();
                 } else {
-                    // squeeze skybox in if it's time
-                    if ( !skyboxRendered && ( ( camera.clearFlags & pc.CLEARFLAG_USE_SKYBOX ) !== 0 ) && ( ( i === (drawCallsCount - 1) ) || ( drawCall.renderQueue >= 3000 ) ) ) {
-                        skyboxRendered = true;
-                        drawCall = this.scene.skyboxHelper.getSkyDrawCall( camera );
-                        i--;
+                    // check if we should even bother trying skybox rendering
+                    if ( !skyboxRendered ) {
+                        // first of all, check if the camera renders the skybox, at all
+                        var shouldRenderSkybox = ( camera.clearFlags & pc.CLEARFLAG_USE_SKYBOX ) !== 0;
+                        // and make sure it's either the last draw call, or we start rendering opaque geometry, or we see the call without depth test
+                        shouldRenderSkybox &= ( i === ( drawCallsCount - 1 ) ) || ( drawCall.renderQueue >= 3000 ) || ( !drawCall.depthTest ) || ( drawCall.material && !drawCall.material.depthTest );
 
-                        if ( !drawCall.visible ) {
-                            continue;
+                        // check if we are good to go with skybox
+                        if ( shouldRenderSkybox ) {
+                            // mark we have rendered it
+                            skyboxRendered = true;
+                            // get the draw call
+                            drawCall = this.scene.skyboxHelper.getSkyDrawCall( camera );
+                            // rewind the draw call index by 1 back
+                            i--;
+
+                            // bail out if draw call is hidden (probably disabled)
+                            if ( !drawCall.visible ) {
+                                continue;
+                            }
                         }
                     }
 
@@ -1978,11 +2143,9 @@ Object.assign(pc, function() {
                 ];
                 pc._instanceVertexFormat = new pc.VertexFormat(device, formatDesc);
             }
-            if (device.enableAutoInstancing) {
-                if (!pc._autoInstanceBuffer) {
-                    pc._autoInstanceBuffer = new pc.VertexBuffer(device, pc._instanceVertexFormat, device.autoInstancingMaxObjects, pc.BUFFER_DYNAMIC);
-                    pc._autoInstanceBufferData = new Float32Array(pc._autoInstanceBuffer.lock());
-                }
+            if (!pc._autoInstanceBuffer) {
+                pc._autoInstanceBuffer = new pc.VertexBuffer(device, pc._instanceVertexFormat, device.autoInstancingMaxObjects, pc.BUFFER_DYNAMIC);
+                pc._autoInstanceBufferData = new Float32Array(pc._autoInstanceBuffer.lock());
             }
         },
 
