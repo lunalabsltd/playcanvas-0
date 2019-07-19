@@ -1,15 +1,12 @@
 Object.assign(pc, function () {
     var keyA, keyB, sortPos, sortDir;
 
-    var sortManual = pc.ForwardRenderer.prototype.sortBackToFront;
-    var sortMaterialMesh = pc.ForwardRenderer.prototype.sortFrontToBack;
-    var sortBackToFront = pc.ForwardRenderer.prototype.sortBackToFront;
-
     function sortFrontToBack(drawCallA, drawCallB) {
         return drawCallA.zdist - drawCallB.zdist;
     }
 
-    var sortCallbacks = [null, sortManual, sortMaterialMesh, sortBackToFront, sortFrontToBack];
+    var sortCallbacks = [null, pc.ForwardRenderer.prototype.genericSort, pc.ForwardRenderer.prototype.genericSort, pc.ForwardRenderer.prototype.genericSort, pc.ForwardRenderer.prototype.genericSort];
+    var autoInstancingSortCallbacks = [null, pc.ForwardRenderer.prototype.autoInstancingSort, pc.ForwardRenderer.prototype.autoInstancingSort, pc.ForwardRenderer.prototype.autoInstancingSort, pc.ForwardRenderer.prototype.autoInstancingSort];
 
     function sortCameras(camA, camB) {
         return camA.priority - camB.priority;
@@ -155,6 +152,7 @@ Object.assign(pc, function () {
         }
 
         this.name = options.name;
+        this.graphicsDevice = options.graphicsDevice;
 
         this._enabled = options.enabled === undefined ? true : options.enabled;
         this._refCounter = this._enabled ? 1 : 0;
@@ -690,7 +688,7 @@ Object.assign(pc, function () {
                 visible.list.length = visible.length;
             }
 
-            visible.list.sort(sortCallbacks[sortMode]);
+            visible.list.sort( this.graphicsDevice._enableAutoInstancing ? autoInstancingSortCallbacks[ sortMode ] : sortCallbacks[ sortMode ] );
         }
     };
 
