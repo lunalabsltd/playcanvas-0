@@ -1880,12 +1880,15 @@ Object.assign(pc, function() {
                     // We have a command
                     drawCall.command();
                 } else {
+                    // force default depth range
+                    device.setDepthRange( 0, 1 );
+
                     // check if we should even bother trying skybox rendering
                     if ( !skyboxRendered ) {
                         // first of all, check if the camera renders the skybox, at all
                         var shouldRenderSkybox = ( camera.clearFlags & pc.CLEARFLAG_USE_SKYBOX ) !== 0;
                         // and make sure it's either the last draw call, or we start rendering opaque geometry, or we see the call without depth test
-                        shouldRenderSkybox &= ( i === ( drawCallsCount - 1 ) ) || ( drawCall.renderQueue >= 3000 ) || ( !drawCall.depthTest ) || ( drawCall.material && !drawCall.material.depthTest );
+                        shouldRenderSkybox &= ( i === ( drawCallsCount - 1 ) ) || ( drawCall.renderQueue >= 3000 ) || ( drawCall.material && !drawCall.material.depthTest );
 
                         // check if we are good to go with skybox
                         if ( shouldRenderSkybox ) {
@@ -1900,6 +1903,9 @@ Object.assign(pc, function() {
                             if ( !drawCall.visible ) {
                                 continue;
                             }
+
+                            // make sure any skybox fragment ends up with maximum depth possible
+                            device.setDepthRange( 1, 1 );
                         }
                     }
 
