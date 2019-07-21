@@ -872,6 +872,9 @@ Object.assign(pc, function () {
 
             this.unpackPremultiplyAlpha = false;
             gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+
+            this.depthRange = new pc.Vec2( 0, 1 );
+            gl.depthRange( this.depthRange.x, this.depthRange.y );
         },
 
         initializeContext: function () {
@@ -971,6 +974,20 @@ Object.assign(pc, function () {
                 this.vh = h;
             }
         },
+
+        /**
+         * @function
+         * @name pc.GraphicsDevice#setDepthRange
+         * @description Set the active depth range on the specified device.
+         * @param {Number} zNear Minimum depth buffer value.
+         * @param {Number} zFar  Maximum depth buffer value.
+         */
+        setDepthRange: function (zNear, zFar) {
+            if ((this.depthRange.x !== zNear) || (this.depthRange.y !== zFar)) {
+                this.depthRange.set(zNear, zFar);
+                this.gl.depthRange(zNear, zFar);
+            }
+        },    
 
         /**
          * @function
