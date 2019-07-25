@@ -261,7 +261,7 @@ Object.assign(pc, function () {
         for (i = 0; i < lights.length; i++) {
             light = lights[i];
             if (light._enabled) {
-                if (light._mask & mask) {
+                if (light._cullingMask & mask) {
                     if (lType !== pc.LIGHTTYPE_DIRECTIONAL) {
                         if (light.isStatic) {
                             continue;

@@ -878,7 +878,7 @@ Object.assign(pc, function() {
             var scope = this.device.scope;
 
             for (i = 0; i < numDirs; i++) {
-                if (!(dirs[i]._mask & mask)) continue;
+                if (!(dirs[i]._cullingMask & mask)) continue;
 
                 directional = dirs[i];
                 wtm = directional._node.getWorldTransform();
@@ -1746,7 +1746,7 @@ Object.assign(pc, function() {
                         continue;
                     }
                     objDefs = drawCall._shaderDefs;
-                    lightMask = pc.MASK_DYNAMIC;
+                    lightMask = (1 << drawCall.node._cullingLayer);
 
                     this.setSkinning(device, drawCall, material);
 
