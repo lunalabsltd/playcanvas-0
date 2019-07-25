@@ -3,6 +3,8 @@ Object.assign(pc, function () {
 
     var EVENT_RESIZE = 'resizecanvas';
     var whiteColor = new Float32Array([1, 1, 1, 1]);
+    var texcoordDefault = new Float32Array([0, 0, 0, 0]);
+    var positionDefault = new Float32Array([0, 0, 0, 1]);
 
     var slots = {};
     
@@ -1942,7 +1944,7 @@ Object.assign(pc, function () {
                         this.enabledAttributes[locationId] = false;
 
                         gl.disableVertexAttribArray(locationId);
-                        gl.vertexAttrib4fv(locationId, whiteColor);
+                        gl.vertexAttrib4fv(locationId, positionDefault);
                     }
                     if (attribute.scopeId.name == 'COLOR') {
                         locationId = attribute.locationId;
@@ -1956,7 +1958,7 @@ Object.assign(pc, function () {
                         this.enabledAttributes[locationId] = false;
 
                         gl.disableVertexAttribArray(locationId);
-                        gl.vertexAttrib4fv(locationId, whiteColor);
+                        gl.vertexAttrib4fv(locationId, texcoordDefault);
                     }
 
                     if (element !== null && !element.const) {
