@@ -338,6 +338,9 @@ pc.extend(pc, function () {
                         // only overlay canvases drive their RectTransform's size
                         element._width = this.screen._width;
                         element._height = this.screen._height;
+                        element._sizeDelta.set( element._width, element._height );
+                        element._elementRect.set( 0, 0, element._width, element._height );
+                        element._corners.set( -element._width, -element._height, element._width, element._height ).scale( 0.5 );
                     }
 
                     // make sure pivot point is still correct
