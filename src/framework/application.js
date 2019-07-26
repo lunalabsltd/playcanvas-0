@@ -180,7 +180,8 @@ Object.assign(pc, function () {
         var self = this;
         this.defaultLayerWorld = new pc.Layer({
             name: "World",
-            id: pc.LAYERID_WORLD
+            id: pc.LAYERID_WORLD,
+            graphicsDevice: this.graphicsDevice
         });
 
         if (this.graphicsDevice.webgl2) {
@@ -189,6 +190,7 @@ Object.assign(pc, function () {
                 enabled: false,
                 name: "Depth",
                 id: pc.LAYERID_DEPTH,
+                graphicsDevice: this.graphicsDevice,
 
                 onEnable: function () {
                     if (this.renderTarget) return;
@@ -259,6 +261,7 @@ Object.assign(pc, function () {
                 name: "Depth",
                 id: pc.LAYERID_DEPTH,
                 shaderPass: pc.SHADER_DEPTH,
+                graphicsDevice: this.graphicsDevice,
 
                 onEnable: function () {
                     if (this.renderTarget) return;
@@ -349,21 +352,24 @@ Object.assign(pc, function () {
             enabled: false,
             name: "Skybox",
             id: pc.LAYERID_SKYBOX,
-            opaqueSortMode: pc.SORTMODE_NONE
+            opaqueSortMode: pc.SORTMODE_NONE,
+            graphicsDevice: this.graphicsDevice
         });
         this.defaultLayerUi = new pc.Layer({
             enabled: true,
             name: "UI",
             id: pc.LAYERID_UI,
             transparentSortMode: pc.SORTMODE_MANUAL,
-            passThrough: true
+            passThrough: true,
+            graphicsDevice: this.graphicsDevice
         });
         this.defaultLayerImmediate = new pc.Layer({
             enabled: true,
             name: "Immediate",
             id: pc.LAYERID_IMMEDIATE,
             opaqueSortMode: pc.SORTMODE_NONE,
-            passThrough: true
+            passThrough: true,
+            graphicsDevice: this.graphicsDevice
         });
         this.defaultLayerComposition = new pc.LayerComposition();
 

@@ -1,15 +1,12 @@
 Object.assign(pc, function () {
     var keyA, keyB, sortPos, sortDir;
 
-    var sortManual = pc.ForwardRenderer.prototype.sortCompare;
-    var sortMaterialMesh = pc.ForwardRenderer.prototype.sortCompareMesh;
-    var sortBackToFront = pc.ForwardRenderer.prototype.sortCompareMesh;
-
     function sortFrontToBack(drawCallA, drawCallB) {
         return drawCallA.zdist - drawCallB.zdist;
     }
 
-    var sortCallbacks = [null, sortManual, sortMaterialMesh, sortBackToFront, sortFrontToBack];
+    var sortCallbacks = [null, pc.ForwardRenderer.prototype.genericSort, pc.ForwardRenderer.prototype.genericSort, pc.ForwardRenderer.prototype.genericSort, pc.ForwardRenderer.prototype.genericSort];
+    var autoInstancingSortCallbacks = [null, pc.ForwardRenderer.prototype.autoInstancingSort, pc.ForwardRenderer.prototype.autoInstancingSort, pc.ForwardRenderer.prototype.autoInstancingSort, pc.ForwardRenderer.prototype.autoInstancingSort];
 
     function sortCameras(camA, camB) {
         return camA.priority - camB.priority;
@@ -155,6 +152,7 @@ Object.assign(pc, function () {
         }
 
         this.name = options.name;
+        this.graphicsDevice = options.graphicsDevice;
 
         this._enabled = options.enabled === undefined ? true : options.enabled;
         this._refCounter = this._enabled ? 1 : 0;
@@ -649,7 +647,7 @@ Object.assign(pc, function () {
         for (i = 0; i < drawCallsCount; i++) {
             drawCall = drawCalls[i];
             if (drawCall.command) continue;
-            if (drawCall.material.renderQueue < 3000) continue; // Only alpha sort mesh instances in the main world (backwards comp)
+            //if (drawCall.material.renderQueue < 3000) continue; // Only alpha sort mesh instances in the main world (backwards comp)
             meshPos = drawCall.aabb.center;
             tempx = meshPos.x - camPos.x;
             tempy = meshPos.y - camPos.y;
@@ -690,7 +688,7 @@ Object.assign(pc, function () {
                 visible.list.length = visible.length;
             }
 
-            visible.list.sort(sortCallbacks[sortMode]);
+            visible.list.sort( this.graphicsDevice._enableAutoInstancing ? autoInstancingSortCallbacks[ sortMode ] : sortCallbacks[ sortMode ] );
         }
     };
 
