@@ -20,6 +20,7 @@ Object.assign(pc, function () {
         this._castShadows = false;
         this._enabled = false;
         this._mask = 1;
+        this._cullingMask = -1;
         this.isStatic = false;
         this.key = 0;
         this.bakeDir = true;
@@ -122,6 +123,7 @@ Object.assign(pc, function () {
             clone.normalOffsetBias = this._normalOffsetBias;
             clone.shadowResolution = this._shadowResolution;
             clone.shadowDistance = this.shadowDistance;
+            clone.cullingMask = this.cullingMask;
 
             // Cookies properties
             // clone.cookie = this._cookie;
@@ -335,6 +337,18 @@ Object.assign(pc, function () {
                 return;
 
             this._mask = value;
+        }
+    });
+
+    Object.defineProperty(Light.prototype, 'cullingMask', {
+        get: function () {
+            return this._cullingMask;
+        },
+        set: function (value) {
+            if (this._cullingMask === value)
+                return;
+
+            this._cullingMask = value;
         }
     });
 
