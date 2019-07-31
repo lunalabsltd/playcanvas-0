@@ -115,9 +115,6 @@ pc.extend( pc, function() {
             }
             // do we follow the camera?
             if ( screenType == pc.SCREEN_TYPE_CAMERA ) {
-                w /= window.devicePixelRatio;
-                h /= window.devicePixelRatio;
-
                 if ( camera.projection == pc.PROJECTION_PERSPECTIVE ) {
                     this._planeHeight = Math.tan( camera.fov / 2.0 * Math.PI / 180.0 ) * Math.abs( 2 * this._screenDistance );
                 } else {
