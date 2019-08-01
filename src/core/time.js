@@ -50,6 +50,29 @@ Object.assign(pc, (function () {
     return {
         Timer: Timer,
 
+        _accamulatedTime: 0,
+        _pausedTime: 0,
+
+        /**
+         * @private
+         * @function
+         * @name pc.pause
+         * @description Stores current pause time.
+         */
+        pause: function() {
+            this._pausedTime = this._now();
+        },
+        /**
+         * @private
+         * @function
+         * @name pc.resume
+         * @description Restores time from paused one.
+         */
+        resume: function() {
+            this._accamulatedTime += this._now() - this._pausedTime;
+            this._pausedTime = 0;
+        },
+
         /**
          * @private
          * @function
@@ -57,7 +80,11 @@ Object.assign(pc, (function () {
          * @description Get current time in milliseconds. Use it to measure time difference. Reference time may differ on different platforms.
          * @returns {Number} The time in milliseconds
          */
-        now: (!window.performance || !window.performance.now || !window.performance.timing) ? Date.now : function () {
+        now: function () {
+            return this._pausedTime || this._now() - this._accamulatedTime;
+        },
+
+        _now:  (!window.performance || !window.performance.now || !window.performance.timing) ? Date.now : function () {
             return window.performance.now();
         }
     };
