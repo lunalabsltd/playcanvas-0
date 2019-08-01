@@ -50,7 +50,7 @@ Object.assign(pc, (function () {
     return {
         Timer: Timer,
 
-        _accamulatedTime: 0,
+        _accumulatedTime: 0,
         _pausedTime: 0,
 
         /**
@@ -69,7 +69,7 @@ Object.assign(pc, (function () {
          * @description Restores time from paused one.
          */
         resume: function() {
-            this._accamulatedTime += this._now() - this._pausedTime;
+            this._accumulatedTime += this._now() - this._pausedTime;
             this._pausedTime = 0;
         },
 
@@ -81,7 +81,7 @@ Object.assign(pc, (function () {
          * @returns {Number} The time in milliseconds
          */
         now: function () {
-            return this._pausedTime || this._now() - this._accamulatedTime;
+            return this._pausedTime || this._now() - this._accumulatedTime;
         },
 
         _now:  (!window.performance || !window.performance.now || !window.performance.timing) ? Date.now : function () {
