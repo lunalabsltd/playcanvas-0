@@ -158,6 +158,8 @@ Object.assign(pc, function () {
         // for compatibility
         this.context = this;
 
+        this.paused = false;
+
         this.graphicsDevice = new pc.GraphicsDevice(canvas, options.graphicsDeviceOptions);
         this.stats = new pc.ApplicationStats(this.graphicsDevice);
         options.canvas = canvas;
@@ -1499,7 +1501,7 @@ Object.assign(pc, function () {
             // have current application pointer in pc
             pc.app = app;
 
-            var now = timestamp || pc.now();
+            var now = pc.now();
             var ms = now - (app._time || now);
             var dt = ms / 1000.0;
             dt = pc.math.clamp(dt, 0, app.maxDeltaTime);
@@ -1514,7 +1516,7 @@ Object.assign(pc, function () {
                 window.requestAnimationFrame(app.tick);
             }
 
-            if (app.graphicsDevice.contextLost) {
+            if (app.graphicsDevice.contextLost || app.paused) {
                 return;
             }
 
