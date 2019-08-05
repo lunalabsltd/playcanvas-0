@@ -199,10 +199,7 @@ pc.shape = {
     Plane: pc.Plane
 };
 
-pc.time = {
-    now: pc.now,
-    Timer: pc.Timer
-};
+pc.time = pc;
 
 pc.PhongMaterial = pc.StandardMaterial;
 
