@@ -81,10 +81,10 @@ Object.assign(pc, (function () {
          * @returns {Number} The time in milliseconds
          */
         now: function () {
-            return pc._pausedTime || pc._now() - pc._accumulatedTime;
+            return pc._pausedTime || ( pc._now() - pc._accumulatedTime );
         },
 
-        _now:  (!window.performance || !window.performance.now || !window.performance.timing) ? Date.now : function () {
+        _now: (!window.performance || !window.performance.now || !window.performance.timing) ? Date.now : function () {
             return window.performance.now();
         }
     };
