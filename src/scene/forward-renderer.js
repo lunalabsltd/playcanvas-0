@@ -1905,7 +1905,7 @@ Object.assign(pc, function() {
             }
 
             // the flag indicating we have switched to screen-space rendering on the previous draw call
-            var previousDrawCallWasScreenSpace = true;
+            var previousDrawCallWasScreenSpace = false;
 
             // Render the scene
             for (i = 0; i < drawCallsCount; i++) {
