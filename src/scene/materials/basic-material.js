@@ -69,7 +69,6 @@ Object.assign(pc, function () {
         updateShader: function (device, scene, objDefs, staticLightList, pass, sortedLights) {
             var options = {
                 skin: !!this.meshInstances[0].skinInstance,
-                screenSpace: !!this.meshInstances[0].screenSpace,
                 vertexColors: this.vertexColors,
                 diffuseMap: this.colorMap,
                 pass: pass
