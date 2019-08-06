@@ -31,13 +31,13 @@ Object.assign(pc, function () {
                 throw new Error( "pushValue is limited to storing 1 previous value" );
             }
 
+            var previousValue = this.value;
             this.setValue( value );
-            this.previous_value = this.value;
+            this.previous_value = previousValue;
         },
 
         popValue: function () {
             this.setValue( this.previous_value );
-            this.previous_value = null;
         },
 
         getValue: function (value) {
