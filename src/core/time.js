@@ -60,7 +60,7 @@ Object.assign(pc, (function () {
          * @description Stores current pause time.
          */
         pause: function() {
-            this._pausedTime = this._now();
+            pc._pausedTime = pc._now();
         },
         /**
          * @private
@@ -69,8 +69,8 @@ Object.assign(pc, (function () {
          * @description Restores time from paused one.
          */
         resume: function() {
-            this._accumulatedTime += this._now() - this._pausedTime;
-            this._pausedTime = 0;
+            pc._accumulatedTime += pc._now() - pc._pausedTime;
+            pc._pausedTime = 0;
         },
 
         /**
@@ -81,7 +81,7 @@ Object.assign(pc, (function () {
          * @returns {Number} The time in milliseconds
          */
         now: function () {
-            return this._pausedTime || this._now() - this._accumulatedTime;
+            return pc._pausedTime || pc._now() - pc._accumulatedTime;
         },
 
         _now:  (!window.performance || !window.performance.now || !window.performance.timing) ? Date.now : function () {
