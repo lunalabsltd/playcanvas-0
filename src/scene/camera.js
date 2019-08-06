@@ -126,8 +126,9 @@ Object.assign(pc, function () {
                     worldCoord.z * vpm[11] +
                                1 * vpm[15];
 
+            var scDump = screenCoord.clone();
             screenCoord.x = (screenCoord.x / w + 1) * 0.5 * cw;
-            screenCoord.y = (1 - screenCoord.y / w) * 0.5 * ch;
+            screenCoord.y = (1 + screenCoord.y / w) * 0.5 * ch;
 
             return screenCoord;
         },
