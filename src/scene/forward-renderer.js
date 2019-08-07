@@ -1991,28 +1991,36 @@ Object.assign(pc, function() {
                             material.dirty = false;
                         }
 
-                        if (!drawCall._shader[pass] || drawCall._shaderDefs !== objDefs || drawCall._lightHash !== lightHash) {
-                            if (!drawCall.isStatic) {
-                                variantKey = pass + "_" + objDefs + "_" + lightHash;
-                                drawCall._shader[pass] = material.variants[variantKey];
-                                if (!drawCall._shader[pass]) {
-                                    this.updateShader(drawCall, objDefs, null, pass, sortedLights);
-                                    material.variants[variantKey] = drawCall._shader[pass];
+                        // check if the shader is keyword-enabled one
+                        if ( !material._shader._supportsKeywords ) {
+                            // it's not (probably standard playcanvas one)
+                            if (!drawCall._shader[pass] || drawCall._shaderDefs !== objDefs || drawCall._lightHash !== lightHash) {
+                                if (!drawCall.isStatic) {
+                                    variantKey = pass + "_" + objDefs + "_" + lightHash;
+                                    drawCall._shader[pass] = material.variants[variantKey];
+                                    if (!drawCall._shader[pass]) {
+                                        this.updateShader(drawCall, objDefs, null, pass, sortedLights);
+                                        material.variants[variantKey] = drawCall._shader[pass];
+                                    }
+                                } else {
+                                    this.updateShader(drawCall, objDefs, drawCall._staticLightList, pass, sortedLights);
                                 }
-                            } else {
-                                this.updateShader(drawCall, objDefs, drawCall._staticLightList, pass, sortedLights);
+                                drawCall._shaderDefs = objDefs;
+                                drawCall._lightHash = lightHash;
                             }
-                            drawCall._shaderDefs = objDefs;
-                            drawCall._lightHash = lightHash;
-                        }
 
-                        // #ifdef DEBUG
-                        if (!device.setShader(drawCall._shader[pass])) {
-                            console.error('Error in material "' + material.name + '" with flags ' + objDefs);
-                            drawCall.material = scene.defaultMaterial;
+                            // #ifdef DEBUG
+                            if (!device.setShader(drawCall._shader[pass])) {
+                                console.error('Error in material "' + material.name + '" with flags ' + objDefs);
+                                drawCall.material = scene.defaultMaterial;
+                            }
+                            // #else
+                            device.setShader( drawCall._shader[pass] );
+                        } else {
+                            // it is keyword-enabled - all tweaking / recompilation is handled
+                            // by the shader itself
+                            device.setShader( material._shader );
                         }
-                        // #else
-                        device.setShader(drawCall._shader[pass]);
                         // #endif
 
                         // Uniforms I: material
