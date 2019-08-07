@@ -283,6 +283,7 @@ Object.assign(pc, function () {
         clone.greenWrite = this.greenWrite;
         clone.blueWrite = this.blueWrite;
         clone.alphaWrite = this.alphaWrite;
+        clone.parameters = Object.assign( {}, this.parameters );
     };
 
     Material.prototype.clone = function () {
