@@ -1992,7 +1992,7 @@ Object.assign(pc, function() {
                         }
 
                         // check if the shader is keyword-enabled one
-                        if ( !material._shader._supportsKeywords ) {
+                        if ( ( material._shader === null ) || !material._shader._supportsKeywords ) {
                             // it's not (probably standard playcanvas one)
                             if (!drawCall._shader[pass] || drawCall._shaderDefs !== objDefs || drawCall._lightHash !== lightHash) {
                                 if (!drawCall.isStatic) {
