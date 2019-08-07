@@ -3035,8 +3035,8 @@ Object.assign(pc, function () {
             var gl = this.gl;
 
             var definition = shader.definition;
-            var glVertexShader = this.compileShaderSource(definition.vshader, true);
-            var glFragmentShader = this.compileShaderSource(definition.fshader, false);
+            var glVertexShader = this.compileShaderSource( shader.vshader, true );
+            var glFragmentShader = this.compileShaderSource( shader.fshader, false );
 
             var glProgram = gl.createProgram();
 
@@ -3069,6 +3069,10 @@ Object.assign(pc, function () {
             shader._glVertexShader = glVertexShader;
             shader._glFragmentShader = glFragmentShader;
             shader._glProgram = glProgram;
+            // memoize current global keywords version
+            shader._globalKeywordsVersion = pc.Shader._globalKeywordsVersion;
+            // mark for post linking
+            shader.ready = false;
 
             // #ifdef PROFILER
             this._shaderStats.linked++;
@@ -3127,11 +3131,11 @@ Object.assign(pc, function () {
 
             // Check for errors
             if (!gl.getShaderParameter(glVertexShader, gl.COMPILE_STATUS)) {
-                console.error("Failed to compile vertex shader:\n\n" + this._addLineNumbers(definition.vshader) + "\n\n" + gl.getShaderInfoLog(glVertexShader));
+                console.error("Failed to compile vertex shader:\n\n" + this._addLineNumbers(shader.vshader) + "\n\n" + gl.getShaderInfoLog(glVertexShader));
                 return false;
             }
             if (!gl.getShaderParameter(glFragmentShader, gl.COMPILE_STATUS)) {
-                console.error("Failed to compile fragment shader:\n\n" + this._addLineNumbers(definition.fshader) + "\n\n" + gl.getShaderInfoLog(glFragmentShader));
+                console.error("Failed to compile fragment shader:\n\n" + this._addLineNumbers(shader.fshader) + "\n\n" + gl.getShaderInfoLog(glFragmentShader));
                 return false;
             }
             if (!gl.getProgramParameter(glProgram, gl.LINK_STATUS)) {
@@ -3157,6 +3161,10 @@ Object.assign(pc, function () {
 
                 shader.attributes.push(shaderInput);
             }
+
+            // clear uniforms and samplers as previously saved ones might change due to recompilation
+            shader.samplers = [];
+            shader.uniforms = [];
 
             // Query the program for each shader state (GLSL 'uniform')
             i = 0;
@@ -3199,6 +3207,12 @@ Object.assign(pc, function () {
          */
         setShader: function (shader) {
             if (shader !== this.shader) {
+                // check if the shader should be recompiled
+                if ( shader.needsCompilation ) {
+                    // invoke recompilation
+                    this.compileAndLinkShader( shader );
+                }
+
                 if (!shader.ready) {
                     if (!this.postLink(shader)) {
                         return false;
