@@ -54,6 +54,13 @@ Object.assign(pc, function () {
         this.uniforms = [];
         this.samplers = [];
 
+        // array of keywords enabled on this shader
+        this._keywords = [];
+        // flag indicating the shader can recompile itself when keywords change
+        this._supportsKeywords = false;
+        // global keywords version
+        this._globalKeywordsVersion = 0;
+
         this.ready = false;
 
         // Used for shader variants (see pc.Material)

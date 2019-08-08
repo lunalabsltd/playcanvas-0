@@ -19,6 +19,8 @@ Object.assign(pc, function () {
         setValue: function (value) {
             // Set the new value
             this.value = value;
+            // erase value history
+            this.previous_value = null;
 
             // Increment the revision
             this.versionObject.increment();
@@ -29,13 +31,13 @@ Object.assign(pc, function () {
                 throw new Error( "pushValue is limited to storing 1 previous value" );
             }
 
-            this.previous_value = this.value;
+            var previousValue = this.value;
             this.setValue( value );
+            this.previous_value = previousValue;
         },
 
         popValue: function () {
             this.setValue( this.previous_value );
-            this.previous_value = null;
         },
 
         getValue: function (value) {

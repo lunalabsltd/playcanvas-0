@@ -61,34 +61,6 @@ Object.assign(pc, function () {
         this.defaultMaskMaterial.alphaTest = 1 / 255.0;
         this.defaultMaskMaterial.update();
 
-        this.defaultScreenSpaceImageMaterial = new pc.StandardMaterial();
-        this.defaultScreenSpaceImageMaterial.cull = pc.CULLFACE_NONE;
-        this.defaultScreenSpaceImageMaterial.emissive = new pc.Color(0, 0, 0, 1); // use non-white to compile shader correctly
-        this.defaultScreenSpaceImageMaterial.diffuse = new pc.Color(0, 0, 0, 1);
-        this.defaultScreenSpaceImageMaterial.emissiveMap = this._defaultTexture;
-        this.defaultScreenSpaceImageMaterial.emissiveMapTint = true;
-        this.defaultScreenSpaceImageMaterial.opacityMap = this._defaultTexture;
-        this.defaultScreenSpaceImageMaterial.opacityMapChannel = "a";
-        this.defaultScreenSpaceImageMaterial.opacityTint = true;
-        this.defaultScreenSpaceImageMaterial.opacity = 0; // use non-1 opacity to compile shader correctly
-        this.defaultScreenSpaceImageMaterial.useLighting = false;
-        this.defaultScreenSpaceImageMaterial.useGammaTonemap = false;
-        this.defaultScreenSpaceImageMaterial.useFog = false;
-        this.defaultScreenSpaceImageMaterial.useSkybox = false;
-        this.defaultScreenSpaceImageMaterial.blendType = pc.BLEND_PREMULTIPLIED;
-        this.defaultScreenSpaceImageMaterial.depthTest = false;
-        this.defaultScreenSpaceImageMaterial.depthWrite = false;
-        this.defaultScreenSpaceImageMaterial.renderQueue = 3000;
-        this.defaultScreenSpaceImageMaterial.updateShader(pc.Application.getApplication().graphicsDevice, pc.Application.getApplication().scene, 1 << 16 | pc.SHADERDEF_SCREENSPACE );
-        this.defaultScreenSpaceImageMaterial.update();
-
-        this.defaultScreenSpaceMaskMaterial = this.defaultScreenSpaceImageMaterial.clone();
-        this.defaultScreenSpaceMaskMaterial.redWrite = false;
-        this.defaultScreenSpaceMaskMaterial.greenWrite = false;
-        this.defaultScreenSpaceMaskMaterial.blueWrite = false;
-        this.defaultScreenSpaceMaskMaterial.alphaTest = 1 / 255.0;
-        this.defaultScreenSpaceMaskMaterial.update();
-
         this.defaultTextMaterial = new pc.StandardMaterial();
         this.defaultTextMaterial.cull = pc.CULLFACE_NONE;
         this.defaultTextMaterial.msdfMap = this._defaultTexture;
@@ -104,22 +76,6 @@ Object.assign(pc, function () {
         this.defaultTextMaterial.blendType = pc.BLEND_PREMULTIPLIED;
         this.defaultTextMaterial.depthWrite = false;
         this.defaultTextMaterial.update();
-
-        this.defaultScreenSpaceTextMaterial = new pc.StandardMaterial();
-        this.defaultScreenSpaceTextMaterial.cull = pc.CULLFACE_NONE;
-        this.defaultScreenSpaceTextMaterial.msdfMap = this._defaultTexture;
-        this.defaultScreenSpaceTextMaterial.tintMap = this._defaultTexture;
-        this.defaultScreenSpaceTextMaterial.useLighting = false;
-        this.defaultScreenSpaceTextMaterial.useGammaTonemap = false;
-        this.defaultScreenSpaceTextMaterial.useFog = false;
-        this.defaultScreenSpaceTextMaterial.useSkybox = false;
-        this.defaultScreenSpaceTextMaterial.emissive = new pc.Color(1,1,1,1);
-        this.defaultScreenSpaceTextMaterial.opacity = 0.5;
-        this.defaultScreenSpaceTextMaterial.blendType = pc.BLEND_PREMULTIPLIED;
-        this.defaultScreenSpaceTextMaterial.depthWrite = false;
-        this.defaultScreenSpaceTextMaterial.depthTest = false;
-        this.defaultScreenSpaceTextMaterial.renderQueue = 3000;
-        this.defaultScreenSpaceTextMaterial.update();
 
         this.on('beforeremove', this.onRemoveComponent, this);
     };

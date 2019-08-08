@@ -264,6 +264,9 @@ Object.assign(pc, function () {
         _defineProperty("mask", 1, function (newValue, oldValue) {
             this.light.mask = newValue;
         });
+        _defineProperty("cullingMask", 1, function (newValue, oldValue) {
+            this.light.cullingMask = newValue;
+        });
         _defineProperty("affectDynamic", true, function (newValue, oldValue) {
             if (newValue) {
                 this.light.mask |= pc.MASK_DYNAMIC;

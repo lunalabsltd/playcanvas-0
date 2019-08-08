@@ -32,7 +32,6 @@ Object.assign(pc, function () {
         options.blendType = stdMat.blendType;
         options.forceUv1 = stdMat.forceUv1;
 
-        options.screenSpace = objDefs && (objDefs & pc.SHADERDEF_SCREENSPACE) !== 0;
         options.skin = objDefs && (objDefs & pc.SHADERDEF_SKIN) !== 0;
         options.useInstancing = objDefs && (objDefs & pc.SHADERDEF_INSTANCING) !== 0;
     };
@@ -261,7 +260,7 @@ Object.assign(pc, function () {
         for (i = 0; i < lights.length; i++) {
             light = lights[i];
             if (light._enabled) {
-                if (light._mask & mask) {
+                if (light._cullingMask & mask) {
                     if (lType !== pc.LIGHTTYPE_DIRECTIONAL) {
                         if (light.isStatic) {
                             continue;

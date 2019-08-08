@@ -158,6 +158,8 @@ Object.assign(pc, function () {
         // for compatibility
         this.context = this;
 
+        this.paused = false;
+
         this.graphicsDevice = new pc.GraphicsDevice(canvas, options.graphicsDeviceOptions);
         this.stats = new pc.ApplicationStats(this.graphicsDevice);
         options.canvas = canvas;
@@ -180,7 +182,8 @@ Object.assign(pc, function () {
         var self = this;
         this.defaultLayerWorld = new pc.Layer({
             name: "World",
-            id: pc.LAYERID_WORLD
+            id: pc.LAYERID_WORLD,
+            graphicsDevice: this.graphicsDevice
         });
 
         if (this.graphicsDevice.webgl2) {
@@ -189,6 +192,7 @@ Object.assign(pc, function () {
                 enabled: false,
                 name: "Depth",
                 id: pc.LAYERID_DEPTH,
+                graphicsDevice: this.graphicsDevice,
 
                 onEnable: function () {
                     if (this.renderTarget) return;
@@ -259,6 +263,7 @@ Object.assign(pc, function () {
                 name: "Depth",
                 id: pc.LAYERID_DEPTH,
                 shaderPass: pc.SHADER_DEPTH,
+                graphicsDevice: this.graphicsDevice,
 
                 onEnable: function () {
                     if (this.renderTarget) return;
@@ -349,21 +354,24 @@ Object.assign(pc, function () {
             enabled: false,
             name: "Skybox",
             id: pc.LAYERID_SKYBOX,
-            opaqueSortMode: pc.SORTMODE_NONE
+            opaqueSortMode: pc.SORTMODE_NONE,
+            graphicsDevice: this.graphicsDevice
         });
         this.defaultLayerUi = new pc.Layer({
             enabled: true,
             name: "UI",
             id: pc.LAYERID_UI,
             transparentSortMode: pc.SORTMODE_MANUAL,
-            passThrough: true
+            passThrough: true,
+            graphicsDevice: this.graphicsDevice
         });
         this.defaultLayerImmediate = new pc.Layer({
             enabled: true,
             name: "Immediate",
             id: pc.LAYERID_IMMEDIATE,
             opaqueSortMode: pc.SORTMODE_NONE,
-            passThrough: true
+            passThrough: true,
+            graphicsDevice: this.graphicsDevice
         });
         this.defaultLayerComposition = new pc.LayerComposition();
 
@@ -462,7 +470,8 @@ Object.assign(pc, function () {
             { class: pc.ParticleSystemSystem,               args: [ this ] },
             { class: pc.ParticleSystemRendererSystem,       args: [ this ] },
             { class: pc.AnimatorSystem,                     args: [ this ] },
-            { class: pc.ReflectionProbeSystem,              args: [ this ] }
+            { class: pc.ReflectionProbeSystem,              args: [ this ] },
+            { class: pc.AnimationSystem,                    args: [ this ] }
         ];
 
         for ( var i = 0; i < systemClasses.length; i++ ) {
@@ -1499,7 +1508,7 @@ Object.assign(pc, function () {
             // have current application pointer in pc
             pc.app = app;
 
-            var now = timestamp || pc.now();
+            var now = pc.now();
             var ms = now - (app._time || now);
             var dt = ms / 1000.0;
             dt = pc.math.clamp(dt, 0, app.maxDeltaTime);
@@ -1514,7 +1523,7 @@ Object.assign(pc, function () {
                 window.requestAnimationFrame(app.tick);
             }
 
-            if (app.graphicsDevice.contextLost) {
+            if (app.graphicsDevice.contextLost || app.paused) {
                 return;
             }
 

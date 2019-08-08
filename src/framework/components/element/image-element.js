@@ -170,13 +170,12 @@ pc.extend(pc, function() {
         },
 
         _updateMaterial: function(screenSpace) {
-            var material = this._material || (screenSpace ? this._element.system.defaultScreenSpaceImageMaterial : this._element.system.defaultImageMaterial);
+            var material = this._material || this._element.system.defaultImageMaterial;
 
             material.alphaTest = this._alphaTest;
 
             if (this._meshInstance) {
                 this._meshInstance.material = this._showMaskGraphics ? material : this._maskMaterial;
-                this._meshInstance.screenSpace = screenSpace;
                 this._meshInstance.setParameter("screenSpaceFactor", screenSpace ? 1 : 0);
             }
 
@@ -584,7 +583,7 @@ pc.extend(pc, function() {
 
                 // if we are back to the default material then reset
                 // color parameters
-                if (this._material === this._system.defaultImageMaterial || this._material === this._system.defaultScreenSpaceImageMaterial) {
+                if (this._material === this._system.defaultImageMaterial) {
                     this._meshInstance.deleteParameter('material_opacity');
                     this._meshInstance.deleteParameter('material_emissive');
                 }

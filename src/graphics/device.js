@@ -3,6 +3,8 @@ Object.assign(pc, function () {
 
     var EVENT_RESIZE = 'resizecanvas';
     var whiteColor = new Float32Array([1, 1, 1, 1]);
+    var texcoordDefault = new Float32Array([0, 0, 0, 0]);
+    var positionDefault = new Float32Array([0, 0, 0, 1]);
 
     var slots = {};
     
@@ -271,7 +273,6 @@ Object.assign(pc, function () {
         var gl = null;
         options = options || {};
         options.stencil = true;
-        preferWebGl2 = false;
         options.antialias = (window.devicePixelRatio < 2);
         options.alpha = false;
         for (i = 0; i < names.length; i++) {
@@ -873,6 +874,9 @@ Object.assign(pc, function () {
 
             this.unpackPremultiplyAlpha = false;
             gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+
+            this.depthRange = new pc.Vec2( 0, 1 );
+            gl.depthRange( this.depthRange.x, this.depthRange.y );
         },
 
         initializeContext: function () {
@@ -972,6 +976,20 @@ Object.assign(pc, function () {
                 this.vh = h;
             }
         },
+
+        /**
+         * @function
+         * @name pc.GraphicsDevice#setDepthRange
+         * @description Set the active depth range on the specified device.
+         * @param {Number} zNear Minimum depth buffer value.
+         * @param {Number} zFar  Maximum depth buffer value.
+         */
+        setDepthRange: function (zNear, zFar) {
+            if ((this.depthRange.x !== zNear) || (this.depthRange.y !== zFar)) {
+                this.depthRange.set(zNear, zFar);
+                this.gl.depthRange(zNear, zFar);
+            }
+        },    
 
         /**
          * @function
@@ -1937,6 +1955,29 @@ Object.assign(pc, function () {
                     //     attribute.scopeId.value = null;
                     // }
 
+                    // initialize mesh default attributes, may be override further
+                    if (attribute.scopeId.name == 'POSITION') {
+                        locationId = attribute.locationId;
+                        this.enabledAttributes[locationId] = false;
+
+                        gl.disableVertexAttribArray(locationId);
+                        gl.vertexAttrib4fv(locationId, positionDefault);
+                    }
+                    if (attribute.scopeId.name == 'COLOR') {
+                        locationId = attribute.locationId;
+                        this.enabledAttributes[locationId] = false;
+
+                        gl.disableVertexAttribArray(locationId);
+                        gl.vertexAttrib4fv(locationId, whiteColor);
+                    }
+                    if (attribute.scopeId.name == 'TEXCOORD0') {
+                        locationId = attribute.locationId;
+                        this.enabledAttributes[locationId] = false;
+
+                        gl.disableVertexAttribArray(locationId);
+                        gl.vertexAttrib4fv(locationId, texcoordDefault);
+                    }
+
                     if (element !== null && !element.const) {
                         // Retrieve the vertex buffer that contains this element
                         vertexBuffer = this.vertexBuffers[element.stream];
@@ -1992,14 +2033,6 @@ Object.assign(pc, function () {
                         } else if (this.instancedAttribs[locationId]) {
                             gl.vertexAttribDivisor(locationId, 0);
                             this.instancedAttribs[locationId] = false;
-                        }
-                    } else {
-                        if (attribute.scopeId.name == 'COLOR' && !attribute.scopeId.value) {
-                            locationId = attribute.locationId;
-                            this.enabledAttributes[locationId] = false;
-
-                            gl.disableVertexAttribArray(locationId);
-                            gl.vertexAttrib4fv(locationId, whiteColor);
                         }
                     }
                 }
@@ -3002,8 +3035,8 @@ Object.assign(pc, function () {
             var gl = this.gl;
 
             var definition = shader.definition;
-            var glVertexShader = this.compileShaderSource(definition.vshader, true);
-            var glFragmentShader = this.compileShaderSource(definition.fshader, false);
+            var glVertexShader = this.compileShaderSource( shader.vshader, true );
+            var glFragmentShader = this.compileShaderSource( shader.fshader, false );
 
             var glProgram = gl.createProgram();
 
@@ -3036,6 +3069,10 @@ Object.assign(pc, function () {
             shader._glVertexShader = glVertexShader;
             shader._glFragmentShader = glFragmentShader;
             shader._glProgram = glProgram;
+            // memoize current global keywords version
+            shader._globalKeywordsVersion = pc.Shader._globalKeywordsVersion;
+            // mark for post linking
+            shader.ready = false;
 
             // #ifdef PROFILER
             this._shaderStats.linked++;
@@ -3094,11 +3131,11 @@ Object.assign(pc, function () {
 
             // Check for errors
             if (!gl.getShaderParameter(glVertexShader, gl.COMPILE_STATUS)) {
-                console.error("Failed to compile vertex shader:\n\n" + this._addLineNumbers(definition.vshader) + "\n\n" + gl.getShaderInfoLog(glVertexShader));
+                console.error("Failed to compile vertex shader:\n\n" + this._addLineNumbers(shader.vshader) + "\n\n" + gl.getShaderInfoLog(glVertexShader));
                 return false;
             }
             if (!gl.getShaderParameter(glFragmentShader, gl.COMPILE_STATUS)) {
-                console.error("Failed to compile fragment shader:\n\n" + this._addLineNumbers(definition.fshader) + "\n\n" + gl.getShaderInfoLog(glFragmentShader));
+                console.error("Failed to compile fragment shader:\n\n" + this._addLineNumbers(shader.fshader) + "\n\n" + gl.getShaderInfoLog(glFragmentShader));
                 return false;
             }
             if (!gl.getProgramParameter(glProgram, gl.LINK_STATUS)) {
@@ -3124,6 +3161,10 @@ Object.assign(pc, function () {
 
                 shader.attributes.push(shaderInput);
             }
+
+            // clear uniforms and samplers as previously saved ones might change due to recompilation
+            shader.samplers = [];
+            shader.uniforms = [];
 
             // Query the program for each shader state (GLSL 'uniform')
             i = 0;
@@ -3166,6 +3207,12 @@ Object.assign(pc, function () {
          */
         setShader: function (shader) {
             if (shader !== this.shader) {
+                // check if the shader should be recompiled
+                if ( shader.needsCompilation ) {
+                    // invoke recompilation
+                    this.compileAndLinkShader( shader );
+                }
+
                 if (!shader.ready) {
                     if (!this.postLink(shader)) {
                         return false;

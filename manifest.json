@@ -436,18 +436,6 @@
     "priority": 0
   },
   {
-    "src": "src/framework/components/animation/component.js",
-    "priority": 0
-  },
-  {
-    "src": "src/framework/components/animation/system.js",
-    "priority": 0
-  },
-  {
-    "src": "src/framework/components/animation/data.js",
-    "priority": 0
-  },
-  {
     "src": "src/framework/components/model/component.js",
     "priority": 0
   },
