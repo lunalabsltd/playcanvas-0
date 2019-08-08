@@ -570,14 +570,14 @@ pc.extend(pc, function() {
         },
 
         onEnable: function() {
-            if (this._model && !this._system.app.scene.containsModel(this._model)) {
-                this._system.app.scene.addModel(this._model);
+            if ( this._model ) {
+                this._system.app.scene.addModel( this._model );
             }
         },
 
         onDisable: function() {
-            if (this._model && this._system.app.scene.containsModel(this._model)) {
-                this._system.app.scene.removeModel(this._model);
+            if ( this._model ) {
+                this._system.app.scene.removeModel( this._model );
             }
         }
     });

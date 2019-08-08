@@ -121,14 +121,12 @@ pc.extend(pc, function () {
         _patch: function () {
             this.entity._dirtyLocal = true;
             
-            this.entity.inverseWorldTransform = new pc.Mat4();
             this.entity._sync = this._sync;
             this.entity._presync = this._presync;
             this.entity.setPosition = this._setPosition;
         },
 
         _unpatch: function () {
-            delete this.entity.inverseWorldTransform;
             this.entity._sync = pc.Entity.prototype._sync;
             this.entity._presync = pc.Entity.prototype._presync;
             this.entity.setPosition = pc.Entity.prototype.setPosition;
@@ -186,18 +184,12 @@ pc.extend(pc, function () {
                 return;
             }
 
-            for (var i = 0; i < this._layoutElements.length; i++) {
-                var layoutElement = this._layoutElements[ i ];
-                if (layoutElement != null && layoutElement.m_Enabled) {
-                    layoutElement.CalculateLayoutInputHorizontal();
-                    layoutElement.CalculateLayoutInputVertical();
-                }
-            }
+            pc.GraphNode.prototype._presync.apply( this );
 
             for (var i = 0; i < this._canvasElements.length; i++) {
                 var canvasElement = this._canvasElements[ i ];
                 if (canvasElement != null) {
-                    canvasElement.rebuild(0);
+                    canvasElement.Rebuild(0);
                 }
             }
         },
@@ -302,13 +294,6 @@ pc.extend(pc, function () {
                     layoutController.SetLayoutHorizontal();
                     layoutController.SetLayoutVertical();
                 }    
-            }
-
-            for (var i = 0; i < this._canvasElements.length; i++) {
-                var canvasElement = this._canvasElements[ i ];
-                if (canvasElement != null) {
-                    canvasElement.rebuild(2);
-                }
             }
 
             for (var i = 0; i < this._aspectRatioFitters.length; i++) {
@@ -418,8 +403,7 @@ pc.extend(pc, function () {
                 this.worldTransform.mul( _tmpMatrix );
 
                 // pre-calc inverse transform: we need it for raycasts
-                this.inverseWorldTransform.copy( this.worldTransform );
-                this.inverseWorldTransform.invert();
+                this.worldTransformInverse.copy( this.worldTransform ).invert();
 
                 // we are done! please note worldTransform's origin now sits at pivot point
                 // rendering and layout has to account it!
@@ -434,6 +418,14 @@ pc.extend(pc, function () {
                 }
 
                 element.fire("resize", element._width, element._height);
+
+                for (var i = 0; i < this._canvasElements.length; i++) {
+                    var canvasElement = this._canvasElements[ i ];
+                    if (canvasElement != null) {
+                        canvasElement.Rebuild(2);
+                        canvasElement.Rebuild(3);
+                    }
+                }
             }
         },
 
