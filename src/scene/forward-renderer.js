@@ -417,6 +417,7 @@ Object.assign(pc, function() {
             fogColor: scope.resolve('unity_FogColor'),
 
             viewProjId: scope.resolve('unity_MatrixVP'),
+            projId: scope.resolve('unity_MatrixP'),
             viewId: scope.resolve('unity_MatrixV'),
             modelMatrixId: scope.resolve('unity_ObjectToWorld'),
             modelMatrixInvId: scope.resolve('unity_WorldToObject'),
@@ -424,6 +425,7 @@ Object.assign(pc, function() {
             time: scope.resolve('_Time'),
 
             viewProjArrayId: scope.resolve('hlslcc_mtx4x4unity_MatrixVP[0]'),
+            projArrayId: scope.resolve('hlslcc_mtx4x4glstate_matrix_projection[0]'),
             viewArrayId: scope.resolve('hlslcc_mtx4x4unity_MatrixV[0]'),
             modelMatrixArrayId: scope.resolve('hlslcc_mtx4x4unity_ObjectToWorld[0]'),
             modelMatrixInvArrayId: scope.resolve('hlslcc_mtx4x4unity_WorldToObject[0]'),
@@ -537,8 +539,8 @@ Object.assign(pc, function() {
             var materialA = drawCallA._material;
             var materialB = drawCallB._material;
 
-            if ( drawCallA.screenSpace !== drawCallB.screenSpace ) {
-                return drawCallA.screenSpace ? 1 : -1;
+            if ( drawCallA.isScreenSpace !== drawCallB.isScreenSpace ) {
+                return drawCallA.isScreenSpace ? 1 : -1;
             }
 
             if ( !( materialA && materialB ) ) {
@@ -758,10 +760,14 @@ Object.assign(pc, function() {
                 viewProjMat.mul2(projMat, viewMat);
                 this.viewProjId.setValue(viewProjMat.data);
                 this.viewId.setValue(viewMat.data);
+                
                 this.unityIds.viewId.setValue(viewMat.data);
-                this.unityIds.viewArrayId.setValue(viewMat.data);
                 this.unityIds.viewProjId.setValue(viewProjMat.data);
+                this.unityIds.projId.setValue(projMat.data);
+
+                this.unityIds.viewArrayId.setValue(viewMat.data);
                 this.unityIds.viewProjArrayId.setValue(viewProjMat.data);
+                this.unityIds.projArrayId.setValue(projMat.data);
 
                 // View Position (world space)
                 var cameraPos = camera._node.getPosition();
@@ -1838,6 +1844,41 @@ Object.assign(pc, function() {
             pc._autoInstanceBuffer.unlock();
         },
 
+        /**
+         * Switches the rendering to / from screen space.
+         *
+         * @param    {Boolean}    screenSpace    Whether to enable screen-space rendering.
+         */
+        switchRenderingToScreenSpace: function ( screenSpace ) {
+            if ( screenSpace ) {
+                var identity = pc.Mat4.IDENTITY.data
+
+                this.viewProjId.pushValue( identity );
+                this.projId.pushValue( identity );
+                this.viewId.pushValue( identity );
+
+                this.unityIds.viewProjArrayId.pushValue( identity );
+                this.unityIds.projArrayId.pushValue( identity );
+                this.unityIds.viewArrayId.pushValue( identity );
+
+                this.unityIds.viewProjId.pushValue( identity );
+                this.unityIds.projId.pushValue( identity );
+                this.unityIds.viewId.pushValue( identity );
+            } else {
+                this.viewProjId.popValue();
+                this.projId.popValue();
+                this.viewId.popValue();
+
+                this.unityIds.viewProjArrayId.popValue();
+                this.unityIds.projArrayId.popValue();
+                this.unityIds.viewArrayId.popValue();
+
+                this.unityIds.viewProjId.popValue();
+                this.unityIds.projId.popValue();
+                this.unityIds.viewId.popValue();
+            }
+        },
+
         renderForward: function(camera, drawCalls, drawCallsCount, sortedLights, pass, cullingMask, drawCallback, layer) {
             var device = this.device;
             var scene = this.scene;
@@ -1862,6 +1903,9 @@ Object.assign(pc, function() {
             if ( device._enableAutoInstancing ) {
                 this.prepareAutoInstancing( drawCalls, drawCallsCount );
             }
+
+            // the flag indicating we have switched to screen-space rendering on the previous draw call
+            var previousDrawCallWasScreenSpace = false;
 
             // Render the scene
             for (i = 0; i < drawCallsCount; i++) {
@@ -1947,28 +1991,36 @@ Object.assign(pc, function() {
                             material.dirty = false;
                         }
 
-                        if (!drawCall._shader[pass] || drawCall._shaderDefs !== objDefs || drawCall._lightHash !== lightHash) {
-                            if (!drawCall.isStatic) {
-                                variantKey = pass + "_" + objDefs + "_" + lightHash;
-                                drawCall._shader[pass] = material.variants[variantKey];
-                                if (!drawCall._shader[pass]) {
-                                    this.updateShader(drawCall, objDefs, null, pass, sortedLights);
-                                    material.variants[variantKey] = drawCall._shader[pass];
+                        // check if the shader is keyword-enabled one
+                        if ( ( material._shader === null ) || !material._shader._supportsKeywords ) {
+                            // it's not (probably standard playcanvas one)
+                            if (!drawCall._shader[pass] || drawCall._shaderDefs !== objDefs || drawCall._lightHash !== lightHash) {
+                                if (!drawCall.isStatic) {
+                                    variantKey = pass + "_" + objDefs + "_" + lightHash;
+                                    drawCall._shader[pass] = material.variants[variantKey];
+                                    if (!drawCall._shader[pass]) {
+                                        this.updateShader(drawCall, objDefs, null, pass, sortedLights);
+                                        material.variants[variantKey] = drawCall._shader[pass];
+                                    }
+                                } else {
+                                    this.updateShader(drawCall, objDefs, drawCall._staticLightList, pass, sortedLights);
                                 }
-                            } else {
-                                this.updateShader(drawCall, objDefs, drawCall._staticLightList, pass, sortedLights);
+                                drawCall._shaderDefs = objDefs;
+                                drawCall._lightHash = lightHash;
                             }
-                            drawCall._shaderDefs = objDefs;
-                            drawCall._lightHash = lightHash;
-                        }
 
-                        // #ifdef DEBUG
-                        if (!device.setShader(drawCall._shader[pass])) {
-                            console.error('Error in material "' + material.name + '" with flags ' + objDefs);
-                            drawCall.material = scene.defaultMaterial;
+                            // #ifdef DEBUG
+                            if (!device.setShader(drawCall._shader[pass])) {
+                                console.error('Error in material "' + material.name + '" with flags ' + objDefs);
+                                drawCall.material = scene.defaultMaterial;
+                            }
+                            // #else
+                            device.setShader( drawCall._shader[pass] );
+                        } else {
+                            // it is keyword-enabled - all tweaking / recompilation is handled
+                            // by the shader itself
+                            device.setShader( material._shader );
                         }
-                        // #else
-                        device.setShader(drawCall._shader[pass]);
                         // #endif
 
                         // Uniforms I: material
@@ -2060,6 +2112,11 @@ Object.assign(pc, function() {
                     // Pre-render callback
                     if (drawCall.preRender) {
                         drawCall.preRender._onPreRender();
+                    }
+
+                    if ( previousDrawCallWasScreenSpace !== drawCall.isScreenSpace ) {
+                        this.switchRenderingToScreenSpace( !previousDrawCallWasScreenSpace );
+                        previousDrawCallWasScreenSpace = !previousDrawCallWasScreenSpace;
                     }
 
                     // Uniforms II: meshInstance overrides

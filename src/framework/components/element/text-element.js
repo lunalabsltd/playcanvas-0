@@ -190,8 +190,6 @@ pc.extend(pc, function() {
                 if (screenSpace) {
                     this._meshInstance.layer = pc.scene.LAYER_HUD;
                 }
-                this._meshInstance.screenSpace = screenSpace;
-                this._meshInstance.setParameter("screenSpaceFactor", screenSpace ? 1 : 0);
 
                 this._meshInstance.setParameter("texture_msdfMap", this._font.texture);
                 this._meshInstance.setParameter("_MainTex", this._font.texture);
@@ -281,12 +279,10 @@ pc.extend(pc, function() {
         },
 
         _updateMaterial: function(screenSpace) {
-            var material = this._material || (screenSpace ? this._element.system.defaultScreenSpaceTextMaterial : this._element.system.defaultTextMaterial);
+            var material = this._material || this._element.system.defaultTextMaterial;
 
             if (this._meshInstance) {
                 this._meshInstance.material = material;
-                this._meshInstance.screenSpace = screenSpace;
-                this._meshInstance.setParameter("screenSpaceFactor", screenSpace ? 1 : 0);
             }
 
             this._onStencilLayerChange();

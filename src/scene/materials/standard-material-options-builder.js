@@ -32,7 +32,6 @@ Object.assign(pc, function () {
         options.blendType = stdMat.blendType;
         options.forceUv1 = stdMat.forceUv1;
 
-        options.screenSpace = objDefs && (objDefs & pc.SHADERDEF_SCREENSPACE) !== 0;
         options.skin = objDefs && (objDefs & pc.SHADERDEF_SKIN) !== 0;
         options.useInstancing = objDefs && (objDefs & pc.SHADERDEF_INSTANCING) !== 0;
     };
