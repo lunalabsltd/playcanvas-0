@@ -60,6 +60,7 @@ Object.assign(pc, function () {
         this._enabledInHierarchy = false;
 
         this.scaleCompensation = false;
+        this.hasChanged = true;
     };
 
     /**

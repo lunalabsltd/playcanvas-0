@@ -172,9 +172,9 @@ pc.extend(pc, function () {
         _presync: function () {
             var element = this.element;
 
-            if (this.element.screen) {
+            if ( this.element.screen ) {
                 var camera = this.element.screen.screen.camera || pc.Application.getApplication().getMainCamera().camera;
-                if (camera._projMatDirty) {
+                if ( camera._projMatDirty ) {
                     this.element.screen.screen._calcProjectionMatrix();
                 }
             }
@@ -185,13 +185,6 @@ pc.extend(pc, function () {
             }
 
             pc.GraphNode.prototype._presync.apply( this );
-
-            for (var i = 0; i < this._canvasElements.length; i++) {
-                var canvasElement = this._canvasElements[ i ];
-                if (canvasElement != null) {
-                    canvasElement.Rebuild(0);
-                }
-            }
         },
 
         _updateElementRect: function (container) {
@@ -223,6 +216,9 @@ pc.extend(pc, function () {
                 !this._dirtyLocal && !this._dirtyLocalEulerAngles && !this._dirtyWorld) {
                 return;
             }
+
+            // if got here it means the transform has been changed
+            this.hasChanged = true;
 
             var parent = element._parent;
 
@@ -288,9 +284,17 @@ pc.extend(pc, function () {
             element._updateAnchoredPosition();
             element._updateSizeDelta();
 
+            for (var i = 0; i < this._layoutSelfControllers.length; i++) {
+                var layoutController = this._layoutSelfControllers[ i ];
+                if ( layoutController != null && layoutController.m_Enabled ) {
+                    layoutController.SetLayoutHorizontal();
+                    layoutController.SetLayoutVertical();
+                }    
+            }
+
             for (var i = 0; i < this._layoutControllers.length; i++) {
                 var layoutController = this._layoutControllers[ i ];
-                if (layoutController != null && layoutController.m_Enabled) {
+                if ( layoutController != null && layoutController.m_Enabled ) {
                     layoutController.SetLayoutHorizontal();
                     layoutController.SetLayoutVertical();
                 }    
@@ -309,7 +313,7 @@ pc.extend(pc, function () {
             element._anchorDirty = false;
             element._cornerDirty = false;
 
-            if (this._dirtyWorld) {
+            if ( this._dirtyWorld ) {
                 // let's compute the pivot point – remember it's local to element coord space
                 element._pivotPoint.set( element._width * element.pivot.x, element._height * element.pivot.y, 0 );
                 _tmpVector.copy( element._pivotPoint );
@@ -421,9 +425,10 @@ pc.extend(pc, function () {
 
                 for (var i = 0; i < this._canvasElements.length; i++) {
                     var canvasElement = this._canvasElements[ i ];
-                    if (canvasElement != null) {
-                        canvasElement.Rebuild(2);
-                        canvasElement.Rebuild(3);
+
+                    if ( canvasElement != null ) {
+                        canvasElement.Rebuild( 2 );
+                        canvasElement.Rebuild( 3 );
                     }
                 }
             }
@@ -431,20 +436,19 @@ pc.extend(pc, function () {
 
         propagateDirty: function() {
             var nodes = [];
+            
             var node = this.entity;
-            var hasLayoutParents = this.entity.parent && this.entity.parent._layoutControllers.length > 0;
-
-            while (node) {
-                nodes.push( node );
-                node = node.parent;
-            }
-
-            if (hasLayoutParents) {
-                for(var i = 0; i < nodes.length; i++) {
-                    nodes[ i ]._dirtifyLocal();
-                    nodes[ i ]._dirtifyWorld();
+            var target = this.entity;
+            
+            while ( node ) {
+                if ( node._layoutControllers.length > 0 ) {
+                    target = node;
                 }
+
+                node = node._parent;
             }
+
+            target._dirtifyWorld();
         },
 
         setVerticesDirty: function () {

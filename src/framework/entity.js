@@ -67,6 +67,7 @@ Object.assign(pc, function () {
         // UnityEngine.UI fields
         this._layoutElements = [];
         this._layoutControllers = [];
+        this._layoutSelfControllers = [];
         this._aspectRatioFitters = [];
         this._canvasElements = [];
         this._canvasGroups = [];
