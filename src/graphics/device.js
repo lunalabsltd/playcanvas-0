@@ -1325,6 +1325,10 @@ Object.assign(pc, function () {
 
             texture._glTexture = gl.createTexture();
 
+            if( texture._levels && texture._levels[ 0 ] && texture._levels[ 0 ].tagName === 'VIDEO' ) {
+                texture._needsUpdate = true;
+            }
+
             texture._glTarget = texture._cubemap ? gl.TEXTURE_CUBE_MAP :
                 (texture._volume ? gl.TEXTURE_3D : gl.TEXTURE_2D);
 
@@ -1920,7 +1924,7 @@ Object.assign(pc, function () {
                     this.uploadTexture(texture);
 
                     if (texture !== this.grabPassTexture) {
-                        texture._needsUpload = false;
+                        texture.markUploaded();
                         texture._needsMipmapsUpload = false;
                     }
                 }

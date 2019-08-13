@@ -279,6 +279,7 @@ Object.assign(pc, function () {
             }
         }
 
+        clone.parameters = Object.assign({}, this.parameters);
         clone.redWrite = this.redWrite;
         clone.greenWrite = this.greenWrite;
         clone.blueWrite = this.blueWrite;
