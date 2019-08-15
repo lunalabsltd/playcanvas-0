@@ -1892,6 +1892,8 @@ Object.assign(pc, function() {
             if ( device._enableAutoInstancing ) {
                 this.prepareAutoInstancing( drawCalls, drawCallsCount );
             }
+
+            var previousDrawCallWasScreenSpace = false;
             
             // Render the scene
             for (i = 0; i < drawCallsCount; i++) {
@@ -2039,6 +2041,11 @@ Object.assign(pc, function() {
                     // Pre-render callback
                     if ( drawCall.preRender ) {
                         drawCall.preRender._onPreRender();
+                    }
+
+                    if ( previousDrawCallWasScreenSpace !== drawCall.isScreenSpace ) {
+                        this.switchRenderingToScreenSpace( !previousDrawCallWasScreenSpace );
+                        previousDrawCallWasScreenSpace = !previousDrawCallWasScreenSpace;
                     }
 
                     // Uniforms II: meshInstance overrides
