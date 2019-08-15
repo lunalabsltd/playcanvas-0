@@ -1866,9 +1866,6 @@ Object.assign(pc, function() {
             }
         },
 
-        
-        
-
         renderForward: function(camera, drawCalls, drawCallsCount, sortedLights, pass, cullingMask, drawCallback, layer) {
             var device = this.device;
             var scene = this.scene;
