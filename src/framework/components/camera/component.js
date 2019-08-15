@@ -90,7 +90,6 @@ Object.assign(pc, function () {
         this.on("set_calculateTransform", this.onSetCalculateTransform, this);
         this.on("set_calculateProjection", this.onSetCalculateProjection, this);
         this.on("set_cullFaces", this.onSetCullFaces, this);
-        this.on("set_flipFaces", this.onSetFlipFaces, this);
         this.on("set_layers", this.onSetLayers, this);
         this.on("set_cullingMask", this.onSetCullingMask, this);
     };
@@ -284,10 +283,6 @@ Object.assign(pc, function () {
 
         onSetCullFaces: function (name, oldValue, newValue) {
             this.camera._cullFaces = newValue;
-        },
-
-        onSetFlipFaces: function (name, oldValue, newValue) {
-            this.camera._flipFaces = newValue;
         },
 
         onSetProjection: function (name, oldValue, newValue) {
