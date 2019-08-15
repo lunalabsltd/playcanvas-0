@@ -80,6 +80,7 @@ Object.assign(pc, function () {
         this.cull = pc.CULLFACE_BACK;
 
         this.depthTest = true;
+        this.depthFunc = pc.FUNC_LESSEQUAL;
         this.depthWrite = true;
         this.stencilFront = null;
         this.stencilBack = null;
