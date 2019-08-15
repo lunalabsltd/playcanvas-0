@@ -1433,6 +1433,7 @@ Object.assign(pc, function () {
             var target = new pc.Vec3();
             var up = new pc.Vec3();
             var rotation = new pc.Quat();
+            var direction = new pc.Vec3();
 
             return function (tx, ty, tz, ux, uy, uz) {
                 if (tx instanceof pc.Vec3) {
@@ -1455,8 +1456,16 @@ Object.assign(pc, function () {
                     }
                 }
 
-                matrix.setLookAt(this.getPosition(), target, up);
-                rotation.setFromMat4(matrix);
+                var position = this.getPosition();
+                direction.sub2( position, target );
+
+                if ( direction.length() > Number.EPSILON ) {
+                    matrix.setLookAt(this.getPosition(), target, up);
+                    rotation.setFromMat4(matrix);
+                } else {
+                    rotation.set(0, 0, 0, 1 );
+                }
+
                 this.setRotation(rotation);
             };
         }(),
