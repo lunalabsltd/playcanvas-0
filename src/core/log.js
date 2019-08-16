@@ -18,7 +18,6 @@ Object.assign(pc, function () {
          * @description Starting logging to the console
          */
         open: function () {
-            pc.log.write("Powered by PlayCanvas " + pc.version + " " + pc.revision);
         },
 
         /**

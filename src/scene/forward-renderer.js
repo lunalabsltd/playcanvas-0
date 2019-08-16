@@ -633,19 +633,6 @@ Object.assign(pc, function() {
             return drawCallA.mesh.id - drawCallB.mesh.id;
         },
 
-        _switchMaterialPass: function(device, material, shader) {
-            material.applyRenderStateSettings(shader.renderState);
-
-            device.setBlending( material.blend );
-            device.setBlendFunction( material.blendSrc, material.blendDst );
-            device.setBlendEquation( material.blendEquation );
-            device.setCullMode( material.cull );
-            device.setDepthWrite( material.depthWrite );
-            device.setDepthTest( material.depthTest );
-
-            device.setShader( shader );
-        },
-
         depthSortCompare: function(drawCallA, drawCallB) {
             keyA = drawCallA._key[pc.SORTKEY_DEPTH];
             keyB = drawCallB._key[pc.SORTKEY_DEPTH];
@@ -1456,11 +1443,11 @@ Object.assign(pc, function() {
                 var shaders = meshInstance.material.shader.shaders;
 
                 for (var i = 0; i < shaders.length; i++) {
-                    this._switchMaterialPass(device, meshInstance.material, shaders[i]);
-                    result += this._drawInstance.call(this, device, meshInstance, mesh, style, normal);
+                    meshInstance.material.setPass( i, false, meshInstance._flipFaces );
+                    result += this._drawInstance.call( this, device, meshInstance, mesh, style, normal );
                 }
             } else {
-                result += this._drawInstance.call(this, device, meshInstance, mesh, style, normal);
+                result += this._drawInstance.call( this, device, meshInstance, mesh, style, normal );
             }
 
             return result;
@@ -1893,9 +1880,8 @@ Object.assign(pc, function() {
 
             var i, drawCall, mesh, material, objDefs, variantKey, lightMask, style, usedDirLights;
             var prevMaterial = null,
-                prevObjDefs, prevLightMask, prevStatic;
+                prevObjDefs, prevLightMask, prevStatic, prevFlipFaces;
             var paramName, parameter, parameters;
-            var stencilFront, stencilBack;
 
             var halfWidth = device.width * 0.5;
             var skyboxRendered = false;
@@ -1904,9 +1890,8 @@ Object.assign(pc, function() {
                 this.prepareAutoInstancing( drawCalls, drawCallsCount );
             }
 
-            // the flag indicating we have switched to screen-space rendering on the previous draw call
             var previousDrawCallWasScreenSpace = false;
-
+            
             // Render the scene
             for (i = 0; i < drawCallsCount; i++) {
                 drawCall = drawCalls[i];
@@ -1979,7 +1964,11 @@ Object.assign(pc, function() {
                         prevMaterial = null; // force change shader if the object uses a different variant of the same material
                     }
 
-                    if (drawCall.isStatic || prevStatic) {
+                    if ( drawCall.isStatic !== prevStatic ) {
+                        prevMaterial = null;
+                    }
+
+                    if ( drawCall._flipFaces !== prevFlipFaces ) {
                         prevMaterial = null;
                     }
 
@@ -2040,77 +2029,14 @@ Object.assign(pc, function() {
                             this.dispatchLocalLights(sortedLights, scene, lightMask, usedDirLights, drawCall._staticLightList);
                         }
 
-                        this.alphaTestId.setValue(material.alphaTest);
-
-                        device.setBlending(material.blend);
-                        if (material.blend) {
-                            if (material.separateAlphaBlend) {
-                                device.setBlendFunctionSeparate(material.blendSrc, material.blendDst, material.blendSrcAlpha, material.blendDstAlpha);
-                                device.setBlendEquationSeparate(material.blendEquation, material.blendAlphaEquation);
-                            } else {
-                                device.setBlendFunction(material.blendSrc, material.blendDst);
-                                device.setBlendEquation(material.blendEquation);
-                            }
-                        }
-                        device.setColorWrite(material.redWrite, material.greenWrite, material.blueWrite, material.alphaWrite);
-                        if (camera._cullFaces) {
-                            if (camera._flipFaces) {
-                                device.setCullMode(material.cull > 0 ?
-                                    (material.cull === pc.CULLFACE_FRONT ? pc.CULLFACE_BACK : pc.CULLFACE_FRONT) : 0);
-                            } else {
-                                device.setCullMode(material.cull);
-                            }
-                        } else {
-                            device.setCullMode(pc.CULLFACE_NONE);
-                        }
-                        device.setDepthWrite(material.depthWrite);
-                        device.setDepthTest(material.depthTest);
-                        device.setAlphaToCoverage(material.alphaToCoverage);
-
-                        if (material.depthBias || material.slopeDepthBias) {
-                            device.setDepthBias(true);
-                            device.setDepthBiasValues(material.depthBias, material.slopeDepthBias);
-                        } else {
-                            device.setDepthBias(false);
-                        }
+                        this.alphaTestId.setValue( material.alphaTest );
+                        material._applyRenderState( device, drawCall._flipFaces );
                     }
 
-                    stencilFront = drawCall.stencilFront || material.stencilFront;
-                    stencilBack = drawCall.stencilBack || material.stencilBack;
-
-                    if (stencilFront || stencilBack) {
-                        device.setStencilTest(true);
-                        if (stencilFront === stencilBack) {
-                            // identical front/back stencil
-                            device.setStencilFunc(stencilFront.func, stencilFront.ref, stencilFront.readMask);
-                            device.setStencilOperation(stencilFront.fail, stencilFront.zfail, stencilFront.zpass, stencilFront.writeMask);
-                        } else {
-                            // separate
-                            if (stencilFront) {
-                                // set front
-                                device.setStencilFuncFront(stencilFront.func, stencilFront.ref, stencilFront.readMask);
-                                device.setStencilOperationFront(stencilFront.fail, stencilFront.zfail, stencilFront.zpass, stencilFront.writeMask);
-                            } else {
-                                // default front
-                                device.setStencilFuncFront(pc.FUNC_ALWAYS, 0, 0xFF);
-                                device.setStencilOperationFront(pc.STENCILOP_KEEP, pc.STENCILOP_KEEP, pc.STENCILOP_KEEPP, 0xFF);
-                            }
-                            if (stencilBack) {
-                                // set back
-                                device.setStencilFuncBack(stencilBack.func, stencilBack.ref, stencilBack.readMask);
-                                device.setStencilOperationBack(stencilBack.fail, stencilBack.zfail, stencilBack.zpass, stencilBack.writeMask);
-                            } else {
-                                // default back
-                                device.setStencilFuncBack(pc.FUNC_ALWAYS, 0, 0xFF);
-                                device.setStencilOperationBack(pc.STENCILOP_KEEP, pc.STENCILOP_KEEP, pc.STENCILOP_KEEP, 0xFF);
-                            }
-                        }
-                    } else {
-                        device.setStencilTest(false);
-                    }
+                    device.applyStencilState( drawCall.stencilFront, drawCall.stencilBack, false );
 
                     // Pre-render callback
-                    if (drawCall.preRender) {
+                    if ( drawCall.preRender ) {
                         drawCall.preRender._onPreRender();
                     }
 
@@ -2138,10 +2064,6 @@ Object.assign(pc, function() {
 
                     if (drawCallback) {
                         drawCallback(drawCall, i);
-                    }
-
-                    if (camera._cullFaces && drawCall._flipFaces) {
-                        device.setCullMode(material.cull > 0 ? (material.cull === pc.CULLFACE_FRONT ? pc.CULLFACE_BACK : pc.CULLFACE_FRONT) : 0);
                     }
 
                     if (vrDisplay && vrDisplay.presenting) {
@@ -2193,6 +2115,7 @@ Object.assign(pc, function() {
                     prevObjDefs = objDefs;
                     prevLightMask = lightMask;
                     prevStatic = drawCall.isStatic;
+                    prevFlipFaces = drawCall._flipFaces;
                 }
             }
             device.updateEnd();
